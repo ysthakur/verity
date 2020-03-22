@@ -3,12 +3,12 @@ package com.ysthakur.parsing.lexer
 import java.io.FileInputStream
 
 import com.ysthakur.parsing.dsl._
+import com.ysthakur.parsing.lexer.RegexTokenTypes._
+import com.ysthakur.parsing.lexer.ComplexTokenTypes._
 
 class Lexer(val file: FileInputStream) extends
     Tokenizer[Char, Token, StringBuilder](new StringBuilder(), "INITIAL")
     with Dynamic {
-
-    private val s = this
 
     override def getNext: Char = file.read().toChar
 
@@ -23,9 +23,10 @@ class Lexer(val file: FileInputStream) extends
         res.toChar
     }
 
-    val WSP = "\\W"
+    val wsp = "\\W+"
 
     s.INITIAL := (
-        WSP --> {}
+        wsp --> {WSP}
+
     )
 }

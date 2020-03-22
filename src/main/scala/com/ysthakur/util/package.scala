@@ -4,8 +4,10 @@ package object util {
 
     type |[A, B] = Either[A, B]
 
-    implicit def toEither[A, B](a: A): Either[A, B] = Left(a)
-    implicit def toEither[A, B](b: B): Either[A, B] = Right(b)
+    val x: Int|String = 1
+
+    implicit def toLeft[A, B](a: A): A Either B = Left[A, B](a)
+    implicit def toRight[A, B](b: B): A Either B = Right[A, B](b)
 
     implicit class ElvisOpplicable[T](option: Option[T]) {
         def ?:(orElse: T): T =

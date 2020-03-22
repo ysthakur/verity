@@ -6,7 +6,7 @@ import com.ysthakur.parsing.lexer.Token
 /**
  * TODO implement this
  */
-class Parser extends Tokenizer[Token, Node, Any](null) {
+class Parser extends Tokenizer[Token, Node, Iterable[Node]](null) {
     /**
      * Get the next character (if this is a lexer) or token (if this is a parser)
      *

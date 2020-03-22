@@ -1,5 +1,8 @@
 package com.ysthakur.parsing.parser
 
-trait Node {
+import com.ysthakur.parsing.lexer.Token
+import com.ysthakur.util._
+
+trait Node extends Iterable[Node] {
 
 }

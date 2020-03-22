@@ -20,6 +20,7 @@ abstract class Tokenizer[Input, Output, Accumulator <: Iterable[Input]]
     var currentState: State = defaultState
     private val stateCases: ListBuffer[StateCase[Input]] = new ListBuffer[StateCase[Input]]()
     private var last: Input = _
+    protected val s: Tokenizer[Input, Output, Accumulator] = this
 
     implicit val states: Map[String, State] = makeStates(stateNames)
     implicit val thisTokenizer: Tokenizer[Input, Output, Accumulator] = this
@@ -30,13 +31,13 @@ abstract class Tokenizer[Input, Output, Accumulator <: Iterable[Input]]
      *
      * @return
      */
-    abstract def getNext: Input
+    def getNext: Input
 
     /**
      * Add this piece of the input (character/token) to the
      * accumulator, which is a StringBuilder or something
      */
-    abstract def accumulate(input: Input): Unit
+    def accumulate(input: Input): Unit
 
     def proceed(): Unit = {
         last = getNext
@@ -69,7 +70,7 @@ abstract class Tokenizer[Input, Output, Accumulator <: Iterable[Input]]
      *
      * @return
      */
-    abstract def peekNext: Input
+    def peekNext: Input
 
     /**
      * Return the last character/token that it processed
