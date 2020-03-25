@@ -1,47 +1,36 @@
 package com.ysthakur.parsing.lexer
 
-import java.io.FileInputStream
+import java.io.InputStream
 
-import com.ysthakur.parsing.dsl._
-import com.ysthakur.parsing.{FullMatch, MatchResult, NoMatch}
+import com.ysthakur.parsing.{LexerOrParser, Pattern, PatternCase, StateCase}
 
-import scala.collection.mutable.ListBuffer
-import scala.util.control.Breaks._
+object Lexer extends LexerOrParser[Char, Iterable[Token], StringBuilder]() with Dynamic {
 
-class Lexer(val file: FileInputStream) extends
-    LexerOrParser[Char, Token, StringBuilder](new StringBuilder(), "INITIAL")
-    with Dynamic {
+    override type InputSource = InputStream
+    override type Helper = LexerHelper
 
-    private var lastTokenType: TokenType = _
-    private val tokens = ListBuffer[Token]()
-
-    s.INITIAL := (
-        PredicatePattern[Char](input => {
-            val text = toStr(input)
-            var res: MatchResult = NoMatch()
-            breakable {
-                for (tokenType <- (FixedTextTokenTypes.allTokenTypes
-                    ++ KeywordTokenTypes.allTokenTypes).values) {
-                    if (text == tokenType.text) res = FullMatch(false)
-                }
-            }
-            res
-        }) --> {
-            tokens.addOne(
+    private val action: This#Helper => Unit = (helper: This#Helper) => {
+        val lastTokenType = patternCaseToTokenType(helper.lastMatch.asInstanceOf[PatternCase[Char, Helper]])
+        if (!lastTokenType.isInstanceOf[IgnoredTokenType])
+            helper.asInstanceOf[Helper].tokens.addOne(
                 if (lastTokenType.isInstanceOf[FixedTextTokenType]) InvariantToken(lastTokenType)
-                else VariantToken(lastTokenType, current)
-            )
-        }
-    )
-
-    override def getNext: Char = file.read().toChar
-
-    override def accumulate(input: Char): Unit = current.addOne(input)
-
-    override def peekNext: Char = {
-        file.mark(2)
-        val res = file.read()
-        file.reset()
-        res.toChar
+                else VariantToken(lastTokenType, helper.current.asInstanceOf))
     }
+
+    private def makePattern(tt: TokenType): Pattern[Char] = {
+        tt match {
+            case rtt: RegexTokenType => RegexPattern(rtt.regex)
+            case ftt: FixedTextTokenType => FixedTextPattern(ftt.text)
+            case _ => throw new Error("Unexpected type")
+        }
+    }
+
+    private val patternCaseToTokenType = JMMTokenTypes.allTokenTypes.map {
+            case (_, tokenType) => PatternCase[Char, Helper](makePattern(tokenType).asInstanceOf,
+                    action) -> tokenType
+    }
+
+    this.addStateCase(StateCase(defaultState, patternCaseToTokenType.keys))
+
+    override def makeHelper(inputSource: InputStream): LexerHelper = LexerHelper(inputSource)
 }

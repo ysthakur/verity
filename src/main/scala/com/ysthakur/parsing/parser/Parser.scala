@@ -1,29 +1,14 @@
 package com.ysthakur.parsing.parser
 
-import com.ysthakur.parsing.dsl.LexerOrParser
+import com.ysthakur.parsing.LexerOrParser
 import com.ysthakur.parsing.lexer.Token
 
 /**
  * TODO implement this
  */
-class Parser extends LexerOrParser[Token, Node, Iterable[Node]](null) {
-    /**
-     * Get the next character (if this is a lexer) or token (if this is a parser)
-     *
-     * @return
-     */
-    override def getNext: Token = ???
+object Parser extends LexerOrParser[Token, Node, Iterable[Token]]() {
+    override type InputSource = Iterable[Token]
+    override type Helper = ParserHelper
 
-    /**
-     * Add this piece of the input (character/token) to the
-     * accumulator, which is a StringBuilder or something
-     */
-    override def accumulate(input: Token): Unit = ???
-
-    /**
-     * Return the next character/token without consuming it
-     *
-     * @return
-     */
-    override def peekNext: Token = ???
+    override def makeHelper(inputSource: Iterable[Token]): ParserHelper = ???
 }

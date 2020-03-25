@@ -1,6 +1,13 @@
-package com.ysthakur.parsing.dsl
+package com.ysthakur.parsing
 
-import com.ysthakur.parsing.{MatchResult, PartialMatch, TextRange}
+import scala.language.existentials
+
+/**
+ *
+ * @param pattern
+ * @param action
+ */
+case class PatternCase[Input, Helper](pattern: Pattern[Input], action: Helper => Unit)
 
 /**
  * A pattern, like regex, that matches input
@@ -23,7 +30,8 @@ trait Pattern[Input] {
      */
     def &(other: Pattern[Input]): Pattern[Input] = CompositePattern(this, other)
 
-    def -->(action: => Unit): PatternCase[Input] = PatternCase(this, () => action)
+    def -->[Helper](action: Helper => Unit): PatternCase[Input, Helper] =
+        PatternCase(this.asInstanceOf, action)
 
     def tryMatch[T <: Iterable[Input]](input: T): MatchResult
 
