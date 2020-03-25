@@ -2,8 +2,25 @@ package com.ysthakur.parsing.dsl
 
 import com.ysthakur.parsing.{MatchResult, PartialMatch, TextRange}
 
+/**
+ * A pattern, like regex, that matches input
+ * @tparam Input The type of the input (Iterable of Char or Token)
+ */
 trait Pattern[Input] {
 
+    /**
+     * Whether or not it always matches the same input.
+     * If false, it might be a valid identifier or something
+     * that takes a variable length input or something like that
+     */
+    val isFixed: Boolean
+
+    /**
+     * Just to compose multiple patterns. Match this pattern first, then
+     * pattern `other`. It's left associative
+     * @param other
+     * @return
+     */
     def &(other: Pattern[Input]): Pattern[Input] = CompositePattern(this, other)
 
     def -->(action: => Unit): PatternCase[Input] = PatternCase(this, () => action)
@@ -12,6 +29,12 @@ trait Pattern[Input] {
 
 }
 
+/**
+ * Used to match first `pattern1`, then `pattern2`
+ * @param pattern1 The first thing being matched
+ * @param pattern2 The second thing being matched
+ * @tparam Input
+ */
 case class CompositePattern[Input](pattern1: Pattern[Input], pattern2: Pattern[Input]) extends Pattern[Input] {
     override def &(other: Pattern[Input]): Pattern[Input] = CompositePattern(this, other)
 
@@ -27,4 +50,6 @@ case class CompositePattern[Input](pattern1: Pattern[Input], pattern2: Pattern[I
             case _ => firstMatch
         }
     }
+
+    override val isFixed: Boolean = pattern1.isFixed && pattern2.isFixed
 }

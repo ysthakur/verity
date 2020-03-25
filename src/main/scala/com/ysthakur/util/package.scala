@@ -16,6 +16,9 @@ package object util {
                 case None => orElse
             }
     }
+    implicit class ElvisOperator[T](obj: T) {
+        def ?:(orElse: T): T = if (obj == null) orElse else obj
+    }
 
     def cast[T]: T = asInstanceOf[T]
 }

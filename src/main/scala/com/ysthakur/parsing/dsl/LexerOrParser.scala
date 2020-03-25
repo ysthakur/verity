@@ -1,6 +1,7 @@
 package com.ysthakur.parsing.dsl
 
 import com.ysthakur.parsing.{FullMatch, NeedsMore, NoMatch, PartialMatch}
+import com.ysthakur.util._
 
 import scala.collection.immutable.Map
 import scala.collection.mutable.ListBuffer
@@ -13,17 +14,17 @@ import scala.util.control.Breaks._
  * @tparam Accumulator The data structure all the pieces of the input are stored in
  *                     (a StringBuilder or ASTNode)
  */
-abstract class Tokenizer[Input, Output, Accumulator <: Iterable[Input]]
+abstract class LexerOrParser[Input, Output, Accumulator <: Iterable[Input]]
 (protected val current: Accumulator, stateNames: String*) extends Dynamic {
 
     val defaultState: State = State("DEFAULT")
     var currentState: State = defaultState
     private val stateCases: ListBuffer[StateCase[Input]] = new ListBuffer[StateCase[Input]]()
     private var last: Input = _
-    protected val s: Tokenizer[Input, Output, Accumulator] = this
+    protected val s: LexerOrParser[Input, Output, Accumulator] = this
 
     implicit val states: Map[String, State] = makeStates(stateNames)
-    implicit val thisTokenizer: Tokenizer[Input, Output, Accumulator] = this
+    implicit val thisTokenizer: LexerOrParser[Input, Output, Accumulator] = this
 
 
     /**
@@ -46,23 +47,55 @@ abstract class Tokenizer[Input, Output, Accumulator <: Iterable[Input]]
             stateCases.find(sc => sc.state == defaultState)
                 .getOrElse(throw new Error("No state matches this!"))
         )
-        var possibleFutureMatches = ListBuffer[Pattern[Input]]()
+        var possibleFutureMatches = ListBuffer[PatternCase[Input]]()
+        var lastMatch: PatternCase[Input] = null
         do {
-            for (pc <- stateCase.patternCases) {
+            val pattern = findPattern(stateCase.patternCases.map(pc => pc.pattern))
+            /*for (pc <- stateCase.patternCases) {
                 val matchRes = pc.pattern.tryMatch(current)
                 matchRes match {
-                    case NoMatch() => possibleFutureMatches -= pc.pattern
-                    case FullMatch() =>
-                        pc.action()
-                        possibleFutureMatches = ListBuffer.empty
-                    case NeedsMore() => possibleFutureMatches :+= pc.pattern
+                    case NoMatch() => possibleFutureMatches -= pc
+                    case FullMatch(couldMatchMore) =>
+                        if (!couldMatchMore) {
+                            pc.action()
+                            possibleFutureMatches = ListBuffer.empty
+                            lastMatch = null
+                        } else {
+                            possibleFutureMatches :+= pc
+                            lastMatch = lastMatch ?: pc
+                        }
+                    case NeedsMore() => possibleFutureMatches.addOne(pc)
                     //TODO handle this better
                     case PartialMatch(_) =>
                         throw new Error("This should not happen! " +
                             "There should have been a full match before!")
                 }
-            }
+            }*/
         } while (possibleFutureMatches.nonEmpty)
+    }
+
+    protected def findPattern(patterns: Iterable[Pattern[Input]]): Option[Pattern[Input]] = {
+        var possibleFutureMatches = ListBuffer[Pattern[Input]]()
+        var lastMatch: Pattern[Input] = null
+        for (pattern <- patterns) {
+            val matchRes = pattern.tryMatch(current)
+            matchRes match {
+                case NoMatch() => possibleFutureMatches -= pattern
+                case FullMatch(couldMatchMore) =>
+                    if (!couldMatchMore) {
+                        return Some(pattern)
+                    } else {
+                        possibleFutureMatches :+= pattern
+                        lastMatch = lastMatch ?: pattern
+                    }
+                case NeedsMore() => possibleFutureMatches.addOne(pattern)
+                //TODO handle this better
+                case PartialMatch(_) =>
+                    throw new Error("This should not happen! " +
+                        "There should have been a full match before!")
+            }
+        }
+        Option(lastMatch)
     }
 
     /**

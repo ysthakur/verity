@@ -1,5 +1,7 @@
 package com.ysthakur.parsing
 
+import com.ysthakur.parsing.lexer.RegexPattern
+
 package object dsl {
 
     implicit def toState[T](stateName: String)(implicit states: Map[String, State]): State =

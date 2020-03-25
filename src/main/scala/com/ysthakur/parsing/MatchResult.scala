@@ -19,7 +19,7 @@ case class PartialMatch(textRange: TextRange) extends MatchResult
 /**
  * The entire input matched. Yay!
  */
-case class FullMatch() extends MatchResult
+case class FullMatch(couldMatchMore: Boolean) extends MatchResult
 
 /**
  * None of the input matched
