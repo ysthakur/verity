@@ -7,7 +7,7 @@ import com.ysthakur.parsing._
 
 case class RegexPattern(regexStr: String) extends parsing.Pattern[Char] {
     override val isFixed: Boolean = false
-    private val pattern = Pattern.compile(regexStr)
+    private val pattern = Pattern.compile(s"^$regexStr$$")
     override def tryMatch[T <: Iterable[Char]](input: T): MatchResult =
         RegexPattern.tryMatch(input, pattern)
 }

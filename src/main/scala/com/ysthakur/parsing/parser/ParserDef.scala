@@ -6,7 +6,7 @@ import com.ysthakur.parsing.lexer.Token
 /**
  * TODO implement this
  */
-object Parser extends LexerOrParser[Token, Node, Iterable[Token]]() {
+object ParserDef extends LexerOrParser[Token, Node, Iterable[Token]]() {
     override type InputSource = Iterable[Token]
     override type Helper = ParserHelper
 

@@ -1,9 +1,10 @@
 package com.ysthakur.parsing.lexer
 
 import scala.collection.mutable
+import scala.reflect.runtime.universe._
 
 //TODO check all of the regexps
-
+/*  */
 /**
  *
  *
@@ -34,17 +35,30 @@ trait IgnoredTokenType extends TokenType
  * Represents something with a bunch of sub-token-types
  */
 sealed trait TokenTypeHolder[T <: TokenType] {
-    protected def allTokenTypes: mutable.Map[String, T]
+    private[parsing] def allTokenTypes: mutable.Map[String, T]
 
     protected def apply(tokenTypeName: String): Option[T] = allTokenTypes.get(tokenTypeName)
 }
 
-trait TokenTypesBase[TT <: TokenType] extends TokenTypeHolder[TT] {
+sealed trait TokenTypesBase[TT <: TokenType] extends TokenTypeHolder[TT] {
+    val ttype: Type
+
     def isInstance(obj: Any): Boolean
-    override lazy val allTokenTypes: mutable.Map[String, TT] =
-        mutable.LinkedHashMap(this.getClass.getDeclaredFields
-            .filter { field => field.canAccess(this) && isInstance(field.get(this)) }
-            .map { field => ((field.getName) -> field.get(this).asInstanceOf[TT]) }: _*)
+
+    override private[parsing] lazy val allTokenTypes: mutable.Map[String, TT] = {
+        val rm = runtimeMirror(this.getClass.getClassLoader)
+        val im = rm.reflect(this)
+        val namesAndFields: Iterable[(String, TT)] = rm.classSymbol(this.getClass).toType.decls.filter {
+            case getter: MethodSymbol => getter.isGetter && getter.isPublic
+            case _ => false
+        }.map { getter =>
+            (getter.name.toString, im.reflectMethod(getter.asInstanceOf[MethodSymbol]).apply())
+        }.filter {
+            case (_, _: TokenType) => true
+            case _ => false
+        }.map(_.asInstanceOf[(String, TT)])
+        mutable.LinkedHashMap.newBuilder.addAll(namesAndFields).result()
+    }
 }
 
 object SymbolTokenTypes extends TokenTypesBase[FixedTextTokenType] {
@@ -64,7 +78,10 @@ object SymbolTokenTypes extends TokenTypesBase[FixedTextTokenType] {
             make("?"), make("%"))
     val AT: FixedTextTokenType = make("@")
 
+    override val ttype: Type = typeOf[FixedTextTokenType]
+
     protected def make(text: String): FixedTextTokenType = FixedTextTokenType(text)
+
     override def isInstance(obj: Any): Boolean = obj.isInstanceOf[SymbolTokenType]
 }
 
@@ -88,13 +105,13 @@ object KeywordTokenTypes extends TokenTypeHolder[KeywordTokenType] {
         .map(word => (word.toUpperCase, new KeywordTokenType(word) with ValidIdentifierTokenType))
 
     override val allTokenTypes: mutable.Map[String, KeywordTokenType] =
-        mutable.LinkedHashMap((reservedKeywords ++ usableKeywords): _*)
+        mutable.LinkedHashMap(reservedKeywords ++ usableKeywords: _*)
 }
 
 object VariantTextTokenTypes extends TokenTypesBase[RegexTokenType] {
     val WSP: RegexTokenType =
         new RegexTokenType("\\W+") with IgnoredTokenType
-    val VALID_ID: ValidIdentifierTokenType =
+    val VALID_ID: RegexTokenType with ValidIdentifierTokenType =
         new RegexTokenType("""[A-Za-z_$][A-Za-z0-9_$]*""") with ValidIdentifierTokenType
     val NUM_LITERAL: RegexTokenType = make("""-?[0-9]+(\.[0-9]+)?[FfDL]?""")
     val CHAR_LITERAL: RegexTokenType = make("""'([^\\']|\\.)'""")
@@ -102,16 +119,20 @@ object VariantTextTokenTypes extends TokenTypesBase[RegexTokenType] {
     val SINGLE_LINE_COMMENT: RegexTokenType =
         new RegexTokenType("""//.*?\n""") with IgnoredTokenType
     val MULTILINE_COMMENT: RegexTokenType =
-        new RegexTokenType("/\\*[^]*?\\*/") with IgnoredTokenType
+        new RegexTokenType("""/\*(.|\n)*?\*/""") with IgnoredTokenType
+
+    override val ttype: Type = typeOf[RegexTokenType]
 
     protected def make(regex: String): RegexTokenType = RegexTokenType(regex)
+
     override def isInstance(obj: Any): Boolean = obj.isInstanceOf[RegexTokenType]
 }
 
 object JMMTokenTypes extends Dynamic {
     val fixedTextTokenTypes: mutable.Map[String, FixedTextTokenType] =
         mutable.LinkedHashMap((SymbolTokenTypes.allTokenTypes ++ KeywordTokenTypes.allTokenTypes).toSeq: _*)
-    val allTokenTypes: mutable.Map[String, TokenType] = mutable.LinkedHashMap((fixedTextTokenTypes ++ VariantTextTokenTypes.allTokenTypes).toSeq: _*)
+    val allTokenTypes: mutable.Map[String, TokenType] =
+        mutable.LinkedHashMap((fixedTextTokenTypes ++ VariantTextTokenTypes.allTokenTypes).toSeq: _*)
 
     def selectDynamic(tokenName: String): Option[TokenType] = allTokenTypes.get(tokenName)
 }

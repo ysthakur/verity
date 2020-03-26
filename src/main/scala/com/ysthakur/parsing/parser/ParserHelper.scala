@@ -5,7 +5,7 @@ import com.ysthakur.parsing.lexer.Token
 
 import scala.collection.mutable.ListBuffer
 
-class ParserHelper extends LexerOrParserHelper[Iterable[Token], Token, Node, Iterable[Token]](Parser, new ListBuffer()) {
+class ParserHelper extends LexerOrParserHelper[Iterable[Token], Token, Node, Iterable[Token]](ParserDef) {
     override def process(): Node = ???
 
     /**
@@ -35,4 +35,8 @@ class ParserHelper extends LexerOrParserHelper[Iterable[Token], Token, Node, Ite
      * @return
      */
     override def peekNext: Token = ???
+
+    override def emptyAccumulator(): Iterable[Token] = ???
+
+    override def accumulate(acc: Iterable[Token], input: Token): Unit = ???
 }

@@ -7,7 +7,9 @@ import scala.language.existentials
  * @param pattern
  * @param action
  */
-case class PatternCase[Input, Helper](pattern: Pattern[Input], action: Helper => Unit)
+case class PatternCase[Input, Helper](pattern: Pattern[Input], action: Helper => Unit) {
+    override def toString: String = s"PatternCase(pattern=$pattern,)"
+}
 
 /**
  * A pattern, like regex, that matches input
