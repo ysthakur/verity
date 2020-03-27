@@ -4,17 +4,23 @@ import java.io.InputStream
 
 import com.ysthakur.parsing.{LexerOrParser, Pattern, PatternCase, StateCase}
 
+/**
+ * Originally intended to a definition of the lexer with the DSL
+ */
 object LexerDef extends LexerOrParser[Char, Iterable[Token], StringBuilder]() with Dynamic {
 
     override type InputSource = InputStream
     override type Helper = LexerHelper
 
     private val action: This#Helper => Unit = (helper: This#Helper) => {
-        val lastTokenType = patternCaseToTokenType(helper.lastMatch.asInstanceOf[PatternCase[Char, Helper]])
+        val lastTokenType =
+            patternCaseToTokenType(helper.lastMatch._1.asInstanceOf[PatternCase[Char, Helper]])
         helper.asInstanceOf[Helper].lastToken =
             lastTokenType match {
-                case textTokenType: FixedTextTokenType => new InvariantToken(textTokenType, helper.offset)
-                case regexTokenType: RegexTokenType => new VariantToken(regexTokenType, helper.current.toString, helper.offset)
+                case textTokenType: FixedTextTokenType =>
+                    new InvariantToken(textTokenType, helper.offset)
+                case regexTokenType: RegexTokenType =>
+                    new VariantToken(regexTokenType, helper.lastMatch._2.toString, helper.offset)
             }
     }
 
@@ -26,16 +32,16 @@ object LexerDef extends LexerOrParser[Char, Iterable[Token], StringBuilder]() wi
         }
     }
 
-    private val patternCaseToTokenType = JMMTokenTypes.allTokenTypes.map[PatternCase[Char, Helper], TokenType] {
-        case (_, tokenType) =>
-            PatternCase[Char, Helper](makePattern(tokenType), action) -> tokenType
-        case _ => throw new Error()
-    }
+    private val patternCaseToTokenType =
+        JMMTokenTypes.allTokenTypes.map[PatternCase[Char, Helper], TokenType] {
+            case (_, tokenType) =>
+                PatternCase[Char, Helper](makePattern(tokenType), action) -> tokenType
+        }
 
-    //println("Symbol tokens  = " + SymbolTokenTypes.allTokenTypes.values)
-    //println("Variant types  = " + VariantTextTokenTypes.allTokenTypes.values)
-    //println("All token types= " + JMMTokenTypes.allTokenTypes.values)
-    //println("Lexertokentypes= " + patternCaseToTokenType.values)
+    /*println("Symbol tokens  = " + SymbolTokenTypes.allTokenTypes.values)
+    println("Variant types  = " + VariantTextTokenTypes.allTokenTypes.values)
+    println("All token types= " + JMMTokenTypes.allTokenTypes.values)
+    println("Lexertokentypes= " + patternCaseToTokenType.values)*/
 
     this.addStateCase(StateCase(defaultState, patternCaseToTokenType.keys))
 

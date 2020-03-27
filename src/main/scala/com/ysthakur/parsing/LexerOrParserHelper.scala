@@ -20,72 +20,65 @@ abstract class LexerOrParserHelper[InputSource, Input, Output, Accumulator <: It
     var current: Accumulator = emptyAccumulator()
     var currentState: State = defaultState
     private[parsing] var lastInput: Input = _
-    var lastMatch: PatternCase[Input, Helper] = _
+    /**
+     * The last match it had. Includes the text that was matched
+     */
+    var lastMatch: (PatternCase[Input, Helper], Accumulator) = _
     private var running = false
     var offset: Int = 0
 
     def run(): Unit = {
+        lastInput = getNext
         while (hasNext) {
             //if (current.nonEmpty) println(current)
-            proceed()
+            proceed(currentState)
+            lastMatch._1.action(this.asInstanceOf[lop.Helper])
             update()
             println(lastMatch)
         }
     }
 
-    def proceed(): Unit = {
-        lastInput = getNext
-        accumulate(current, lastInput)
+    def proceed(currentState: State): Unit = {
+        accumulate(lastInput)
         val stateCase = stateCases.find(sc => sc.state == currentState).getOrElse(
             stateCases.find(sc => sc.state == defaultState)
                 .getOrElse(throw new Error("No state matches this!"))
         )
         var possibleFutureMatches = mutable.Set[PatternCase[Input, Helper]]()
         var lastMatch: (PatternCase[Input, Helper], Accumulator) = null
-        var origPosition = offset
+        var (lastMatchLength, currentLength) = (0, 1)
         var currentPosition = offset
-        var temp: Input = lastInput
-        //println(stateCase.patternCases)
         do {
-            breakable {
-                for (pc <- stateCase.patternCases) {
-                    val matchRes = pc.pattern.tryMatch(current.asInstanceOf[Iterable[Input]])
-                    matchRes match {
-                        case NoMatch() => possibleFutureMatches -= pc
-                        case FullMatch(couldMatchMore) =>
-                            if (!couldMatchMore) {
-                                this.lastMatch = pc
-                                pc.action(this.asInstanceOf[lop.Helper])
-                                current = emptyAccumulator()
-                                print(lastMatch)
-                                return
-                            } else {
-                                possibleFutureMatches += pc
-                                lastMatch = (pc, current.asInstanceOf[mutable.Cloneable[Accumulator]].clone())
-                                break
-                            }
-                        case NeedsMore() => possibleFutureMatches.addOne(pc)
-                        //TODO handle this better
-                        case PartialMatch(_) =>
-                            throw new Error("This should not happen! " +
-                                "There should have been a full match before!")
-                    }
-                }
-            }
+            breakable(for (pc <- stateCase.patternCases)
+                pc.pattern.tryMatch(current.asInstanceOf[Iterable[Input]]) match {
+                    case FullMatch(couldMatchMore) =>
+                        if (lastMatchLength < currentLength) {
+                            lastMatch = (pc, current.asInstanceOf[mutable.Cloneable[Accumulator]].clone())
+                            lastMatchLength = currentLength
+                        }
+                        if (couldMatchMore) possibleFutureMatches += pc
+                    case NeedsMore() => possibleFutureMatches.addOne(pc)
+                    case NoMatch() | PartialMatch(_) => possibleFutureMatches -= pc
+                })
+
             if (possibleFutureMatches.isEmpty) {
+                val origOffset = offset
                 offset = currentPosition
                 if (lastMatch == null)
-                    throw new Error(s"Bad character($current) at position ${getPosition}")
+                    throw new Exception(s"""Bad character(s) "$current" at start offset $origOffset, ${getPosition}""")
                 else {
-                    val pc = lastMatch._1
-                    pc.action(this.asInstanceOf[lop.Helper])
-                    this.lastMatch = pc
-                    current = lastMatch._2
+                    this.lastMatch = lastMatch
+                    lastInput = current.last
+                    current = emptyAccumulator()
+                    offset -= 1
+                    println("Matched! Found=\"" + lastMatch._2 + "\" ending at offset=" + offset)
                     return
                 }
             } else {
+                if (!hasNext) throw new Exception("Unexpected end of file!")
                 accumulate(current, getNext)
                 currentPosition += 1
+                currentLength += 1
             }
         } while (possibleFutureMatches.nonEmpty)
     }
@@ -118,7 +111,7 @@ abstract class LexerOrParserHelper[InputSource, Input, Output, Accumulator <: It
      * it must be overridden</em>
      */
     def accumulate(input: Input): Unit = {
-        accumulate(current)
+        accumulate(current, input)
         offset += 1
     }
 

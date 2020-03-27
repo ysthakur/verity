@@ -7,9 +7,13 @@ import com.ysthakur.parsing._
 
 case class RegexPattern(regexStr: String) extends parsing.Pattern[Char] {
     override val isFixed: Boolean = false
-    private val pattern = Pattern.compile(s"^$regexStr$$")
+    private val pattern = Pattern.compile(s"^$regexStr$$", Pattern.UNICODE_CHARACTER_CLASS)
     override def tryMatch[T <: Iterable[Char]](input: T): MatchResult =
-        RegexPattern.tryMatch(input, pattern)
+        try {
+            RegexPattern.tryMatch(input, pattern)
+        } catch {
+            case e: StackOverflowError => throw new Error(s"Input=$input, regex=$regexStr", e)
+        }
 }
 
 object RegexPattern {
@@ -18,10 +22,14 @@ object RegexPattern {
         input match {
             case inputStr: CharSequence =>
                 val matcher = pattern.matcher(inputStr)
-                if (matcher.matches()) FullMatch(matcher.requireEnd())
-                else if (matcher.find(0)) PartialMatch(TextRange(matcher.start, matcher.end))
-                else if (matcher.hitEnd()) NeedsMore()
-                else NoMatch()
+                try {
+                    if (matcher.matches()) FullMatch(matcher.requireEnd())
+                    else if (matcher.find(0)) PartialMatch(TextRange(0, matcher.end))
+                    else if (matcher.hitEnd()) NeedsMore()
+                    else NoMatch()
+                } catch {
+                    case e: StackOverflowError => throw e
+                }
             case ls: List[Char] => tryMatch(ls.mkString : Iterable[Char], pattern)
             case _ => tryMatch(input.toList : Iterable[Char], pattern)
         }

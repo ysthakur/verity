@@ -110,7 +110,7 @@ object KeywordTokenTypes extends TokenTypeHolder[KeywordTokenType] {
 
 object VariantTextTokenTypes extends TokenTypesBase[RegexTokenType] {
     val WSP: RegexTokenType =
-        new RegexTokenType("\\W+") with IgnoredTokenType
+        new RegexTokenType("""\s+""") with IgnoredTokenType
     val VALID_ID: RegexTokenType with ValidIdentifierTokenType =
         new RegexTokenType("""[A-Za-z_$][A-Za-z0-9_$]*""") with ValidIdentifierTokenType
     val NUM_LITERAL: RegexTokenType = make("""-?[0-9]+(\.[0-9]+)?[FfDL]?""")

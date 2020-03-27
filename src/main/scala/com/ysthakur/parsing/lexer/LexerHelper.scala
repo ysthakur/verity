@@ -6,6 +6,10 @@ import com.ysthakur.parsing.LexerOrParserHelper
 
 import scala.collection.mutable.ListBuffer
 
+/**
+ * The thing that does the actual tokenizing
+ * @param file
+ */
 case class LexerHelper(file: InputStream)
     extends LexerOrParserHelper[InputStream, Char, Iterable[Token], StringBuilder](LexerDef) {
     private[lexer] val tokens = ListBuffer[Token]()
@@ -37,9 +41,9 @@ case class LexerHelper(file: InputStream)
     override def hasNext: Boolean = {
         try {
             val next = peekNext
-            next != -1
+            next.toInt != -1
         } catch {
-            case e: IOException => false
+            case _: Throwable => false
         }
     }
 
@@ -52,12 +56,12 @@ case class LexerHelper(file: InputStream)
         file.mark(4)
         val res = file.read()
         file.reset()
-        res.toChar
+        if (res != -1) res.toChar else throw new Error("End of file!")
     }
 
     override def end(): Unit = {
         file.close()
     }
 
-    override def getPosition: String = s"($passedRows,$passedCols), offset=$offset"
+    override def getPosition: String = s"pointer offset=$offset, ($passedRows,$passedCols)"
 }

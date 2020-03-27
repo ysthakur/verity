@@ -8,12 +8,13 @@ import com.ysthakur.parsing.lexer.{LexerDef, VariantTextTokenTypes}
 object Main {
 
     def main(args: Array[String]): Unit = {
+        //regex()
         lex()
     }
 
     def regex(): Unit = {
-        val pattern = Pattern.compile(s"^${VariantTextTokenTypes.VALID_ID.regex}$$")
-        val matcher = pattern.matcher("H")
+        val pattern = Pattern.compile(s"${VariantTextTokenTypes.MULTILINE_COMMENT.regex}$$")
+        val matcher = pattern.matcher("/* This is a simple Java program.   FileName : \"HelloWorld.java\". */")
         println(matcher.matches())
         println(matcher.requireEnd())
     }
