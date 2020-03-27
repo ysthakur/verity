@@ -23,7 +23,7 @@ case class LexerHelper(file: InputStream)
     }
 
     override def update(): Unit = {
-        if (!lastToken.isInstanceOf[IgnoredTokenType]) tokens += lastToken
+        /*if (!lastToken.isInstanceOf[IgnoredTokenType])*/ tokens += lastToken
         val text = lastToken.text
         val nRows = text.count(_ == '\n')
         passedRows += nRows

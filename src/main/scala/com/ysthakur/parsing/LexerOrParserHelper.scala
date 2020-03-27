@@ -21,21 +21,26 @@ abstract class LexerOrParserHelper[InputSource, Input, Output, Accumulator <: It
     var currentState: State = defaultState
     private[parsing] var lastInput: Input = _
     /**
-     * The last match it had. Includes the text that was matched
+     * The last match it had. Includes the [[com.ysthakur.parsing.PatternCase]] and the text
+     * that was matched and a tuple in the format (`startOffset`, `endOffset`).
+     * The end offset's not inclusive.
      */
-    var lastMatch: (PatternCase[Input, Helper], Accumulator) = _
+    var lastMatch: (PatternCase[Input, Helper], Accumulator, (Int, Int)) = _
     private var running = false
     var offset: Int = 0
 
     def run(): Unit = {
+        if (!hasNext) throw new Error("Empty input!!!")
         lastInput = getNext
-        while (hasNext) {
+        val block = () => {
             //if (current.nonEmpty) println(current)
             proceed(currentState)
             lastMatch._1.action(this.asInstanceOf[lop.Helper])
             update()
             println(lastMatch)
         }
+        while (hasNext) block()
+        block()
     }
 
     def proceed(currentState: State): Unit = {
@@ -45,15 +50,15 @@ abstract class LexerOrParserHelper[InputSource, Input, Output, Accumulator <: It
                 .getOrElse(throw new Error("No state matches this!"))
         )
         var possibleFutureMatches = mutable.Set[PatternCase[Input, Helper]]()
-        var lastMatch: (PatternCase[Input, Helper], Accumulator) = null
+        var lastMatch: (PatternCase[Input, Helper], Accumulator, Int) = null
         var (lastMatchLength, currentLength) = (0, 1)
-        var currentPosition = offset
+        var startOffset, currentOffset = offset
         do {
             breakable(for (pc <- stateCase.patternCases)
                 pc.pattern.tryMatch(current.asInstanceOf[Iterable[Input]]) match {
                     case FullMatch(couldMatchMore) =>
                         if (lastMatchLength < currentLength) {
-                            lastMatch = (pc, current.asInstanceOf[mutable.Cloneable[Accumulator]].clone())
+                            lastMatch = (pc, current.asInstanceOf[mutable.Cloneable[Accumulator]].clone(), currentOffset)
                             lastMatchLength = currentLength
                         }
                         if (couldMatchMore) possibleFutureMatches += pc
@@ -62,22 +67,24 @@ abstract class LexerOrParserHelper[InputSource, Input, Output, Accumulator <: It
                 })
 
             if (possibleFutureMatches.isEmpty) {
-                val origOffset = offset
-                offset = currentPosition
                 if (lastMatch == null)
-                    throw new Exception(s"""Bad character(s) "$current" at start offset $origOffset, ${getPosition}""")
+                    throw new Exception(s"""Bad character(s) "$current" at start offset $startOffset, ${getPosition}""")
                 else {
-                    this.lastMatch = lastMatch
-                    lastInput = current.last
+                    this.lastMatch = (lastMatch._1, lastMatch._2, (startOffset, lastMatch._3))
+                    //TODO fix this so that when it has to be rolled back because it went more than
+                    //  one character too far, it doesn't fail. For now, it seems to work
+                    //  with the current grammar
+                    val last = current.last
+                    this.lastInput = if (this.lastInput == last) getNext else last
                     current = emptyAccumulator()
-                    offset -= 1
+                    offset = lastMatch._3
                     println("Matched! Found=\"" + lastMatch._2 + "\" ending at offset=" + offset)
                     return
                 }
             } else {
                 if (!hasNext) throw new Exception("Unexpected end of file!")
                 accumulate(current, getNext)
-                currentPosition += 1
+                currentOffset += 1
                 currentLength += 1
             }
         } while (possibleFutureMatches.nonEmpty)
@@ -133,6 +140,11 @@ abstract class LexerOrParserHelper[InputSource, Input, Output, Accumulator <: It
 
     protected def end(): Unit = {}
 
+    /**
+     * The string representation of this lexer or parser's current
+     * position.
+     * @return
+     */
     def getPosition: String = offset.toString
 
     /**

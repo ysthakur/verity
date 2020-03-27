@@ -62,21 +62,38 @@ sealed trait TokenTypesBase[TT <: TokenType] extends TokenTypeHolder[TT] {
 }
 
 object SymbolTokenTypes extends TokenTypesBase[FixedTextTokenType] {
-    var LPAREN, RPAREN, LSQUARE, RSQUARE, LCURLY, RCURLY =
-        (make("("), make(")"), make("["),
-            make("]"), make("{"), make("}"))
-    val COMMA, SEMICOLON, COLONX2, COLON, DOT =
-        (make(","), make(";"), make("::"), make(":"), make("."))
-    val LTEQ, GTEQ, EQX2, LT, GT, NOTEQ, EQ =
-        (make("<="), make(">="), make("=="),
-            make("<"), make(">"), make("!="), make("="))
-    val ANDX2, ORX2, AND, OR, CARET =
-        (make("&&"), make("||"), make("&"),
-            make("|"), make("^"))
-    val PLUS, MINUS, STAR, FWDSLASH, BACKSLASH, QUESTION, MODULO =
-        (make("+"), make("-"), make("*"), make("/"), make("\\"),
-            make("?"), make("%"))
-    val AT: FixedTextTokenType = make("@")
+    type FTT = FixedTextTokenType
+    val LPAREN: FTT = make("(")
+    val RPAREN: FTT = make(")")
+    val LSQUARE: FTT = make("[")
+    val RSQUARE: FTT = make("]")
+    val LCURLY: FTT = make("{")
+    val RCURLY: FTT = make("}")
+    val COMMA: FTT = make(",")
+    val SEMICOLON: FTT = make(";")
+    val COLONX2: FTT = make("::")
+    val COLON: FTT = make(":")
+    val DOT: FTT = make(".")
+    val LTEQ: FTT = make("<=")
+    val GTEQ: FTT = make(">=")
+    val EQX2: FTT = make("==")
+    val LT: FTT = make("<")
+    val GT: FTT = make(">")
+    val NOTEQ: FTT = make("!=")
+    val EQ: FTT = make("=")
+    val ANDX2: FTT = make("&&")
+    val ORX2: FTT = make("||")
+    val AND: FTT = make("&")
+    val OR: FTT = make("|")
+    val CARET: FTT = make("^")
+    val PLUS: FTT = make("+")
+    val MINUS: FTT = make("-")
+    val STAR: FTT = make("*")
+    val FWDSLASH: FTT = make("/")
+    val BACKSLASH: FTT = make("\\")
+    val QUESTION: FTT = make("?")
+    val MODULO: FTT = make("%")
+    val AT: FTT = make("@")
 
     override val ttype: Type = typeOf[FixedTextTokenType]
 
@@ -117,7 +134,7 @@ object VariantTextTokenTypes extends TokenTypesBase[RegexTokenType] {
     val CHAR_LITERAL: RegexTokenType = make("""'([^\\']|\\.)'""")
     val STR_LITERAL: RegexTokenType = make(""""(\.|[^\\"])*"""")
     val SINGLE_LINE_COMMENT: RegexTokenType =
-        new RegexTokenType("""//.*?\n""") with IgnoredTokenType
+        new RegexTokenType("""//.*?(\r\n|\r|\n)""") with IgnoredTokenType
     val MULTILINE_COMMENT: RegexTokenType =
         new RegexTokenType("""/\*(.|\n)*?\*/""") with IgnoredTokenType
 
