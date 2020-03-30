@@ -14,5 +14,6 @@ libraryDependencies ++= Seq(
 scalacOptions ++= Seq(
     "-feature",
     "-language:implicitConversions",
-    "-language:dynamics"
+    "-language:dynamics",
+    "-language:reflectiveCalls"
 )

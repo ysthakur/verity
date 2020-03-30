@@ -10,7 +10,7 @@ class LexerTest extends AnyFlatSpec with Matchers {
     def lex(): Unit = {
         val file = new File("C:\\Users\\thaku\\Ideaprojects\\" +
             "javamm-scala\\src\\test\\resources\\lexertest.java")
-        val tokens = LexerDef.process(new FileInputStream(file)).toList
+        val tokens = Lexer.process(new FileInputStream(file)).toList
         println(tokens)
     }
 
