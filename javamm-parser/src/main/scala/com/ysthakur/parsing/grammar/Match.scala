@@ -1,7 +1,12 @@
 package com.ysthakur.parsing.grammar
 
-trait Match[type +Input] {
-  type I = Input
+import com.ysthakur.util.as
+import com.ysthakur.util.utils
+
+import scala.language.implicitConversions
+
+trait Match[+Input] {
+  //type I <: Input
 
   def start: Int
   def end: Int
@@ -13,9 +18,9 @@ object Match {
       tuple: (Pattern[Input], Match[Input])
   ): PatternMatch[Input] =
     new PatternMatch(tuple._1, tuple._2.matched, tuple._2.start, tuple._2.end)
-  implicit def makeConsMatch[Input](
+  /*implicit def makeConsMatch[Input](
       cons: List[Match[Input]]
-  ): CompositeMatch[Input] = CompositeMatch(cons)
+  ): CompositeMatch[Input] = CompositeMatch(cons)*/
 }
 
 class PatternMatch[Input](

@@ -4,7 +4,7 @@ import java.io.{BufferedInputStream, File, FileInputStream}
 import java.util.regex.Pattern
 
 import com.ysthakur.parsing.ast.Node
-import com.ysthakur.parsing.lexer.{JMMTokenTypes, Lexer, Token, VariantTextTokenTypes}
+import com.ysthakur.parsing.lexer.{JMMTokenTypes, Lexer, Token}
 import com.ysthakur.parsing.parser.Parser
 
 object Main {
@@ -38,25 +38,21 @@ object Main {
   }
 
   def regex(): Unit = {
-    val pattern =
-      Pattern.compile(s"${VariantTextTokenTypes.MULTILINE_COMMENT.regex}$$")
-    val matcher = pattern.matcher(
-        "/* This is a simple Java program.   FileName : \"HelloWorld.java\". */"
-    )
-    println(matcher.matches())
-    println(matcher.requireEnd())
+    // val pattern =
+    //   Pattern.compile(s"${VariantTextTokenTypes.MULTILINE_COMMENT.regex}$$")
+    // val matcher = pattern.matcher(
+    //     "/* This is a simple Java program.   FileName : \"HelloWorld.java\". */"
+    // )
+    // println(matcher.matches())
+    // println(matcher.requireEnd())
   }
 
 }
 
-/*
-//regex()
-    //val tokens = lex()
-    //val ast = parse(tokens)
     /**
  * Keywords that cannot be used as valid identifiers
  */
-    val reservedKeywords = List(
+   /* val reservedKeywords = List(
         "import",
         "package",
         "public",

@@ -1,0 +1,1 @@
+["sbt.Task[scala.collection.immutable.Map[java.lang.String, scala.collection.Seq[scala.Tuple2[java.nio.file.Path, sbt.nio.FileStamp]]]]",{"0.23.0-RC1":{"hashes":[["C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\test\\scala\\LexerTest.scala","d033019f2b893be3696591260821a35e1581afd7"]],"lastModifiedTimes":[]}}]

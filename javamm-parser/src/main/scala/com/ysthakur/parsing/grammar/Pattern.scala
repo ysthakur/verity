@@ -1,6 +1,9 @@
 package com.ysthakur.parsing.grammar
 
 import com.ysthakur.util._
+import com.ysthakur.util.as
+import com.ysthakur.parsing.grammar._
+import com.ysthakur.util.utils
 
 import scala.language.postfixOps
 
@@ -27,10 +30,8 @@ trait Pattern[Input] {
     * @param other
     * @return
     */
-  def -[T >: Input](
-      other: Pattern[T]
-  ): ConsPattern[Input, T, ConsPattern[T, NilPattern.type]] =
-    new ConsPattern(this, other)
+  def -[T <: Input](other: Pattern[T]): CompositePattern[Input] =
+    new CompositePattern(List(this, other.asInstanceOf[Pattern[Input]]))
 
   def |[T <: Input](other: Pattern[T]): Pattern[Input] =
     FunctionPattern((input: Iterable[Input]) => {
@@ -38,7 +39,7 @@ trait Pattern[Input] {
       m1 match {
         case FullMatch(_, _) | PartialMatch(_) => m1
         case _ =>
-          val m2 = other.tryMatch(input.as[Iterable[T]])
+          val m2 = other.tryMatch(input.asInstanceOf[Iterable[T]])
           m2 match {
             case FullMatch(_, _) | PartialMatch(_) => m2
             case _                                 => m2

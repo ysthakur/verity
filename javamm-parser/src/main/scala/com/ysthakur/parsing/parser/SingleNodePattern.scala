@@ -4,7 +4,7 @@ import com.ysthakur.parsing.grammar._
 
 import scala.reflect.ClassTag
 
-class SingleNodePattern[Node](implicit tag: ClassTag[Node])
+class SingleNodePattern[Node : ClassTag]
     extends Pattern[Node] {
 
   /**

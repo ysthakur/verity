@@ -1,0 +1,33 @@
+[ {
+  "id" : "root/compile",
+  "compilerVersion" : "0.23.0-RC1",
+  "compilerArguments" : [ "-language:implicitConversions" ],
+  "sourceDirectories" : [ "C:\\Users\\thaku\\javamm-scala\\src\\main\\scala-0.23", "C:\\Users\\thaku\\javamm-scala\\src\\main\\scala", "C:\\Users\\thaku\\javamm-scala\\src\\main\\java", "C:\\Users\\thaku\\javamm-scala\\target\\scala-0.23\\src_managed\\main" ],
+  "dependencyClasspath" : [ "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\target\\scala-0.23\\classes", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\lamp\\dotty-library_0.23\\0.23.0-RC1\\dotty-library_0.23-0.23.0-RC1.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-lang\\scala-library\\2.13.1\\scala-library-2.13.1.jar" ],
+  "classDirectory" : "C:\\Users\\thaku\\javamm-scala\\target\\scala-0.23\\classes",
+  "projectDependencies" : [ "javamm-parser/compile" ]
+}, {
+  "id" : "root/test",
+  "compilerVersion" : "0.23.0-RC1",
+  "compilerArguments" : [ "-language:implicitConversions" ],
+  "sourceDirectories" : [ "C:\\Users\\thaku\\javamm-scala\\src\\test\\scala-0.23", "C:\\Users\\thaku\\javamm-scala\\src\\test\\scala", "C:\\Users\\thaku\\javamm-scala\\src\\test\\java", "C:\\Users\\thaku\\javamm-scala\\target\\scala-0.23\\src_managed\\test" ],
+  "dependencyClasspath" : [ "C:\\Users\\thaku\\javamm-scala\\target\\scala-0.23\\classes", "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\target\\scala-0.23\\classes", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-sbt\\test-interface\\1.0\\test-interface-1.0.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-lang\\scala-library\\2.13.1\\scala-library-2.13.1.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\com\\novocode\\junit-interface\\0.11\\junit-interface-0.11.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\junit\\junit\\4.11\\junit-4.11.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\lamp\\dotty-library_0.23\\0.23.0-RC1\\dotty-library_0.23-0.23.0-RC1.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\org\\hamcrest\\hamcrest-core\\1.3\\hamcrest-core-1.3.jar" ],
+  "classDirectory" : "C:\\Users\\thaku\\javamm-scala\\target\\scala-0.23\\test-classes",
+  "projectDependencies" : [ "javamm-parser/compile", "root/compile" ]
+}, {
+  "id" : "javamm-parser/compile",
+  "compilerVersion" : "0.23.0-RC1",
+  "compilerArguments" : [ "-language:implicitConversions" ],
+  "sourceDirectories" : [ "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\main\\scala-0.23", "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\main\\scala", "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\main\\java", "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\target\\scala-0.23\\src_managed\\main" ],
+  "dependencyClasspath" : [ "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\lamp\\dotty-library_0.23\\0.23.0-RC1\\dotty-library_0.23-0.23.0-RC1.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-lang\\scala-library\\2.13.1\\scala-library-2.13.1.jar" ],
+  "classDirectory" : "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\target\\scala-0.23\\classes",
+  "projectDependencies" : [ ]
+}, {
+  "id" : "javamm-parser/test",
+  "compilerVersion" : "0.23.0-RC1",
+  "compilerArguments" : [ "-language:implicitConversions" ],
+  "sourceDirectories" : [ "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\test\\scala-0.23", "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\test\\scala", "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\test\\java", "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\target\\scala-0.23\\src_managed\\test" ],
+  "dependencyClasspath" : [ "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\target\\scala-0.23\\classes", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\ch\\epfl\\lamp\\dotty-library_0.23\\0.23.0-RC1\\dotty-library_0.23-0.23.0-RC1.jar", "C:\\Users\\thaku\\AppData\\Local\\Coursier\\cache\\v1\\https\\repo1.maven.org\\maven2\\org\\scala-lang\\scala-library\\2.13.1\\scala-library-2.13.1.jar" ],
+  "classDirectory" : "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\target\\scala-0.23\\test-classes",
+  "projectDependencies" : [ "javamm-parser/compile" ]
+} ]

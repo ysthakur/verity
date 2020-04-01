@@ -1,35 +1,37 @@
-name := "javamm-scala"
+val projectName = "javamm-scala"
+val dottyVersion = "0.23.0-RC1"
+val jmmVersion = "0.1.0"
 
-val scala_version = "0.22.0"
-
-version in ThisBuild := "0.1.0"
+name := projectName
+version in ThisBuild := jmmVersion
 organization in ThisBuild := "com.ysthakur"
-scalaVersion in ThisBuild := scala_version
+scalaVersion in ThisBuild := dottyVersion
 
-lazy val global = project
-  .in(file("."))
-  .settings(scalacOptions ++= commonScalacOptions,
-    libraryDependencies ++= commonDependencies)
-  .disablePlugins()
-  .aggregate(
+lazy val root = project
+    .in(file("."))
+    .settings(
+      name := "javamm-scala",
+      scalacOptions ++= commonScalacOptions,
+      libraryDependencies ++= libDeps)
+    .disablePlugins()
+    .aggregate(
       `javamm-parser`
-  )
+    ).dependsOn(`javamm-parser`)
 
 lazy val `javamm-parser` =
   (project in file("javamm-parser")).settings(
-      name := "javamm-parser",
-      libraryDependencies ++= commonDependencies,
-      scalacOptions ++= commonScalacOptions
+    name := "javamm-parser",
+    //libraryDependencies ++= commonDependencies,
+    scalacOptions ++= commonScalacOptions
   )
 
-lazy val commonDependencies = Seq(
-    //"org.scala-lang" % "scala-reflect" % scala_version,
-    "org.scalatest"  %% "scalatest"    % "3.1.1" % "test"
+lazy val libDeps = Seq(
+  //"org.scala-lang" % "scala-reflect" % scala_version,
+  //"org.scalatest"  %% "scalatest"    % "3.1.1" % "test",
+  "com.novocode" % "junit-interface" % "0.11" % "test"
 )
 
 lazy val commonScalacOptions = Seq(
-    "-language:implicitConversions",
-    "-language:dynamics",
-    "-language:reflectiveCalls",
-    "-language:higherKindedTypes"
+  "-language:implicitConversions",
+  "-explain"
 )

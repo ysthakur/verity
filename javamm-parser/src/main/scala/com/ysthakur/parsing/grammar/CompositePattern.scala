@@ -1,30 +1,28 @@
 package com.ysthakur.parsing.grammar
 
 import com.ysthakur.util._
+import com.ysthakur.util.as
+import com.ysthakur.util.utils
 
 import scala.collection.mutable.ListBuffer
 
-/**
-  * Used to match first `pattern1`, then `pattern2`
-  *
-  * @tparam Input
-  */
 class CompositePattern[Input](
     patterns_ : Iterable[Pattern[Input]] = Iterable.empty
 ) extends Pattern[Input] {
 
   val patterns: ListBuffer[Pattern[Input]] =
-    if (patterns_.isInstanceOf[ListBuffer[Pattern[Input]]])
-      patterns_.as
-    else new ListBuffer().addAll(patterns_.as)
+    patterns_ match {
+      case value: ListBuffer[Pattern[Input]] => value
+      case _ => new ListBuffer().addAll(patterns_)
+    }
 
   override val isFixed: Boolean = patterns.forall(_.isFixed)
 
-  override def -[T <: Input](other: Pattern[T]): Pattern[Input] = {
+  override def -[T <: Input](other: Pattern[T]): CompositePattern[Input] = {
     new CompositePattern(other match {
       case x: CompositePattern[Input] =>
-        (patterns.concat[Pattern[Input]](x.patterns))
-      case _ => patterns.appended[Pattern[Input]](other.as)
+        patterns.concat[Pattern[Input]](x.patterns)
+      case _ => patterns.appended[Pattern[Input]](other.asInstanceOf)
     })
   }
 
@@ -33,12 +31,17 @@ class CompositePattern[Input](
     var currentOffset      = 0
     var lastCouldMatchMore = false
     for (pattern <- patterns) {
-      pattern.tryMatch(input.as) match {
-        case full: FullMatch[Input] => return full
-        case PartialMatch(matched) =>
+      pattern.tryMatch(input.asInstanceOf) match {
+        case FullMatch(matched, couldMatchMore) => {
+          matches.addOne(PatternMatch(pattern, matched.matched.asInstanceOf[Iterable[Input]], matched.start, matched.end))
+          lastCouldMatchMore = couldMatchMore
+        }
+        case PartialMatch(matched) => {
           matches.addOne(
-              PatternMatch(pattern, matched.matched, matched.start, matched.end)
+            PatternMatch(pattern, matched.matched.asInstanceOf[Iterable[Input]], matched.start, matched.end)
           )
+          currentOffset = matched.end
+        }
         case x => return x
       }
     }

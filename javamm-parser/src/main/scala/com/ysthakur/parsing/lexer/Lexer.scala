@@ -14,7 +14,7 @@ object Lexer
 
   override type InputSource = InputStream
   override type Helper      = Lexer
-  private val action: ThisLOP#Helper => Unit = (helper: ThisLOP#Helper) => {
+  private val action: Helper => Unit = (helper: Helper) => {
     val lastTokenType =
       patternCaseToTokenType(
           helper.lastMatch._1.asInstanceOf[PatternCase[Char, Helper]]
@@ -37,7 +37,7 @@ object Lexer
     process(new BufferedInputStream(new FileInputStream(file)))
 
   {
-    this.addStateCase(StateCase(firstState, patternCaseToTokenType.keys))
+    this.addState(firstState, patternCaseToTokenType.keys)
   }
 
   override def makeHelper(inputSource: InputStream): Lexer = Lexer(inputSource)

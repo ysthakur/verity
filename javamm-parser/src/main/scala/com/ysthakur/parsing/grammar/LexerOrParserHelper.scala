@@ -2,6 +2,7 @@ package com.ysthakur.parsing.grammar
 
 import scala.collection.mutable
 import scala.util.control.Breaks.breakable
+import com.ysthakur.util.utils
 
 /**
   *
@@ -48,19 +49,19 @@ abstract class LexerOrParserHelper[
   def proceed(currentState: String): Unit = {
     accumulate(lastInput)
     val stateCase = stateCases
-      .find(sc => sc.state == currentState)
+      .find(sc => sc._1 == currentState)
       .getOrElse(
           stateCases
-            .find(sc => sc.state == firstState)
+            .find(sc => sc._1 == firstState)
             .getOrElse(throw new Error("No state matches this!"))
       )
     var possibleFutureMatches                                 = mutable.Set[PatternCase[Input, Helper]]()
     var lastMatch: (PatternCase[Input, Helper], Match[Input]) = null
     var (lastMatchLength, currentLength)                      = (0, 1)
     var startOffset, currentOffset                            = offset
-    do {
+    while ({
       breakable(
-          for (pc <- stateCase.patternCases)
+          for (pc <- stateCase._2)
             pc.pattern.tryMatch(current.asInstanceOf[Iterable[Input]]) match {
               case FullMatch(matched, couldMatchMore) =>
                 if (lastMatchLength < currentLength) {
@@ -98,7 +99,16 @@ abstract class LexerOrParserHelper[
         currentOffset += 1
         currentLength += 1
       }
-    } while (possibleFutureMatches.nonEmpty)
+      possibleFutureMatches.nonEmpty
+    }) {}
+  }
+
+  def tryMatch(patternCases: Iterable[PatternCase[Input, Helper]]): Unit = {
+    for (pc <- patternCases) tryMatch(pc)
+  }
+
+  def tryMatch(patternCase: PatternCase[Input, Helper]): Unit = {
+
   }
 
   /**

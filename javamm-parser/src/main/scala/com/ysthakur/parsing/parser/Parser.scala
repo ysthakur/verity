@@ -1,11 +1,14 @@
 package com.ysthakur.parsing.parser
 
-import com.ysthakur.parsing.grammar.{CompositePattern, LexerOrParser, LexerOrParserHelper}
-import com.ysthakur.parsing.lexer.KeywordTokenTypes._
-import com.ysthakur.parsing.lexer.SymbolTokenTypes._
+import com.ysthakur.parsing.ast.Types.Node
+import com.ysthakur.parsing.grammar.{CompositePattern, LexerOrParser, LexerOrParserHelper, toState}
+import com.ysthakur.parsing.grammar.toState
+import com.ysthakur.parsing.lexer.KeywordTokenType._
+import com.ysthakur.parsing.lexer.SymbolTokenType._
 import com.ysthakur.parsing.lexer.Token
 import com.ysthakur.parsing.parser.ParserPatterns._
 
+import reflect.Selectable.reflectiveSelectable
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -15,14 +18,14 @@ object Parser extends LexerOrParser[Node, Node, Iterable[Node]]("TOPLEVEL") {
   override type InputSource = ListBuffer[Node]
   override type Helper      = Parser
 
-  val x: CompositePattern[Node] = (PACKAGE - (validId) - SEMICOLON)
+  //val x: CompositePattern[Node] = (PACKAGE - (validId) - SEMICOLON)
 
-  s.TOPLEVEL := (
-      (PACKAGE - (validId) - SEMICOLON) --> { (h: Helper) =>
-        val lastMatch = h.lastMatch._2
+  // "TOPLEVEL" := (
+  //     (PACKAGE - (validId) - SEMICOLON) --> { (h: Helper) =>
+  //       val lastMatch = h.lastMatch._2
 
-      }
-  )
+  //     }
+  // )
 
   def createAST(tokens: Iterable[Token]): Node = {
     process(new ListBuffer[Node]().addAll(tokens))

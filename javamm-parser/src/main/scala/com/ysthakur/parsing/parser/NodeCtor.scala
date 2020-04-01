@@ -1,8 +1,9 @@
 package com.ysthakur.parsing.parser
 
+import com.ysthakur.parsing.ast.Types._
 import com.ysthakur.parsing.grammar.Match
-import com.ysthakur.util.Ctor
 
-trait NodeCtor[M <: Match[Input], override type This, type Input] extends Ctor[M, T] {
-  override type In = M
+trait NodeCtor[Ma <: Match[Node], N <: Node] extends com.ysthakur.util.Ctor[Node, N] {
+  type M = Ma
+  def ctor(m: Ma): N
 }

@@ -1,0 +1,40 @@
+[0m[[0m[31merror[0m] [0m[0m[31m-- [E057] Type Mismatch Error: C:\Users\thaku\javamm-scala\javamm-parser\src\main\scala\com\ysthakur\parsing\lexer\TokenType.scala:127:12 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m127 |[0m      .toMap[0m
+[0m[[0m[31merror[0m] [0m[0m    |            [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m    |Type argument  >: com.ysthakur.parsing.lexer.SymbolTokenType & [0m
+[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.parsing.lexer.KeywordTokenType[0m
+[0m[[0m[31merror[0m] [0m[0m    | <: com.ysthakur.parsing.lexer.SymbolTokenType | [0m
+[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.parsing.lexer.KeywordTokenType does not conform to upper bound Enum[[0m
+[0m[[0m[31merror[0m] [0m[0m    |  LazyRef([0m
+[0m[[0m[31merror[0m] [0m[0m    |    Enum[?[0m
+[0m[[0m[31merror[0m] [0m[0m    |       >: com.ysthakur.parsing.lexer.SymbolTokenType & [0m
+[0m[[0m[31merror[0m] [0m[0m    |        com.ysthakur.parsing.lexer.KeywordTokenType[0m
+[0m[[0m[31merror[0m] [0m[0m    |       <: com.ysthakur.parsing.lexer.SymbolTokenType | [0m
+[0m[[0m[31merror[0m] [0m[0m    |        com.ysthakur.parsing.lexer.KeywordTokenType[0m
+[0m[[0m[31merror[0m] [0m[0m    |    ]#E[0m
+[0m[[0m[31merror[0m] [0m[0m    |  )[0m
+[0m[[0m[31merror[0m] [0m[0m    |] in subpart Enum[?[0m
+[0m[[0m[31merror[0m] [0m[0m    |   >: com.ysthakur.parsing.lexer.SymbolTokenType & [0m
+[0m[[0m[31merror[0m] [0m[0m    |    com.ysthakur.parsing.lexer.KeywordTokenType[0m
+[0m[[0m[31merror[0m] [0m[0m    |   <: com.ysthakur.parsing.lexer.SymbolTokenType | [0m
+[0m[[0m[31merror[0m] [0m[0m    |    com.ysthakur.parsing.lexer.KeywordTokenType[0m
+[0m[[0m[31merror[0m] [0m[0m    |] of inferred type [35m[0m
+[0m[[0m[31merror[0m] [0m[0m    |  (String, [0m
+[0m[[0m[31merror[0m] [0m[0m    |    Enum[?[0m
+[0m[[0m[31merror[0m] [0m[0m    |       >: com.ysthakur.parsing.lexer.SymbolTokenType & [0m
+[0m[[0m[31merror[0m] [0m[0m    |        com.ysthakur.parsing.lexer.KeywordTokenType[0m
+[0m[[0m[31merror[0m] [0m[0m    |       <: com.ysthakur.parsing.lexer.SymbolTokenType | [0m
+[0m[[0m[31merror[0m] [0m[0m    |        com.ysthakur.parsing.lexer.KeywordTokenType[0m
+[0m[[0m[31merror[0m] [0m[0m    |    ][0m
+[0m[[0m[31merror[0m] [0m[0m    |   & com.ysthakur.parsing.lexer.FixedTextTokenType & Enum)[0m
+[0m[[0m[31merror[0m] [0m[0m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[34mExplanation[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[34m===========[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0mTo fix the problem, provide an explicit type.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- [E057] Type Mismatch Error: C:\Users\thaku\javamm-scala\javamm-parser\src\main\scala\com\ysthakur\parsing\parser\ParserPatterns.scala:16:73 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m16 |[0m  [33mtype[0m [35mPC[0m[[35mT[_] <: Match[_], N <: Node] = PatternWithConstructor[NodeCtor[T[Node], N]][0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |                                                                         [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |Type argument T[com.ysthakur.parsing.ast.Types.Node] does not conform to upper bound com.ysthakur.parsing.grammar.Match[com.ysthakur.parsing.ast.Types.Node][0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m
