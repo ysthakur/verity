@@ -12,3 +12,7 @@ case class FunctionPattern[Input](
   override def tryMatch(input: Iterable[Input]): MatchResult =
     matchFun(input.asInstanceOf)
 }
+
+implicit def toFunctionPattern[Input]
+  (matchFun: (_ <: Iterable[Input]) => MatchResult): FunctionPattern[Input] =
+    FunctionPattern(matchFun)

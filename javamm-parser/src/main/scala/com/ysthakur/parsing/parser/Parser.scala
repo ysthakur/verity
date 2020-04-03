@@ -1,7 +1,7 @@
 package com.ysthakur.parsing.parser
 
 import com.ysthakur.parsing.ast.Types.Node
-import com.ysthakur.parsing.grammar.{CompositePattern, LexerOrParser, LexerOrParserHelper, toState}
+import com.ysthakur.parsing.grammar.{ConsPattern, LexerOrParser, LexerOrParserHelper, toState}
 import com.ysthakur.parsing.grammar.toState
 import com.ysthakur.parsing.lexer.KeywordTokenType._
 import com.ysthakur.parsing.lexer.SymbolTokenType._

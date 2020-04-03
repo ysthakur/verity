@@ -1,10 +1,10 @@
 package com.ysthakur.parsing.grammar
 
-import scala.language.existentials
-
-case class StateCase[Input, Helper](
+case class StateCase[Input, Helper <: LexerOrParserHelper[_, _, _, _]](
     state: String,
-    patternCases: Iterable[PatternCase[Input, Helper]]
+    patternCases: Iterable[PatternCase[Input, Helper]],
+    onError: (Any, Helper#A) => Any =
+      (pos, acc) => s"Bad character $acc found at $pos"
 )
 
 /**

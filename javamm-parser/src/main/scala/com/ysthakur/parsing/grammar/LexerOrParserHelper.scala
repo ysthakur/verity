@@ -1,8 +1,9 @@
 package com.ysthakur.parsing.grammar
 
+import com.ysthakur.parsing.lexer.BadCharacterError
+
 import scala.collection.mutable
 import scala.util.control.Breaks.breakable
-import com.ysthakur.util.utils
 
 /**
   *
@@ -14,10 +15,15 @@ import com.ysthakur.util.utils
   *                     memory (StringBuilder/List of tokens)
   */
 abstract class LexerOrParserHelper[
-    InputSource, Input, Output, Accumulator <: Iterable[Input]
+    InputSource,
+    Input,
+    Output,
+    Accumulator <: Iterable[Input]
 ](val lop: LexerOrParser[Input, Output, Accumulator]) {
 
   import lop._
+
+  type A = Accumulator
 
   var current: Accumulator = emptyAccumulator()
   var currentState: String = firstState
@@ -34,19 +40,21 @@ abstract class LexerOrParserHelper[
 
   def run(): Unit = {
     if (!hasNext) throw new Error("Empty input!!!")
-    lastInput = getNext
-    val block = () => {
+    while (lastInput.nonEmpty || {
+      if (hasNext) {
+        lastInput = List(getNext)
+        true
+      } else false
+    }) {
       //if (current.nonEmpty) println(current)
       proceed(currentState)
       lastMatch._1.action(this.asInstanceOf[lop.Helper])
       update()
       println(lastMatch)
     }
-    while (hasNext) block()
-    block()
   }
 
-  def proceed(currentState: String): Unit = {
+  /*def proceed(currentState: String): Unit = {
     accumulate(lastInput)
     val stateCase = stateCases
       .find(sc => sc._1 == currentState)
@@ -101,14 +109,64 @@ abstract class LexerOrParserHelper[
       }
       possibleFutureMatches.nonEmpty
     }) {}
+  }*/
+
+  def proceed(state: String): Unit = {
+    for (stateCase <- stateCases) {
+      val state = stateCase._1
+      if (state == currentState || state == catchAllState) {
+        val res = tryMatch(stateCase._2, offset).getOrElse()
+      }
+    }
+    throw new Error("Input does not match any pattern")
   }
 
-  def tryMatch(patternCases: Iterable[PatternCase[Input, Helper]]): Unit = {
-    for (pc <- patternCases) tryMatch(pc)
-  }
+  def tryMatch(
+      patternCases: Iterable[_PatternCase_],
+      startOffset: Int
+  ): Option[(_PatternCase_, _Match_, _Iterable_)] = {
+    val acc = emptyAccumulator()
+    var possibleFutureMatches = mutable.Set[PatternCase[Input, Helper]]()
+    var lastMatch: (PatternCase[Input, Helper], Match[Input]) = null
+    var (lastMatchLength, currentLength) = (0, 1)
+    var startOffset, currentOffset = offset
+    val current = 0
+    while ({
+      breakable(
+          for (pc <- patternCases)
+            pc.pattern.tryMatch(acc.asInstanceOf[_Iterable_]) match {
+              case FullMatch(matched, couldMatchMore) =>
+                if (lastMatchLength < currentLength) {
+                  lastMatch = (pc, matched.asInstanceOf[_Match_])
+                  lastMatchLength = currentLength
+                }
+                if (couldMatchMore) possibleFutureMatches += pc
+              case NeedsMore()                 => possibleFutureMatches.addOne(pc)
+              case NoMatch() | PartialMatch(_) => possibleFutureMatches -= pc
+            }
+      )
 
-  def tryMatch(patternCase: PatternCase[Input, Helper]): Unit = {
-
+      if (possibleFutureMatches.isEmpty) {
+        if (lastMatch == null)
+          throw new Exception(
+              s"""Bad character(s) "$acc" at start offset $startOffset, ${getPosition}"""
+          )
+        else {
+          this.lastMatch = (lastMatch._1, lastMatch._2)
+          println(
+              "Matched! Found=\"" + lastMatch._2 + "\""
+          )
+          return Some((lastMatch._1, lastMatch._2, acc.slice(lastMatch._2.end, acc.size)))
+        }
+      } else {
+        if (!hasNext) throw new Exception("Unexpected end of file!")
+        accumulate(acc, getNext)
+        currentOffset += 1
+        currentLength += 1
+      }
+      possibleFutureMatches.nonEmpty
+    }) {}
+    None
   }
 
   /**

@@ -8,5 +8,8 @@ object Types {
   type FileNode = ast.FileNode
   type PackageNode = ast.PackageNode
 
+  type TextNode = infile.TextNode
+  type ValidIdNode = infile.ValidIdNode
+  
   type Expr = infile.expr.Expr
 }

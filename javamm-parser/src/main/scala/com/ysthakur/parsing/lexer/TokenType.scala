@@ -16,7 +16,9 @@ trait FixedTextTokenType(val text: String) extends TokenType {
 }
 trait IgnoredTokenType extends TokenType {}
 
-enum SymbolTokenType(symbol: String) extends java.lang.Enum[SymbolTokenType] with FixedTextTokenType(symbol){
+enum SymbolTokenType(symbol: String)
+    extends java.lang.Enum[SymbolTokenType]
+    with FixedTextTokenType(symbol){
   case LPAREN extends SymbolTokenType("(")
   case RPAREN extends SymbolTokenType(")")
   case LSQUARE extends SymbolTokenType("[")
@@ -53,7 +55,9 @@ enum SymbolTokenType(symbol: String) extends java.lang.Enum[SymbolTokenType] wit
 }
 
 //TODO do this
-enum KeywordTokenType(text: String) extends java.lang.Enum[KeywordTokenType] with FixedTextTokenType(text) {
+enum KeywordTokenType(text: String)
+    extends java.lang.Enum[KeywordTokenType]
+    with FixedTextTokenType(text) {
   case IMPORT extends KeywordTokenType("import")
   case PACKAGE extends KeywordTokenType("package")
   case PUBLIC extends KeywordTokenType("public")
@@ -70,6 +74,7 @@ enum KeywordTokenType(text: String) extends java.lang.Enum[KeywordTokenType] wit
   case VOLATILE extends KeywordTokenType("volatile")
   case SYNCHRONIZED extends KeywordTokenType("synchronized")
   case CONST extends KeywordTokenType("const")
+  case RULE extends KeywordTokenType("rule") with ValidIdentifierTokenType
   case SWITCH extends KeywordTokenType("switch")
   case CASE extends KeywordTokenType("case")
   case WHILE extends KeywordTokenType("while")
@@ -82,7 +87,7 @@ enum KeywordTokenType(text: String) extends java.lang.Enum[KeywordTokenType] wit
   case ENUM extends KeywordTokenType("enum")
   case WHERE extends KeywordTokenType("where")
   case THROWS extends KeywordTokenType("throws")
-  case IMPLIES extends KeywordTokenType("implies")
+  case IMPLIES extends KeywordTokenType("implies") with ValidIdentifierTokenType
   case ASSERT extends KeywordTokenType("assert")
   case NEW extends KeywordTokenType("new")
   case CONTINUE extends KeywordTokenType("continue")
@@ -94,8 +99,8 @@ enum KeywordTokenType(text: String) extends java.lang.Enum[KeywordTokenType] wit
   case NULL extends KeywordTokenType("null")
   case TRUE extends KeywordTokenType("true")
   case FALSE extends KeywordTokenType("false")
-  case WITH extends KeywordTokenType("with")
-  case BOOL extends KeywordTokenType("bool")
+  case WITH extends KeywordTokenType("with") with ValidIdentifierTokenType
+  case BOOL extends KeywordTokenType("boolean")
   case BYTE extends KeywordTokenType("byte")
   case SHORT extends KeywordTokenType("short")
   case INT extends KeywordTokenType("int")
@@ -104,6 +109,12 @@ enum KeywordTokenType(text: String) extends java.lang.Enum[KeywordTokenType] wit
   case DOUBLE extends KeywordTokenType("double")
   case LONG extends KeywordTokenType("long")
   case VOID extends KeywordTokenType("void")
+}
+
+enum ReservedWord(text: String)
+    extends java.lang.Enum[ReservedWord]
+    with FixedTextTokenType(text) {
+  case INSTANCEOF extends ReservedWord("instanceof")
 }
 
 enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] with TokenType(true) {
@@ -117,11 +128,10 @@ enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] wi
 }
 
 object JMMTokenTypes {
-  val allTokenTypes: Map[String, TokenType] = 
+  val allTokenTypes: Iterable[(String, TokenType)] =
       (SymbolTokenType.values.asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]] ++ 
         KeywordTokenType.values.asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]] ++ 
         RegexTokenType.values.asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]])
         .asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]]
       .map[(String, TokenType)](x => (x.name, x))
-      .toMap[String, TokenType]
 }

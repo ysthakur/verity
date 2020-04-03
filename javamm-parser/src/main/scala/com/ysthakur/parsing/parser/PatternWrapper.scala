@@ -13,7 +13,10 @@ def p[N <: Node](implicit tag: ClassTag[N] ): SingleNodePattern[N] =
   new SingleNodePattern[N]
 
 implicit def toTokenTypePattern(tokenType: TokenType): TokenTypePattern =
-TokenTypePattern (tokenType)
+  TokenTypePattern(tokenType)
+
+implicit val makeTokenTypePattern: Conversion[TokenType, TokenTypePattern] = 
+  TokenTypePattern(_)
 
 class PatternWrapper[N <: Node](val pattern: Pattern[N]) {
   // def >>[C <: NodeCtor[_ <: Match[Node], _]](
@@ -22,5 +25,5 @@ class PatternWrapper[N <: Node](val pattern: Pattern[N]) {
   //   WrapperPatternWithConstructor[N, C](pattern, ctor)
 }
 
-implicit def toPatternWrapper[N <: Node](pattern: Pattern[N]): PatternWrapper[N] =
-  PatternWrapper(pattern)
+// implicit def toPatternWrapper[N <: Node](pattern: Pattern[N]): PatternWrapper[N] =
+//   PatternWrapper(pattern)

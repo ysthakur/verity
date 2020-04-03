@@ -1,3 +1,4 @@
+/*
 package com.ysthakur.parsing.lexer
 
 import com.ysthakur.parsing.grammar._
@@ -13,7 +14,7 @@ case class FixedTextPattern(text: String) extends Pattern[Char] {
   override val isFixed: Boolean = true
 
   override def tryMatch(inputChars: Iterable[Char]): MatchResult = {
-    val input = toStr(inputChars)
+    val input = inputChars.toString
     val inLen = input.length
     if (input == text)
       return FullMatch(
@@ -29,3 +30,4 @@ case class FixedTextPattern(text: String) extends Pattern[Char] {
     NoMatch()
   }
 }
+*/

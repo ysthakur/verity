@@ -6,7 +6,8 @@ import com.ysthakur.util.utils
 
 import scala.collection.mutable.ListBuffer
 
-class CompositePattern[Input](
+
+/*class CompositePattern[Input](
     patterns_ : Iterable[Pattern[Input]] = Iterable.empty
 ) extends Pattern[Input] {
 
@@ -49,4 +50,4 @@ class CompositePattern[Input](
     if (currentOffset < input.size) PartialMatch(match_)
     else FullMatch(match_, lastCouldMatchMore)
   }
-}
+}*/

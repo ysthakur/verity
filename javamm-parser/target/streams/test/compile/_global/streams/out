@@ -1,9 +1,0 @@
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E008] Member Not Found Error: C:\Users\thaku\javamm-scala\javamm-parser\src\test\scala\LexerTest.scala:4:11 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m4 |[0m[33mimport[0m org.scalatest.flatspec.AnyFlatSpec[0m
-[0m[[0m[31merror[0m] [0m[0m  |       [31m^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m  |       value scalatest is not a member of org[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E008] Member Not Found Error: C:\Users\thaku\javamm-scala\javamm-parser\src\test\scala\LexerTest.scala:5:11 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m5 |[0m[33mimport[0m org.scalatest.matchers.should.Matchers[0m
-[0m[[0m[31merror[0m] [0m[0m  |       [31m^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m  |       value scalatest is not a member of org[0m
-[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m

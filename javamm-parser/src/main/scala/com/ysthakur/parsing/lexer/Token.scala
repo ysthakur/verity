@@ -4,7 +4,18 @@ import com.ysthakur.parsing.HasText
 import com.ysthakur.parsing.ast.Node
 import com.ysthakur.parsing.grammar.{ExactMatch, Match}
 
-abstract class Token(val tokenType: TokenType) extends Node with HasText {}
+/**
+  *
+  * @param tokenType The type of this token
+  * @param startOffset The index in the file where this token starts
+  * @param endOffset The index in the file <em>before</em> which this token ends
+  */
+sealed class Token(val tokenType: TokenType,
+                     val startOffset: Int,
+                     val endOffset: Int) extends Node with HasText {}
+
+object Token {
+}
 
 /**
   * A token whose text is always the same
@@ -13,25 +24,10 @@ abstract class Token(val tokenType: TokenType) extends Node with HasText {}
   */
 case class InvariantToken(
     override val tokenType: FixedTextTokenType,
-    startOffset: Int,
-    endOffset: Int
+    override val startOffset: Int = -1,
+    override val endOffset: Int = -1
 ) extends Token(tokenType) {
-
-  /**
-    * Construct an [[InvariantToken]] knowing the token type and the start offset. The
-    * endOffset is known because of the length of the text, which is known because tokens
-    * of the given token type always have the same text.
-    *
-    * @param tokenType
-    * @param startOffset
-    */
-  def this(tokenType: FixedTextTokenType, startOffset: Int) =
-    this(tokenType, startOffset, startOffset + tokenType.text.length)
-
-  override def unapply(): (CharSequence, Int, Int) =
-    (text, startOffset, endOffset)
-
-  override def text: String = tokenType.text
+  override val text: String = tokenType.text
 }
 
 /**
@@ -41,24 +37,7 @@ case class InvariantToken(
   */
 case class VariantToken(
     override val tokenType: RegexTokenType,
-    matched: Match[Char]
-) extends Token(tokenType) {
-
-  /**
-    * Utility constructor to make tokens knowing only the start offset, since the end offset
-    * can be obtained by adding the start offset to the length of the text that this token
-    * contains.
-    *
-    * @param tokenType
-    * @param text
-    * @param startOffset
-    * @return
-    */
-  def this(tokenType: RegexTokenType, text: String, startOffset: Int) =
-    this(tokenType, ExactMatch(text, startOffset, startOffset + text.length))
-
-  override def unapply(): (CharSequence, Int, Int) =
-    (text, matched.start, matched.end)
-
-  override def text: String = matched.asInstanceOf[HasText].text
-}
+    override val text: String,
+    override val startOffset: Int,
+    override val endOffset: Int,
+) extends Token(tokenType)

@@ -15,6 +15,7 @@ import scala.language.dynamics
   * @tparam Accumulator The data structure all the pieces of the input are stored in
   *                     (a StringBuilder or ASTNode)
   */
+@Deprecated
 abstract class LexerOrParser[Input, Output, Accumulator <: Iterable[Input]]
     (val firstState: String) {
 
@@ -28,15 +29,18 @@ abstract class LexerOrParser[Input, Output, Accumulator <: Iterable[Input]]
       Output,
       _ <: Accumulator
   ]
+  type _Match_ = Match[Input]
+  type _PatternCase_ = PatternCase[Input, Helper]
+  type _Iterable_ = Iterable[Input]
 
   implicit val thisTokenizer: ThisLOP      = this
-  private[parsing] val stateCases: mutable.LinkedHashMap[String, Iterable[PatternCase[Input, Helper]]] =
-    mutable.LinkedHashMap()
+  private[parsing] val stateCases: =
+    mutable.LinkedHashMap[StateCase[Input, Helper]]()
   /**
     * A bunch of helpers that might be processing files/tokens at once
     */
   private val helpers = mutable.Set[Helper]()
-
+  val catchAllState = "ANY"
 
   /**
     * Tokenize or parse the input file or list of tokens
