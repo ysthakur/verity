@@ -1,0 +1,10 @@
+[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\thaku\javamm-scala\javamm-parser\src\main\scala\com\ysthakur\parsing\parser\TokenTypePattern.scala:16:56 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m16 |[0m            [33mif[0m (input.size > [31m1[0m) PartialMatch[[35mTokenType[0m](matched, offset, offset + [31m1[0m)[0m
+[0m[[0m[31merror[0m] [0m[0m   |                                                        [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |Found:    [1m[31m([0mcom.ysthakur.parsing.[1m[31mSingleMatch[0m[com.ysthakur.parsing.lexer.TokenType[1m[31m][0m[1m[31m,[0m[1m[31m [0m[1m[31mInt[0m[1m[31m,[0m[1m[31m [0m[1m[31m[0m
+[0m[[0m[31merror[0m] [0m[0m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |[1m[31m [0m[1m[31m [0m[1m[31mInt[0m[1m[31m[0m
+[0m[[0m[31merror[0m] [0m[0m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |[1m[31m)[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |Required: com.ysthakur.parsing.[1m[32mMatch[0m[com.ysthakur.parsing.lexer.TokenType][0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m

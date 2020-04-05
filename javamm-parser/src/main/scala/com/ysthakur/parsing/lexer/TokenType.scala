@@ -2,6 +2,10 @@ package com.ysthakur.parsing.lexer
 
 import scala.collection.mutable
 
+import com.ysthakur.parsing.grammar._
+import com.ysthakur.parsing.lexer._
+import com.ysthakur.parsing._
+
 //TODO check all of the regexps
 /**
  *
@@ -122,16 +126,72 @@ enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] wi
   case VALID_ID extends RegexTokenType("""[A-Za-z_$][A-Za-z0-9_$]*""") with ValidIdentifierTokenType
   case NUM_LITERAL extends RegexTokenType("""-?[0-9]+(\.[0-9]+)?[FfDL]?""")
   case CHAR_LITERAL extends RegexTokenType("""'([^\\']|\\.)'""")
-  case STR_LITERAL extends RegexTokenType(""""(\.|[^\\"])*"""")
+  case STR_LITERAL extends RegexTokenType(""""(\\.|[^\\])*"""")
   case SINGLE_LINE_COMMENT extends RegexTokenType("""//.*?(\r\n|\r|\n)""") with IgnoredTokenType
   case MULTILINE_COMMENT extends RegexTokenType("""/\*(.|\n)*?\*/""") with IgnoredTokenType
 }
 
 object JMMTokenTypes {
-  val allTokenTypes: Iterable[(String, TokenType)] =
-      (SymbolTokenType.values.asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]] ++ 
-        KeywordTokenType.values.asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]] ++ 
-        RegexTokenType.values.asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]])
+  val allTokenTypes: Iterable[TokenType] =
+      (SymbolTokenType.values.toIterable ++ 
+        KeywordTokenType.values.toIterable ++ 
+        RegexTokenType.values.toIterable)
         .asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]]
-      .map[(String, TokenType)](x => (x.name, x))
+}
+
+
+object TokenTypeUtil {
+
+  type Str = CharSequence & Iterable[Char]
+
+  def tryMatch(tokenType: TokenType, input: StringBuilder, offset: Int): MatchResult = {
+    (tokenType match {
+      case ftt: FixedTextTokenType => tryMatchText(ftt.text)
+      case rtt: RegexTokenType => tryMatchRegex(rtt.regex)
+    })(input, offset)
+  }
+
+  def tryMatchText(text: String)(sb: StringBuilder, offset: Int): MatchResult = {
+    val input = sb.toString
+    val inputLen = input.size
+    val size = text.size
+    if (size == text.size && text.matches(input))
+      return FullMatch(
+        ExactMatch(input, TextRange(0, size)),
+        couldMatchMore = false
+      )
+    else if (inputLen < size) {
+      if (text.startsWith(input.toString)) return NeedsMore()
+    } else if (inputLen > size) {
+      if (input.indexOf(text) == 0)
+        return PartialMatch(ExactMatch(input, 0, size))
+    }
+    NoMatch()
+  }
+
+  def tryMatchRegex(regex: String)(input: CharSequence, start: Int): MatchResult = {
+    val pattern = java.util.regex.Pattern.compile(s"^$regex")
+    val matcher = pattern.matcher(input)
+    try {
+      if (matcher.matches()) {
+        if (regex == RegexTokenType.STR_LITERAL.regex) {
+          println("String full!")
+        }
+        FullMatch(
+          new RegexMatch(matcher.group(), 0, matcher.end),
+          matcher.requireEnd()
+        )
+      }
+      else if (matcher.find(0))
+        PartialMatch(new RegexMatch(matcher.group(), 0, matcher.end))
+      else if (matcher.hitEnd()) {
+        if (regex == RegexTokenType.STR_LITERAL.regex) {
+          println(s"String needs more! $matcher")
+        }
+        NeedsMore()
+      } else NoMatch()
+    } catch {
+      case e: StackOverflowError => throw e
+    }
+  }
 }

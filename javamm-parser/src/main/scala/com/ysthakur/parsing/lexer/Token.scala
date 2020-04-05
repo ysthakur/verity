@@ -2,7 +2,7 @@ package com.ysthakur.parsing.lexer
 
 import com.ysthakur.parsing.HasText
 import com.ysthakur.parsing.ast.Node
-import com.ysthakur.parsing.grammar.{ExactMatch, Match}
+import com.ysthakur.parsing.{ExactMatch, Match}
 
 /**
   *
@@ -10,9 +10,9 @@ import com.ysthakur.parsing.grammar.{ExactMatch, Match}
   * @param startOffset The index in the file where this token starts
   * @param endOffset The index in the file <em>before</em> which this token ends
   */
-sealed class Token(val tokenType: TokenType,
+sealed abstract class Token(val tokenType: TokenType,
                      val startOffset: Int,
-                     val endOffset: Int) extends Node with HasText {}
+                     val endOffset: Int) extends Node with HasText
 
 object Token {
 }
@@ -26,7 +26,7 @@ case class InvariantToken(
     override val tokenType: FixedTextTokenType,
     override val startOffset: Int = -1,
     override val endOffset: Int = -1
-) extends Token(tokenType) {
+) extends Token(tokenType, startOffset, endOffset) {
   override val text: String = tokenType.text
 }
 
@@ -40,4 +40,4 @@ case class VariantToken(
     override val text: String,
     override val startOffset: Int,
     override val endOffset: Int,
-) extends Token(tokenType)
+) extends Token(tokenType, startOffset, endOffset)

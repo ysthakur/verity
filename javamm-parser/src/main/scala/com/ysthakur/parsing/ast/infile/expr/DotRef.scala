@@ -6,6 +6,6 @@ import com.ysthakur.parsing.ast.Types._
 
 case class DotRef(iterable: Iterable[VarRef]) extends Expr {
 
-    def this(pattern: PatternWithMatch[RepeatPattern[Node], Match[Node]]) = this(null)
+    //def this(pattern: PatternWithMatch[RepeatPattern[Node], Match[Node]]) = this(null)
 
 }

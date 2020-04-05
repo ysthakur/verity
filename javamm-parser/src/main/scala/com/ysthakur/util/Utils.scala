@@ -9,7 +9,7 @@ import scala.reflect.ClassTag
 
 // /*implicit*/ def toRight[A, B](b: B): A Either B = Right[A, B](b)
 
-def[T] (option: Option[T] ) `?:` (orElse: T): T =
+def[T] (option: Option[T]) `?:` (orElse: T): T =
   option match {
     case Some (v) => v
     case None => orElse

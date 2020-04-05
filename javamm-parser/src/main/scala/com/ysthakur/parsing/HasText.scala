@@ -2,5 +2,6 @@ package com.ysthakur.parsing
 
 trait HasText {
   def text: String
-  def unapply(): (CharSequence, Int, Int)
+  def startOffset: Int
+  def endOffset: Int
 }

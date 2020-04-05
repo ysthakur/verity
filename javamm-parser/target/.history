@@ -1,0 +1,9 @@
+compile
+logBuffered := false
+set logBuffered := false
+compile
+quit
+help
+exit
+compile
+project global

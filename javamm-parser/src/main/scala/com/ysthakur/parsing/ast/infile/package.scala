@@ -1,6 +1,6 @@
 package com.ysthakur.parsing.ast
 
-import com.ysthakur.parsing.grammar.SingleMatch
+import com.ysthakur.parsing.SingleMatch
 import com.ysthakur.parsing.lexer.InvariantToken
 
 package object infile {

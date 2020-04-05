@@ -3,6 +3,8 @@ package com.ysthakur.parsing.grammar
 import math.Ordered.orderingToOrdered
 import math.Ordering.Implicits.infixOrderingOps
 
+import com.ysthakur.parsing.Match
+
 /**
   * Represents a range of text (or anything else, really).
   *

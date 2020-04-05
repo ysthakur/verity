@@ -5,39 +5,38 @@ import java.util.regex.Pattern
 
 import com.ysthakur.parsing.ast.Node
 import com.ysthakur.parsing.lexer.{JMMTokenTypes, Lexer, Token}
-import com.ysthakur.parsing.parser.Parser
+// import com.ysthakur.parsing.parser.Parser
 
-object Main {
+object Main extends App {
 
-  def main(args: Array[String]): Unit = {
+  //def main(args: Array[String]): Unit = {
     //regex()
-    val tokens = lex()
-    val ast    = parse(tokens)
-    println("AST = " + ast)
-  }
+  val tokens = lex()
+  //val ast    = parse(tokens)
+  println("AST = " + tokens)
+  //}
 
-  def parse(tokens: Iterable[Token]): Node = {
-    Parser.createAST(tokens)
-  }
+  // def parse(tokens: Iterable[Token]): Node = {
+  //   Parser.createAST(tokens)
+  // }
 
   def lex(): Iterable[Token] = {
     val file = new File(
-        "C:\\Users\\thaku\\Ideaprojects\\" +
-          "javamm-scala\\src\\test\\resources\\lexertest.java"
+        "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\test\\resources\\lexertest"
     )
-    val tokens =
-      Lexer.process(new BufferedInputStream(new FileInputStream(file))).toList
+    val lexer = new Lexer(file)
+    val tokens = lexer.tokenize().toList
     println(tokens)
-    println(tokens.map(token => {
-      val tt = token.tokenType
-      JMMTokenTypes.allTokenTypes.keys.find { name =>
-        JMMTokenTypes.allTokenTypes(name) == tt
-      }
-    }))
+    // println(tokens.map(token => {
+    //   val tt = token.tokenType
+    //   JMMTokenTypes.allTokenTypes.map(p =>
+    //   }
+    // }))
+    lexer.end()
     tokens
   }
 
-  def regex(): Unit = {
+  // def regex(): Unit = {
     // val pattern =
     //   Pattern.compile(s"${VariantTextTokenTypes.MULTILINE_COMMENT.regex}$$")
     // val matcher = pattern.matcher(
@@ -45,7 +44,7 @@ object Main {
     // )
     // println(matcher.matches())
     // println(matcher.requireEnd())
-  }
+  // }
 
 }
 

@@ -1,7 +1,10 @@
-package com.ysthakur.parsing.grammar
+package com.ysthakur.parsing
 
 import com.ysthakur.util.as
 import com.ysthakur.util.utils
+
+import com.ysthakur.parsing.grammar._
+import com.ysthakur.parsing.parser._
 
 import scala.language.implicitConversions
 
@@ -13,15 +16,15 @@ trait Match[+Input] {
   def matched: Iterable[Input]
 }
 
-object Match {
-  implicit def makePatternMatch[Input](
-      tuple: (Pattern[Input], Match[Input])
-  ): PatternMatch[Input] =
-    new PatternMatch(tuple._1, tuple._2.matched, tuple._2.start, tuple._2.end)
-  /*implicit def makeConsMatch[Input](
-      cons: List[Match[Input]]
-  ): CompositeMatch[Input] = CompositeMatch(cons)*/
-}
+// object Match {
+//   implicit def makePatternMatch[Input](
+//       tuple: (Pattern[Input], Match[Input])
+//   ): PatternMatch[Input] =
+//     new PatternMatch(tuple._1, tuple._2.matched, tuple._2.start, tuple._2.end)
+//   /*implicit def makeConsMatch[Input](
+//       cons: List[Match[Input]]
+//   ): CompositeMatch[Input] = CompositeMatch(cons)*/
+// }
 
 class PatternMatch[Input](
     pattern: Pattern[Input],
@@ -50,15 +53,15 @@ object PatternMatch {
     new PatternMatch(pattern, matched, start, end)
 }
 
-case class PatternWithMatch[P <: Pattern[_], M <: Match[_]]
-    (pattern: P, mach: M) 
-    extends Match[pattern.I] {
+// case class PatternWithMatch[P <: Pattern[_], M <: Match[_]]
+//     (pattern: P, mach: M) 
+//     extends Match[pattern.I] {
 
-} 
+// } 
 
-case class RepeatMatch[Input](unit: Iterable[Input], numTimes: Int) extends Match[Input] {
+// case class RepeatMatch[Input](unit: Iterable[Input], numTimes: Int) extends Match[Input] {
   
-}
+// }
 
 case class CompositeMatch[+Input](matches: List[Match[Input]]) extends Match[Input] {
   override val start: Int               = matches.head.start
@@ -81,6 +84,10 @@ case class ExactMatch[Input](
 object ExactMatch {
   def apply[Input](matched: Iterable[Input], tr: TextRange): ExactMatch[Input] =
     new ExactMatch(matched, tr.start, tr.end)
+}
+
+case class RegexMatch(matched: Iterable[Char], override val start: Int, override val end: Int)
+extends Match[Char] {
 }
 
 case class SingleMatch[Input](matchedPiece: Input, override val start: Int)

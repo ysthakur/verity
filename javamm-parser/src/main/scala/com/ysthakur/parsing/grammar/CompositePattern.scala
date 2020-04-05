@@ -1,5 +1,6 @@
 package com.ysthakur.parsing.grammar
 
+import com.ysthakur.parsing._
 import com.ysthakur.util._
 import com.ysthakur.util.as
 import com.ysthakur.util.utils
@@ -7,7 +8,7 @@ import com.ysthakur.util.utils
 import scala.collection.mutable.ListBuffer
 
 
-/*class CompositePattern[Input](
+class CompositePattern[Input](
     patterns_ : Iterable[Pattern[Input]] = Iterable.empty
 ) extends Pattern[Input] {
 
@@ -27,12 +28,12 @@ import scala.collection.mutable.ListBuffer
     })
   }
 
-  override def tryMatch(input: Iterable[Input]): MatchResult = {
+  override def tryMatch(input: Iterable[Input], offset: Int): MatchResult = {
     val matches            = ListBuffer[PatternMatch[Input]]()
     var currentOffset      = 0
     var lastCouldMatchMore = false
     for (pattern <- patterns) {
-      pattern.tryMatch(input.asInstanceOf) match {
+      pattern.tryMatch(input.asInstanceOf, offset) match {
         case FullMatch(matched, couldMatchMore) => {
           matches.addOne(PatternMatch(pattern, matched.matched.asInstanceOf[Iterable[Input]], matched.start, matched.end))
           lastCouldMatchMore = couldMatchMore
@@ -50,4 +51,4 @@ import scala.collection.mutable.ListBuffer
     if (currentOffset < input.size) PartialMatch(match_)
     else FullMatch(match_, lastCouldMatchMore)
   }
-}*/
+}
