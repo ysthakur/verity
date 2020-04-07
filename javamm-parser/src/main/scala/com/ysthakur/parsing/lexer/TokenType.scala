@@ -2,7 +2,6 @@ package com.ysthakur.parsing.lexer
 
 import scala.collection.mutable
 
-import com.ysthakur.parsing.grammar._
 import com.ysthakur.parsing.lexer._
 import com.ysthakur.parsing._
 
@@ -36,6 +35,7 @@ enum SymbolTokenType(symbol: String)
   case DOT extends SymbolTokenType(".")
   case LTEQ extends SymbolTokenType("<=")
   case GTEQ extends SymbolTokenType(">=")
+  case EQX3 extends SymbolTokenType("===")
   case EQX2 extends SymbolTokenType("==")
   case LT extends SymbolTokenType("<")
   case GT extends SymbolTokenType(">")
@@ -46,6 +46,7 @@ enum SymbolTokenType(symbol: String)
   case AND extends SymbolTokenType("&")
   case OR extends SymbolTokenType("|")
   case CARET extends SymbolTokenType("^")
+  case EXCL_MARK extends SymbolTokenType("!")
   case PLUSX2 extends SymbolTokenType("++")
   case PLUS extends SymbolTokenType("+")
   case MINUSX2 extends SymbolTokenType("--")
@@ -119,6 +120,7 @@ enum ReservedWord(text: String)
     extends java.lang.Enum[ReservedWord]
     with FixedTextTokenType(text) {
   case INSTANCEOF extends ReservedWord("instanceof")
+  case UNDERSCORE extends ReservedWord("_") with ValidIdentifierTokenType
 }
 
 enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] with TokenType(true) {
@@ -133,7 +135,8 @@ enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] wi
 
 object JMMTokenTypes {
   val allTokenTypes: Iterable[TokenType] =
-      (SymbolTokenType.values.toIterable ++ 
+      (ReservedWord.values.toIterable ++
+        SymbolTokenType.values.toIterable ++ 
         KeywordTokenType.values.toIterable ++ 
         RegexTokenType.values.toIterable)
         .asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]]
@@ -161,12 +164,12 @@ object TokenTypeUtil {
         couldMatchMore = false
       )
     else if (inputLen < size) {
-      if (text.startsWith(input.toString)) return NeedsMore()
+      if (text.startsWith(input.toString)) return NeedsMore
     } else if (inputLen > size) {
       if (input.indexOf(text) == 0)
         return PartialMatch(ExactMatch(input, 0, size))
     }
-    NoMatch()
+    NoMatch
   }
 
   def tryMatchRegex(regex: String)(input: CharSequence, start: Int): MatchResult = {
@@ -188,8 +191,8 @@ object TokenTypeUtil {
         if (regex == RegexTokenType.STR_LITERAL.regex) {
           println(s"String needs more! $matcher")
         }
-        NeedsMore()
-      } else NoMatch()
+        NeedsMore
+      } else NoMatch
     } catch {
       case e: StackOverflowError => throw e
     }

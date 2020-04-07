@@ -6,5 +6,5 @@ import com.ysthakur.parsing.lexer.InvariantToken
 package object infile {
 
   implicit val ValidIdMaker: SingleMatch[Node] => ValidIdNode =
-    m => ValidIdNode(m.matched.asInstanceOf[InvariantToken].text)
+    m => ValidIdNode(m.matched.asInstanceOf[InvariantToken].text, m.start, m.end)
 }

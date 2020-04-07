@@ -1,16 +1,14 @@
 package com.ysthakur.parsing
 
+import com.ysthakur.parsing.ast.Types._
+import com.ysthakur.parsing.parser._
 import com.ysthakur.util.as
 import com.ysthakur.util.utils
-
-import com.ysthakur.parsing.grammar._
-import com.ysthakur.parsing.parser._
 
 import scala.language.implicitConversions
 
 trait Match[+Input] {
   //type I <: Input
-
   def start: Int
   def end: Int
   def matched: Iterable[Input]
@@ -27,7 +25,7 @@ trait Match[+Input] {
 // }
 
 class PatternMatch[Input](
-    pattern: Pattern[Input],
+    pattern: Pattern,
     override val matched: Iterable[Input],
     override val start: Int,
     override val end: Int
@@ -39,13 +37,13 @@ class PatternMatch[Input](
       case e => false
     }
   }
-  def unapply(): (Pattern[Input], Iterable[Input], Int, Int) =
+  def unapply(): (Pattern, Iterable[Input], Int, Int) =
     (pattern, matched, start, end)
 }
 
 object PatternMatch {
   def apply[Input](
-      pattern: Pattern[Input],
+      pattern: Pattern,
       matched: Iterable[Input],
       start: Int,
       end: Int
@@ -53,7 +51,7 @@ object PatternMatch {
     new PatternMatch(pattern, matched, start, end)
 }
 
-// case class PatternWithMatch[P <: Pattern[_], M <: Match[_]]
+// case class PatternWithMatch[P <: Pattern, M <: Match[_]]
 //     (pattern: P, mach: M) 
 //     extends Match[pattern.I] {
 
@@ -90,7 +88,7 @@ case class RegexMatch(matched: Iterable[Char], override val start: Int, override
 extends Match[Char] {
 }
 
-case class SingleMatch[Input](matchedPiece: Input, override val start: Int)
+case class SingleMatch[Input <: Node](matchedPiece: Input, override val start: Int)
     extends Match[Input] {
   override val end: Int = start + 1
   override def matched  = Iterable(matchedPiece)

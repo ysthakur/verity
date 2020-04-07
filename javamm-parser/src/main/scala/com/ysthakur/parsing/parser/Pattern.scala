@@ -1,19 +1,22 @@
-package com.ysthakur.parsing.grammar
+package com.ysthakur.parsing.parser
 
-import com.ysthakur.parsing.grammar.GrammarUtils._
 import com.ysthakur.parsing._
+import com.ysthakur.parsing.ast.Types._
 
 import scala.collection.mutable.ListBuffer
 import scala.language.postfixOps
+
+import PatternUtils._
 
 /**
   * A pattern, like regex, that matches input
   *
   * @tparam Input The type of the input (Iterable of Char or Token)
   */
-trait Pattern[Input] {
-  type Self <: Pattern[Input]
-  type I = Input
+trait Pattern {
+  type Input <: Node
+  type AsNode <: Node
+  type MatchIn <: Match[_]
 
   /**
     * Whether or not it always matches the same input.
@@ -22,7 +25,10 @@ trait Pattern[Input] {
     */
   val isFixed: Boolean
   val isEager: Boolean
-  def tryMatch(input: Iterable[Input], offset: Int): MatchResult
+  def tryMatch(input: Iterable[Input], offset: Int): MatchResult = ???
+  def create(matched: MatchIn): this.AsNode = ???
+
+  def tryCreate(input: Iterable[this.Input], offset: Int): Either[MatchResult, this.AsNode]
 
   /**
     * Just to compose multiple patterns. Match this pattern first, then
@@ -31,41 +37,38 @@ trait Pattern[Input] {
     * @param other
     * @return
     */
-  def -[T <: Pattern[_]](other: T): Self - T =
-    new ConsPattern[Self, T](this.asInstanceOf[Self], other)
+  def -[T <: Pattern](other: T): this.type - T =
+    new ConsPattern[this.type, T](this.asInstanceOf[this.type], other)
 
-  def |[T <: Input](other: Pattern[T]): Pattern[Input] =
-    FunctionPattern((input: Iterable[Input], offset: Int) => {
-      val m1 = this.tryMatch(input, offset)
-      m1 match {
-        case FullMatch(_, _) | PartialMatch(_) => m1
-        case _ =>
-          val m2 = other.tryMatch(input.asInstanceOf[Iterable[T]], offset)
-          m2 match {
-            case FullMatch(_, _) | PartialMatch(_) => m2
-            case _                                 => m2
-          }
-      }
-    })
+  def |[T <: Pattern](other: Pattern): OrPattern[this.type, other.type] =
+    OrPattern(this, other)
 
 //   def -->[Helper](action: Helper => Unit): PatternCase[Input, Helper] =
 //     PatternCase(this.asInstanceOf[Pattern[Input]], action)
 
-  def * : Pattern[Input]  = RepeatPattern(this, isEager = true)
-  def *? : Pattern[Input] = RepeatPattern(this, isEager = false)
+  def * : Pattern  = RepeatPattern(this, isEager = true)
+  def *? : Pattern = RepeatPattern(this, isEager = false)
 }
 
-case class ConsPattern[T1 <: Pattern[_], T2 <: Pattern[_]](p1: T1, p2: T2)
-    extends Pattern[p1.I with p2.I] {
-  override type Self = -[T1, T2]
-  override type I    = p1.I with p2.I
-  override val isFixed: Boolean = p1.isFixed && p2.isFixed
+object PatternUtils {
+  type -[A <: Pattern, B <: Pattern] = ConsPattern[A, B]
+  type ||[A <: Pattern, B <: Pattern] = OrPattern[A, B]
+  type *[T <: Pattern] = RepeatPattern
+  type *?[T <: Pattern] = RepeatPattern
+}
 
-  override def tryMatch(input: Iterable[I], offset: Int): MatchResult = {
+case class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, p2: T2)
+    extends Pattern {
+  override type Input = p1.Input & p2.Input
+  override val isFixed: Boolean = p1.isFixed && p2.isFixed
+  override val isEager: Boolean = p1.isEager && p2.isEager
+
+  override def tryCreate(input: Iterable[Input], offset: Int): Either[MatchResult, this.AsNode] = ???
+  override def tryMatch(input: Iterable[Input], offset: Int): MatchResult = {
     val match1 = p1.tryMatch(input, offset)
     match1 match {
-      case full: FullMatch[I] => full
-      case part: PartialMatch[I] =>
+      case full: FullMatch[Input] => full
+      case part: PartialMatch[Input] =>
         p2.tryMatch(input.slice(part.matched.end, input.size), part.matched.end) match {
           case FullMatch(matched2, cmm2) =>
             FullMatch(CompositeMatch(List(part.matched, matched2)), cmm2)
@@ -76,16 +79,23 @@ case class ConsPattern[T1 <: Pattern[_], T2 <: Pattern[_]](p1: T1, p2: T2)
       case _ => MatchResult.higher(match1, p2.tryMatch(input, offset))
     }
   }
+
+  override def create(matched: MatchIn): AsNode = {
+    ???
+  }
 }
 
-case class OrPattern[T1 <: Pattern[_], T2 <: Pattern[_]](p1: T1, p2: T2)
-    extends Pattern[p1.I Either p2.I] {
-  override type Self = T1 | T2
-  override type I    = p1.I Either p2.I
+case class OrPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, p2: T2)
+    extends Pattern {
+  override type Input    = p1.Input | p2.Input
+  override type AsNode = p1.AsNode | p2.AsNode
+
   override val isFixed: Boolean = p1.isFixed && p2.isFixed
-  override def tryMatch(input: Iterable[I], offset: Int): MatchResult = {
+  override val isEager: Boolean = p1.isEager || p2.isEager
+  override def tryCreate(input: Iterable[Input], offset: Int): Either[MatchResult, this.AsNode] = ???
+  override def tryMatch(input: Iterable[this.Input], offset: Int): MatchResult = {
     val input1 =
-      input.takeWhile(_.isInstanceOf[p1.I]).asInstanceOf[Iterable[p1.I]]
+      input.takeWhile(_.isInstanceOf[p1.Input]).asInstanceOf[Iterable[p1.Input]]
     var match1: MatchResult = null
     var slice2 = if (input1.nonEmpty) {
       p1.tryMatch(input1, offset) match {
@@ -98,7 +108,7 @@ case class OrPattern[T1 <: Pattern[_], T2 <: Pattern[_]](p1: T1, p2: T2)
     } else input
 
     val input2 =
-      slice2.takeWhile(_.isInstanceOf[p2.I]).asInstanceOf[Iterable[p2.I]]
+      slice2.takeWhile(_.isInstanceOf[p2.Input]).asInstanceOf[Iterable[p2.Input]]
     var match2: MatchResult = null
     p2.tryMatch(input2, offset) match {
       case full @ FullMatch(matched, couldMatchMore) =>
@@ -108,15 +118,20 @@ case class OrPattern[T1 <: Pattern[_], T2 <: Pattern[_]](p1: T1, p2: T2)
     }
     return if (match1 >= match2) match1 else match2
   }
+  override def create(res: MatchIn): this.AsNode = {
+    ???
+  }
 }
 
 /**
   *
   */
-case class RepeatPattern[Input](
-    pattern: Pattern[Input],
+case class RepeatPattern (
+    pattern: Pattern,
     override val isEager: Boolean
-) extends Pattern[Input] {
+) extends Pattern {
+
+  override type AsNode = NodeList[pattern.AsNode]
 
   /**
     * Whether or not it always matches the same input.
@@ -125,8 +140,13 @@ case class RepeatPattern[Input](
     */
   override val isFixed: Boolean = false
 
+  override def tryCreate(input: Iterable[Input], offset: Int): Either[MatchResult, this.AsNode] = ???
   override def tryMatch(input: Iterable[Input], offset: Int): MatchResult = {
     val matches = ListBuffer[Match[Input]]()
+    ???
+  }
+
+  override def create(matched: MatchIn): this.AsNode = {
     ???
   }
 }

@@ -4,35 +4,36 @@ import com.ysthakur.parsing._
 import com.ysthakur.parsing.ast.Types._
 import com.ysthakur.parsing.ast.infile.ValidIdNode
 import com.ysthakur.parsing.ast.infile.expr._
-import com.ysthakur.parsing.grammar._ //{Pattern, CompositePattern, FunctionPattern, GrammarUtils, MatchResult}
 import com.ysthakur.parsing.lexer.SymbolTokenType._
 import com.ysthakur.parsing.lexer.KeywordTokenType._
 import com.ysthakur.parsing.lexer.RegexTokenType._
 import com.ysthakur.parsing.lexer._
+import com.ysthakur.parsing.parser.PatternUtils._
 import com.ysthakur.util._
 
 import scala.language.postfixOps
 
 private object ParserPatterns {
 
-  type P = Pattern[Node]
-  type PAC[T[_] <: Match[_], N <: Node] = PatternAndConstructor[T[Node], N]
+  type PAC[T <: Match[_], N <: Node] = PatternAndConstructor[T, N]
+  type TTP = TokenTypePattern
 
-  implicit val validIdCtor: SingleMatch[Node] => Node = 
-    (m: SingleMatch[Node]) => new Node {}
-  implicit val exprCtor: CompositeMatch[Node] => Expr = 
+  implicit val validIdCtor: SingleMatch[Token] => ValidIdNode =
+    (m) => new ValidIdNode(m.matchedPiece.text, m.matchedPiece.startOffset, m.matchedPiece.endOffset)
+  implicit val exprCtor: CompositeMatch[Node] => Expr =
     (m: CompositeMatch[Node]) => {
       null.asInstanceOf
     }
 
-  val unaryPreOp = PLUSX2 | MINUSX2
+  val unaryPreOp = 
+    PLUSX2 | MINUSX2 | MINUS | EXCL_MARK
   val unaryPostOp = PLUSX2 | MINUSX2
-  lazy val unaryExpr: Any = (expr - unaryPostOp) | (unaryPreOp - expr)
-  private lazy val expr = (validId)
-  val validId: PAC[SingleMatch, Node] = null
-    // FunctionPattern((input: Iterable[Node], offset: Int) =>
-    //   ifSingleTokenWithType(input) { _.isInstanceOf[ValidIdentifierTokenType] })
-    //   .apply[SingleMatch[Node], Node](validIdCtor)
+  lazy val unaryExpr = (expr - unaryPostOp) | (unaryPreOp - expr)
+  lazy val expr = (validId)
+  val validId =
+    FunctionPattern[Node, SingleMatch[Token], ValidIdNode](
+      (input: Iterable[Node], offset: Int) => 
+        ifSingleTokenWithType(input) { _.isInstanceOf[ValidIdentifierTokenType] }, validIdCtor)
   val dotReference: ConsPattern[?, ?] = validId - ((DOT - validId) *)
 
   def ifSingleTokenWithType(
@@ -42,8 +43,8 @@ private object ParserPatterns {
       case token: Token =>
         if (f(token.tokenType))
           FullMatch(SingleMatch(token, 0), couldMatchMore = false)
-        else NoMatch()
-      case _ => NoMatch()
+        else NoMatch
+      case _ => NoMatch
     }
   }
 
@@ -51,7 +52,7 @@ private object ParserPatterns {
       input: Iterable[Node]
   )(f: Node => MatchResult): MatchResult =
     if (input.size == 1) f(input.head)
-    else NoMatch()
+    else NoMatch
 
 //   implicit def toWrapperPC[M <: Match[Node], N <: Node, I](pattern: Pattern[Node])(
 //       implicit ctor: M => N

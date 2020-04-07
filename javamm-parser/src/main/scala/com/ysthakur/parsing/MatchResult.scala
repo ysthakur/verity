@@ -1,4 +1,4 @@
-package com.ysthakur.parsing.grammar
+package com.ysthakur.parsing
 
 import math.Ordered.orderingToOrdered
 import math.Ordering.Implicits.infixOrderingOps
@@ -32,8 +32,8 @@ object MatchResult {
 /**
   * Ran out of input before it could finish matching
   */
-case class NeedsMore() extends MatchResult {
-  def >(other: MatchResult): Boolean = other.isInstanceOf[NoMatch]
+object NeedsMore extends MatchResult {
+  def >(other: MatchResult): Boolean = other == NoMatch
 }
 
 /**
@@ -44,8 +44,8 @@ case class NeedsMore() extends MatchResult {
 case class PartialMatch[Input](matched: Match[Input]) extends MatchResult {
   def unapply(): (Int, Int) = (matched.start, matched.end)
   override def >(other: MatchResult): Boolean = 
-    other.isInstanceOf[NoMatch] || 
-    other.isInstanceOf[NeedsMore] ||
+    other == NoMatch || 
+    other == NeedsMore ||
       other.isInstanceOf[PartialMatch[Input]] && 
       other.asInstanceOf[PartialMatch[Input]].matched.end > this.matched.end
 }
@@ -64,6 +64,6 @@ case class FullMatch[Input](matched: Match[Input], couldMatchMore: Boolean)
 /**
   * None of the input matched
   */
-case class NoMatch() extends MatchResult {
+object NoMatch extends MatchResult {
   def >(other: MatchResult): Boolean = false
 }

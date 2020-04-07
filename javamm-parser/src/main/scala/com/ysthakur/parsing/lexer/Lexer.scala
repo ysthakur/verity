@@ -2,7 +2,7 @@ package com.ysthakur.parsing.lexer
 
 import java.io.{BufferedInputStream, File, FileInputStream, IOException, InputStream}
 
-import com.ysthakur.parsing.grammar._
+import com.ysthakur.parsing._
 import com.ysthakur.parsing.Match
 import com.ysthakur.parsing.lexer.TokenType
 
@@ -120,7 +120,7 @@ case class Lexer(file: BufferedInputStream) {
                   }
                   if (couldMatchMore) possibleFutureMatches += tokenType
                 }
-              case NeedsMore() => possibleFutureMatches.addOne(tokenType)
+              case `NeedsMore` => possibleFutureMatches.addOne(tokenType)
               case res => {
                 if (res.isInstanceOf[PartialMatch[_]]) println(s"Partial match $res for tokentype=$tokenType")
                 possibleFutureMatches -= tokenType

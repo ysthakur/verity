@@ -8,8 +8,9 @@ class FileNode(override val parent: PackageNode)
     with HasText {
   type Parent = PackageNode
   override def children: Iterable[Node with HasText] = ???
+  override val startOffset: Int = 0
+  override lazy val endOffset = text.length
+  override lazy val text: String = ???
 
-  override def text: String = ???
-
-  override def unapply(): (CharSequence, Int, Int) = ???
+  //override def unapply(): (CharSequence, Int, Int) = ???
 }

@@ -5,6 +5,7 @@ import com.ysthakur.parsing.ast.infile
 
 object Types {
   type Node = ast.Node
+  type NodeList = ast.NodeList
   type FileNode = ast.FileNode
   type PackageNode = ast.PackageNode
 
