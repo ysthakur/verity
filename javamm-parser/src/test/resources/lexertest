@@ -1,1 +1,12 @@
 package blah;
+
+class HelloWorld {
+    //asfaskldflio3q849t/ $Q#$
+    /* asdfasdf
+    /*
+    
+    */
+    public static void main(String[] args) {
+        "asd\"f"
+    }
+}

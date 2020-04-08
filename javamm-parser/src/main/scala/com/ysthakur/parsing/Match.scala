@@ -12,6 +12,7 @@ trait Match[+Input] {
   def start: Int
   def end: Int
   def matched: Iterable[Input]
+  val textRange: TextRange = TextRange(start, end)
 }
 
 // object Match {
@@ -73,15 +74,16 @@ case class CompositeMatch[+Input](matches: List[Match[Input]]) extends Match[Inp
   * @param matched
   * @tparam Input
   */
-case class ExactMatch[Input](
+case class ExactMatch[Input] private (
     override val matched: Iterable[Input],
     override val start: Int,
-    override val end: Int
+    override val end: Int,
+    override val textRange: TextRange
 ) extends Match[Input]
 
 object ExactMatch {
   def apply[Input](matched: Iterable[Input], tr: TextRange): ExactMatch[Input] =
-    new ExactMatch(matched, tr.start, tr.end)
+    new ExactMatch(matched, tr.start, tr.end, tr)
 }
 
 case class RegexMatch(matched: Iterable[Char], override val start: Int, override val end: Int)

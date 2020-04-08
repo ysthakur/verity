@@ -40,7 +40,7 @@ trait Pattern {
   def -[T <: Pattern](other: T): this.type - T =
     new ConsPattern[this.type, T](this.asInstanceOf[this.type], other)
 
-  def |[T <: Pattern](other: Pattern): OrPattern[this.type, other.type] =
+  def |[M <: this.type, T <: Pattern](other: T): OrPattern[this.type, T] =
     OrPattern(this, other)
 
 //   def -->[Helper](action: Helper => Unit): PatternCase[Input, Helper] =
@@ -85,9 +85,9 @@ case class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, p2: T2)
   }
 }
 
-case class OrPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, p2: T2)
+case class OrPattern[+T1 <: Pattern, +T2 <: Pattern](p1: T1, p2: T2)
     extends Pattern {
-  override type Input    = p1.Input | p2.Input
+  override type Input = p1.Input | p2.Input
   override type AsNode = p1.AsNode | p2.AsNode
 
   override val isFixed: Boolean = p1.isFixed && p2.isFixed

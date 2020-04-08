@@ -16,7 +16,6 @@ import scala.language.postfixOps
 private object ParserPatterns {
 
   type PAC[T <: Match[_], N <: Node] = PatternAndConstructor[T, N]
-  type TTP = TokenTypePattern
 
   implicit val validIdCtor: SingleMatch[Token] => ValidIdNode =
     (m) => new ValidIdNode(m.matchedPiece.text, m.matchedPiece.startOffset, m.matchedPiece.endOffset)
@@ -25,8 +24,15 @@ private object ParserPatterns {
       null.asInstanceOf
     }
 
-  val unaryPreOp = 
-    PLUSX2 | MINUSX2 | MINUS | EXCL_MARK
+  val a: TokenTypePattern = PLUSX2
+  val b: TokenTypePattern = MINUSX2
+  val c: Null = null
+  type ev = a.type =:= TokenTypePattern
+  type ev2 = b.type =:= TokenTypePattern
+  val x: OrPattern[TokenTypePattern, TokenTypePattern] = (a | b)
+
+  val unaryPreOp: OrPattern[_, _] = 
+    (PLUSX2 | MINUSX2) | MINUS | EXCL_MARK
   val unaryPostOp = PLUSX2 | MINUSX2
   lazy val unaryExpr = (expr - unaryPostOp) | (unaryPreOp - expr)
   lazy val expr = (validId)

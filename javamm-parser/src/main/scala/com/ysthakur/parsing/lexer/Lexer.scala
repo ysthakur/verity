@@ -1,6 +1,6 @@
 package com.ysthakur.parsing.lexer
 
-import java.io.{BufferedInputStream, File, FileInputStream, IOException, InputStream}
+import java.io.{BufferedInputStream, File, FileInputStream, IOException, InputStream, FileWriter}
 
 import com.ysthakur.parsing._
 import com.ysthakur.parsing.Match
@@ -18,22 +18,12 @@ case class Position(var row: Int, var col: Int, var offset: Int) {
   def copy(): Position = Position(row, col, offset)
 }
 
-case class Lexer(file: BufferedInputStream) {
+case class Lexer(file: File, logFile: String = "./log.txt") {
   private[lexer] var lastToken: Token = _
   private var position = Position(0, 0, 0)
-
-  def this(file: File) = this(new BufferedInputStream(new FileInputStream(file)))
-
-  @throws[IOException]
-  def getNext: Option[Char] = {
-    val res = file.read()
-    System.out.println(s"($res,${res.toChar})`")
-    if (res == -1) None else Some(res.toChar)
-  }
-
-  def end(): Unit = {
-    file.close()
-  }
+  private val bis = new BufferedInputStream(new FileInputStream(file))
+  new File(logFile).createNewFile()
+  private val LOG = new FileWriter(logFile)
 
   /**
     * The last match it had. Includes the [[com.ysthakur.parsing.grammar.PatternCase]] and the text
@@ -44,21 +34,36 @@ case class Lexer(file: BufferedInputStream) {
   var offset: Int = 0
   private[parsing] var lastInput: mutable.StringBuilder = StringBuilder()
 
+  def tokenize(): Iterable[Token] = {
+    try {
+      return tokenize_()
+    } catch {
+      case e: java.util.regex.PatternSyntaxException => {
+        println("`" + e.getPattern + "`")
+        end()
+        throw e
+      }
+    } finally {
+      println("asdkfja;sldjf;askljdf")
+      end()
+    }
+  }
+
   /**
     *
     */
   @throws[BadCharacterError]
-  def tokenize(): Iterable[Token] = {
+  def tokenize_(): Iterable[Token] = {
     var lastInput = StringBuilder().append(getNext.getOrElse(throw new Error("File is empty!")))
     val tokens = ListBuffer[Token]()
     val tokenTypes = JMMTokenTypes.allTokenTypes//.filter(_.isInstanceOf[KeywordTokenType])
-    print(tokenTypes)
-    println(s"Last input = $lastInput, ${lastInput(0).toInt}")
+    // print(tokenTypes)
+    log(s"Last input = $lastInput, ${lastInput(0).toInt}")
     while (lastInput.nonEmpty ||
         (getNext match {
           case Some(next) =>
-            println(s"Next = $next")
-            lastInput = new StringBuilder(next)
+            log(s"Next = $next")
+            lastInput = new StringBuilder().append(next)
             true
           case None => false
        })
@@ -66,7 +71,7 @@ case class Lexer(file: BufferedInputStream) {
       val (matched: Match[Char], tokenType: TokenType, pos: Position, acc: StringBuilder) =
         tryMatch(tokenTypes, offset, lastInput).getOrElse(
             throw BadCharacterError(lastInput.head), position.row, position.col, this.offset)
-      if (!tokenType.isInstanceOf[IgnoredTokenType]) {
+      if (true/*!tokenType.isInstanceOf[IgnoredTokenType]*/) {
         tokens.addOne(tokenType match {
           case textTokenType: FixedTextTokenType =>
             InvariantToken(
@@ -82,8 +87,8 @@ case class Lexer(file: BufferedInputStream) {
         })
       }
       this.position = pos.copy()
-      lastInput = acc
-      //println(matched)
+      lastInput = new StringBuilder(acc.substring(0))
+      log(s"Matched = $matched, lastInput=`$lastInput`")
     }
     end()
     tokens
@@ -95,6 +100,7 @@ case class Lexer(file: BufferedInputStream) {
       lastInput: StringBuilder
   ): Option[(Match[Char], TokenType, Position, StringBuilder)] = {
     val acc = StringBuilder(lastInput.toString)
+    log(s"Entering, acc=`$acc`")
 
     var lastMatch: (Match[Char], TokenType) = null
     var (lastMatchLength, currentLength) = (0, 1)
@@ -111,41 +117,41 @@ case class Lexer(file: BufferedInputStream) {
             TokenTypeUtil.tryMatch(tokenType, acc, currentPos.offset) match {
               case FullMatch(matched: Match[Char], couldMatchMore: Boolean) => 
                 {
-                  println(s"Full match! $matched, tokentype=$tokenType")
+                  log(s"Full match! $matched, tokentype=$tokenType")
                   if (lastMatchLength < currentLength) {
                     lastMatch = (matched, tokenType)
                     lastPos = currentPos.copy()
                     lastMatchLength = currentLength
-                    println(s"Setting to lastMatch, currentLength=$currentLength")
+                    log(s"Setting to lastMatch, currentLength=$currentLength")
                   }
                   if (couldMatchMore) possibleFutureMatches += tokenType
                 }
               case `NeedsMore` => possibleFutureMatches.addOne(tokenType)
               case res => {
-                if (res.isInstanceOf[PartialMatch[_]]) println(s"Partial match $res for tokentype=$tokenType")
+                if (res.isInstanceOf[PartialMatch[_]]) log(s"Partial match $res for tokentype=$tokenType")
                 possibleFutureMatches -= tokenType
                 if (lastMatch == res) lastMatch == null
               }
             }
       }
 
-      println(s"Possible future matches = $possibleFutureMatches\n")
+      log(s"Possible future matches = $possibleFutureMatches\n")
       if (possibleFutureMatches.isEmpty) {
         if (lastMatch == null)
           throw new Exception(
               s"""Bad character(s) "$acc" at start offset $origOffset, $lastPos"""
           )
         else {
-          println("Matched! Found=\"" + lastMatch._2 + "\"")
+          log("Matched! Found=\"" + lastMatch._2 + "\"")
           val matched = lastMatch._1
           acc.delete(0, matched.end - matched.start)
-          println(s"Acc = $acc")
+          log(s"Returning, acc = `$acc`")
           return Some((lastMatch._1, lastMatch._2, currentPos.copy(), acc))
         }
       } else {
         val next = getNext.getOrElse(throw new Exception("Unexpected end of file!"))
         acc.append(next)
-        print(s"Acc=$acc")
+        log(s"Acc with next=$acc")
         currentPos.offset += 1
         if (lastChar == '\r') {
           if (next != '\n') {
@@ -163,13 +169,36 @@ case class Lexer(file: BufferedInputStream) {
     }) {}
     None
   }
+
+  @throws[IOException]
+  def getNext: Option[Char] = {
+    val res = bis.read()
+    log(s"($res,${res.toChar})`")
+    if (res == -1) None else Some(res.toChar)
+  }
+
+  def end(): Unit = {
+    bis.close()
+    LOG.close()
+  }
+
+  private def log(msg: Any) = LOG.append(msg.toString).append('\n')
 }
 
 object Lexer {
   def tokenize(file: File): Iterable[Token] = {
-    val lexer = Lexer(new BufferedInputStream(new FileInputStream(file)))
-    val res = lexer.tokenize()
-    lexer.end()
-    res
+    val lexer = Lexer(file)
+    try {
+      return lexer.tokenize()
+    } catch {
+      case e: Exception => {
+        println("asdhfaksjdfhlaksjdhflakjsdhfkjashldfjkashdflkjashdf")
+        lexer.end()
+        throw e
+      }
+    } finally {
+      println("asdkfja;sldjf;askljdf")
+      lexer.end()
+    }
   }
 }

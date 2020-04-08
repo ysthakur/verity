@@ -148,17 +148,24 @@ object TokenTypeUtil {
   type Str = CharSequence & Iterable[Char]
 
   def tryMatch(tokenType: TokenType, input: StringBuilder, offset: Int): MatchResult = {
+    try {
     (tokenType match {
       case ftt: FixedTextTokenType => tryMatchText(ftt.text)
       case rtt: RegexTokenType => tryMatchRegex(rtt.regex)
     })(input, offset)
+    } catch {
+      case e: Exception => {
+        println(s"Caught exception, tokenType=$tokenType, input=$input")
+        throw e
+      }
+    }
   }
 
   def tryMatchText(text: String)(sb: StringBuilder, offset: Int): MatchResult = {
     val input = sb.toString
     val inputLen = input.size
     val size = text.size
-    if (size == text.size && text.matches(input))
+    if (size == text.size && text == input)
       return FullMatch(
         ExactMatch(input, TextRange(0, size)),
         couldMatchMore = false
@@ -167,18 +174,21 @@ object TokenTypeUtil {
       if (text.startsWith(input.toString)) return NeedsMore
     } else if (inputLen > size) {
       if (input.indexOf(text) == 0)
-        return PartialMatch(ExactMatch(input, 0, size))
+        return PartialMatch(ExactMatch(input, TextRange(0, size)))
     }
     NoMatch
   }
 
   def tryMatchRegex(regex: String)(input: CharSequence, start: Int): MatchResult = {
-    val pattern = java.util.regex.Pattern.compile(s"^$regex")
+    val pattern = java.util.regex.Pattern.compile(s"^$regex$$")
     val matcher = pattern.matcher(input)
+    if (input == " {" || regex == " {") {
+      println(s"Regex=$regex")
+    }
     try {
       if (matcher.matches()) {
-        if (regex == RegexTokenType.STR_LITERAL.regex) {
-          println("String full!")
+        if (regex == RegexTokenType.VALID_ID.regex) {
+          //println(s"VALID ID MATCH! requireEnd=${matcher.requireEnd}")
         }
         FullMatch(
           new RegexMatch(matcher.group(), 0, matcher.end),
@@ -188,9 +198,9 @@ object TokenTypeUtil {
       else if (matcher.find(0))
         PartialMatch(new RegexMatch(matcher.group(), 0, matcher.end))
       else if (matcher.hitEnd()) {
-        if (regex == RegexTokenType.STR_LITERAL.regex) {
-          println(s"String needs more! $matcher")
-        }
+        // if (regex == RegexTokenType.STR_LITERAL.regex) {
+        //   println(s"String needs more! $matcher")
+        // }
         NeedsMore
       } else NoMatch
     } catch {

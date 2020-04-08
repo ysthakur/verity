@@ -13,7 +13,7 @@ object Main extends App {
     //regex()
   val tokens = lex()
   //val ast    = parse(tokens)
-  println("AST = " + tokens)
+  //println("AST = " + tokens)
   //}
 
   // def parse(tokens: Iterable[Token]): Node = {
