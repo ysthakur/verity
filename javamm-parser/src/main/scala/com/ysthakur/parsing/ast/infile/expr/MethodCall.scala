@@ -1,5 +1,5 @@
-// package com.ysthakur.parsing.ast.infile.expr
+package com.ysthakur.parsing.ast.infile.expr
 
-// class MethodCall() extends Expr {
+abstract class MethodCall() extends Expr {
 
-// }
+}

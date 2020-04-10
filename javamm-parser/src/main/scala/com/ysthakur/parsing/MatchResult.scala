@@ -21,7 +21,7 @@ sealed trait MatchResult {
   def <(other: MatchResult): Boolean = other > this
   def <=(other: MatchResult): Boolean = other >= this
   def >=(other: MatchResult): Boolean = this > other || this == other
-  def higher(other: MatchResult): MatchResult = if (this < other) other else this
+  def higherOf(other: MatchResult): MatchResult = if (this < other) other else this
 }
 
 object MatchResult {

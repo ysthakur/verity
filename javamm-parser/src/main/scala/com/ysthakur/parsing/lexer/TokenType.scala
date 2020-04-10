@@ -5,6 +5,8 @@ import scala.collection.mutable
 import com.ysthakur.parsing.lexer._
 import com.ysthakur.parsing._
 
+import java.util.regex.{Pattern, Matcher}
+
 //TODO check all of the regexps
 /**
  *
@@ -13,7 +15,7 @@ import com.ysthakur.parsing._
  *                    or all tokens of this type have the same text
  */
 sealed trait TokenType(val textMatters: Boolean) {}
-trait ValidIdentifierTokenType
+trait ValidIdentifierTokenType extends TokenType
 trait FixedTextTokenType(val text: String) extends TokenType {
   override val textMatters: Boolean = false
 }
@@ -32,6 +34,8 @@ enum SymbolTokenType(symbol: String)
   case SEMICOLON extends SymbolTokenType(";")
   case COLONX2 extends SymbolTokenType("::")
   case COLON extends SymbolTokenType(":")
+  case PIPELINE extends SymbolTokenType("|>")
+  case RT_ARROW extends SymbolTokenType("->")
   case DOT extends SymbolTokenType(".")
   case LTEQ extends SymbolTokenType("<=")
   case GTEQ extends SymbolTokenType(">=")
@@ -47,6 +51,7 @@ enum SymbolTokenType(symbol: String)
   case OR extends SymbolTokenType("|")
   case CARET extends SymbolTokenType("^")
   case EXCL_MARK extends SymbolTokenType("!")
+  case TILDE extends SymbolTokenType("~")
   case PLUSX2 extends SymbolTokenType("++")
   case PLUS extends SymbolTokenType("+")
   case MINUSX2 extends SymbolTokenType("--")
@@ -130,7 +135,7 @@ enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] wi
   case CHAR_LITERAL extends RegexTokenType("""'([^\\']|\\.)'""")
   case STR_LITERAL extends RegexTokenType(""""(\\.|[^\\])*"""")
   case SINGLE_LINE_COMMENT extends RegexTokenType("""//.*?(\r\n|\r|\n)""") with IgnoredTokenType
-  case MULTILINE_COMMENT extends RegexTokenType("""/\*(.|\n)*?\*/""") with IgnoredTokenType
+  case MULTILINE_COMMENT extends RegexTokenType("""/\*(.|\n|\r\n|\r)*?\*/""") with IgnoredTokenType
 }
 
 object JMMTokenTypes {
@@ -151,6 +156,7 @@ object TokenTypeUtil {
     (tokenType match {
       case ftt: FixedTextTokenType => tryMatchText(ftt.text)
       case rtt: RegexTokenType => tryMatchRegex(rtt.regex)
+      case _ => throw new Error()
     })(input, offset)
   }
 
@@ -160,33 +166,36 @@ object TokenTypeUtil {
     val size = text.size
     if (size == text.size && text.matches(input))
       return FullMatch(
-        ExactMatch(input, TextRange(0, size)),
+        ExactMatch(input, TextRange(offset, offset + size)),
         couldMatchMore = false
       )
     else if (inputLen < size) {
       if (text.startsWith(input.toString)) return NeedsMore
     } else if (inputLen > size) {
       if (input.indexOf(text) == 0)
-        return PartialMatch(ExactMatch(input, 0, size))
+        return PartialMatch(ExactMatch(input, TextRange(offset, offset + size)))
     }
     NoMatch
   }
 
   def tryMatchRegex(regex: String)(input: CharSequence, start: Int): MatchResult = {
-    val pattern = java.util.regex.Pattern.compile(s"^$regex")
-    val matcher = pattern.matcher(input)
+    val pattern = java.util.regex.Pattern.compile(s"^$regex$$").asInstanceOf[Pattern]
+    val matcher = pattern.matcher(input).asInstanceOf[Matcher]
+    if (input == " {" || regex == " {") {
+      println(s"Regex=$regex")
+    }
     try {
       if (matcher.matches()) {
         if (regex == RegexTokenType.STR_LITERAL.regex) {
           println("String full!")
         }
         FullMatch(
-          new RegexMatch(matcher.group(), 0, matcher.end),
+          new RegexMatch(matcher.group().asInstanceOf[String], start, start + matcher.end.asInstanceOf[Int]),
           matcher.requireEnd()
         )
       }
       else if (matcher.find(0))
-        PartialMatch(new RegexMatch(matcher.group(), 0, matcher.end))
+        PartialMatch(new RegexMatch(matcher.group().asInstanceOf[String], start, start + matcher.end))
       else if (matcher.hitEnd()) {
         if (regex == RegexTokenType.STR_LITERAL.regex) {
           println(s"String needs more! $matcher")
