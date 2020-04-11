@@ -1,6 +1,6 @@
 package com.ysthakur.parsing
 
-import com.ysthakur.parsing.ast.Types._
+import com.ysthakur.parsing.ast._
 import com.ysthakur.parsing.parser._
 import com.ysthakur.util.as
 import com.ysthakur.util.utils
@@ -13,6 +13,7 @@ trait Match[+Input] {
   def end: Int
   def matched: Iterable[Input]
   val textRange: TextRange = TextRange(start, end)
+  def pattern: Pattern = ???
 }
 
 // object Match {
@@ -26,7 +27,7 @@ trait Match[+Input] {
 // }
 
 class PatternMatch[Input](
-    pattern: Pattern,
+    override val pattern: Pattern,
     override val matched: Iterable[Input],
     override val start: Int,
     override val end: Int
@@ -50,6 +51,12 @@ object PatternMatch {
       end: Int
   ): PatternMatch[Input] =
     new PatternMatch(pattern, matched, start, end)
+}
+
+case class ConsMatch[I1, I2](m1: Match[I1], m2: Match[I2]) extends Match[? >: I1 with I2] {
+  override def start: Int = m1.start
+  override def end: Int = m2.start
+  override lazy val matched = m1.matched ++ m2.matched 
 }
 
 // case class PatternWithMatch[P <: Pattern, M <: Match[_]]

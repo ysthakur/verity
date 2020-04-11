@@ -1,26 +1,49 @@
 package com.ysthakur
 
-import java.io.{BufferedInputStream, File, FileInputStream}
+import java.io.{BufferedInputStream, File, FileInputStream, FileWriter}
 import java.util.regex.Pattern
 
 import com.ysthakur.parsing.ast.Node
-import com.ysthakur.parsing.lexer.{JMMTokenTypes, Lexer, Token}
+import com.ysthakur.parsing.lexer.{JMMTokenTypes, Lexer, Token, SymbolTokenType, RegexTokenType, KeywordTokenType}
 // import com.ysthakur.parsing.parser.Parser
 
-object Main extends App {
+object Main /*extends App*/ {
 
-  //def main(args: Array[String]): Unit = {
-    //regex()
-  val tokens = lex()
-  //val ast    = parse(tokens)
-  //println("AST = " + tokens)
-  //}
+  def main(args: Array[String]): Unit = {
+    val f = new File(new File("").getAbsolutePath + "\\output")
+    f.createNewFile()
+    val writer = new FileWriter(f)
+    //writer.write("package com.ysthakur.parsing.parser\n\nimport scala.util.parsing.combinator.RegexParsers\n\nclass NewLexer extends RegexParsers {\n")
+    writer.write("")
+    val tri = "\"\"\""
+    for (symbol <- SymbolTokenType.values) {
+      //if (symbol == null) throw new Error()
+      writer.write("\nobject " + symbol.name + " extends SymbolTokenType(" + tri + symbol.text + tri + ")")
+    }
+    writer.write("}")
+    writer.close()
+    
+    //val tokens = lex()
+    //val ast    = parse(tokens)
+    //println("AST = " + tokens)
+  }
+  
+  def makeDef(name: String|UncheckedNull, body: String): String = {
+    new StringBuilder("def ")
+        .append(name.toLowerCase)
+        .append(": Parser[")
+        .append(name.toUpperCase)
+        .append("] = {\n    ")
+        .append(body)
+        .append("\n  }")
+        .toString
+  }
 
   // def parse(tokens: Iterable[Token]): Node = {
   //   Parser.createAST(tokens)
   // }
 
-  def lex(): Iterable[Token] = {
+  def lex(): Iterable[Token[?]] = {
     val file = new File(
         "C:\\Users\\thaku\\javamm-scala\\javamm-parser\\src\\test\\resources\\lexertest"
     )
@@ -47,62 +70,7 @@ object Main extends App {
   // }
 
 }
-
-    /**
- * Keywords that cannot be used as valid identifiers
- */
-   /* val reservedKeywords = List(
-        "import",
-        "package",
-        "public",
-        "private",
-        "protected",
-        "super",
-        "default",
-        "extends",
-        "static",
-        "abstract",
-        "final",
-        "native",
-        "transient",
-        "volatile",
-        "synchronized",
-        "const",
-        "switch",
-        "case",
-        "while",
-        "for",
-        "if",
-        "else",
-        "var",
-        "class",
-        "trait",
-        "enum",
-        "where",
-        "throws",
-        "implies",
-        "assert",
-        "new",
-        "continue",
-        "break",
-        "throw",
-        "return",
-        "as",
-        "is",
-        "null",
-        "true",
-        "false",
-        "with",
-        "bool",
-        "byte",
-        "short",
-        "int",
-        "char",
-        "float",
-        "double",
-        "long",
-        "void"
-    )
+/*
     val f = new File(new File("").getAbsolutePath + "\\output")
     f.createNewFile()
     val writer = new FileWriter(f)

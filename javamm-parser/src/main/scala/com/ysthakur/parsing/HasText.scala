@@ -1,7 +1,7 @@
 package com.ysthakur.parsing
 
 trait HasText {
-  def text: String
+  def text: CharSequence
   def startOffset: Int
   def endOffset: Int
 }
