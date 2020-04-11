@@ -1,8 +1,7 @@
 package com.ysthakur.parsing.lexer
 
-import com.ysthakur.parsing.HasText
 import com.ysthakur.parsing.ast.Node
-import com.ysthakur.parsing.{ExactMatch, Match}
+import com.ysthakur.parsing.{ExactMatch, HasText, Match}
 
 /**
   *
@@ -10,11 +9,18 @@ import com.ysthakur.parsing.{ExactMatch, Match}
   * @param startOffset The index in the file where this token starts
   * @param endOffset The index in the file <em>before</em> which this token ends
   */
-sealed abstract class Token(val tokenType: TokenType,
-                     val startOffset: Int,
-                     val endOffset: Int) extends Node with HasText
+sealed abstract class Token[+T <: TokenType](
+    val tokenType: T,
+    val startOffset: Int,
+    val endOffset: Int
+) extends Node
+    with HasText {
+  def text: String
+}
 
 object Token {
+  def isValidId(token: Token[?]): Boolean = 
+    token.tokenType.isInstanceOf[ValidIdentifierTokenType]
 }
 
 /**
@@ -22,11 +28,11 @@ object Token {
   *
   * @param tokenType
   */
-case class InvariantToken(
-    override val tokenType: FixedTextTokenType,
+case class InvariantToken[+F <: FixedTextTokenType](
+    override val tokenType: F,
     override val startOffset: Int = -1,
     override val endOffset: Int = -1
-) extends Token(tokenType, startOffset, endOffset) {
+) extends Token[F](tokenType, startOffset, endOffset) {
   override val text: String = tokenType.text
 }
 
@@ -35,9 +41,9 @@ case class InvariantToken(
   *
   * @param tokenType
   */
-case class VariantToken(
-    override val tokenType: RegexTokenType,
+case class VariantToken[+R <: RegexTokenType](
+    override val tokenType: R,
     override val text: String,
     override val startOffset: Int,
-    override val endOffset: Int,
-) extends Token(tokenType, startOffset, endOffset)
+    override val endOffset: Int
+) extends Token[R](tokenType, startOffset, endOffset)

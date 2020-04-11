@@ -6,6 +6,7 @@ name := projectName
 version in ThisBuild := jmmVersion
 organization in ThisBuild := "com.ysthakur"
 scalaVersion in ThisBuild := dottyVersion
+mainClass in (Compile, run) := Some("com.ysthakur.Main")
 
 lazy val root = project
     .in(file("."))
@@ -21,7 +22,7 @@ lazy val root = project
 lazy val `javamm-parser` =
   (project in file("javamm-parser")).settings(
     name := "javamm-parser",
-    //libraryDependencies ++= commonDependencies,
+    libraryDependencies += "org.scala-lang.modules" % "scala-parser-combinators_2.13" % "1.1.2",
     scalacOptions ++= commonScalacOptions
   )
 
@@ -33,5 +34,6 @@ lazy val libDeps = Seq(
 
 lazy val commonScalacOptions = Seq(
   "-language:implicitConversions",
-  "-explain"
+  "-explain",
+  "-Yexplicit-nulls"
 )

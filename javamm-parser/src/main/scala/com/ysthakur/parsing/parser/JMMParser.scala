@@ -1,4 +1,34 @@
-// package com.ysthakur.parsing.parser
+package com.ysthakur.parsing.parser
+
+import com.ysthakur.parsing.ast.Types._
+import com.ysthakur.parsing.ast._
+import com.ysthakur.parsing.lexer.{Token, TokenType, ValidIdentifierTokenType, VariantToken}
+
+import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.input.{NoPosition, Position, Reader}
+
+type Tok = Token[TokenType]
+
+object JMMParser extends Parsers {
+  override type Elem = Node
+  
+  private def validId: Parser[ValidIdNode] = Parser(
+    (input: Input) => {
+      input.first match {
+        case tok: Token[?] => if (Token.isValidId(tok))
+          Success(ValidIdNode(tok.asInstanceOf[Token[ValidIdentifierTokenType]]), input.rest)
+        else Failure("Not a valid identifier", input)
+        case _ => Failure("Not a token, much less a valid identifier", input)
+      }
+    })
+}
+
+class JMMReader(tokens: Seq[Tok]) extends Reader[Token[TokenType]] {
+  override def first: Tok = tokens.head
+  override def atEnd: Boolean = tokens.isEmpty
+  override def pos: Position = NoPosition
+  override def rest: Reader[Tok] = new JMMReader(tokens.tail)
+}
 
 // import com.ysthakur.parsing.ast.Types.Node
 // import com.ysthakur.parsing.grammar.{ConsPattern, LexerOrParser, LexerOrParserHelper, toState}

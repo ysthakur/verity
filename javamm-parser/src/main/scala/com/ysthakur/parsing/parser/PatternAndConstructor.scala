@@ -1,6 +1,6 @@
 package com.ysthakur.parsing.parser
 
-import com.ysthakur.parsing.ast.Types._
+import com.ysthakur.parsing.ast._
 import com.ysthakur.parsing._
 
 case class PatternAndConstructor[M <: Match[?], N <: Node](
@@ -12,10 +12,11 @@ case class PatternAndConstructor[M <: Match[?], N <: Node](
 
   override val isFixed: Boolean = pattern.isFixed
   override val isEager: Boolean = pattern.isEager
-  override def tryMatch(input: Iterable[Input], offset: Int): MatchResult =
-    pattern.tryMatch(input, offset)
+  override def tryMatch(input: Iterable[Input], offset: Int, trace: Trace): MatchResult =
+    pattern.tryMatch(input, offset, trace)
   override def create(matched: MatchIn): this.AsNode = ctor(matched.asInstanceOf)
-  override def tryCreate(input: Iterable[Input], offset: Int): Either[MatchResult, this.AsNode] = ???
+  // override def copy: PatternAndConstructor[M, N] = PatternAndConstructor(pattern, ctor)
+  // override def tryCreate(input: Iterable[Input], offset: Int): (MatchResult, scala.Option[this.AsNode]) = ???
 }
 
 // case class ApplicablePattern[P <: Pattern](pattern: P) {
