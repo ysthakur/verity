@@ -35,10 +35,6 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
   def end(): Unit = {
     file.close()
   }
-  
-  def log(s: String): Unit = {
-    LOG.write(s)
-  }
 
   /**
     * The last match it had. Includes the [[com.ysthakur.parsing.grammar.PatternCase]] and the text
@@ -185,18 +181,6 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
       possibleFutureMatches.nonEmpty
     }) {}
     None
-  }
-
-  @throws[IOException]
-  def getNext: Option[Char] = {
-    val res = bis.read()
-    log(s"($res,${res.toChar})`")
-    if (res == -1) None else Some(res.toChar)
-  }
-
-  def end(): Unit = {
-    bis.close()
-    LOG.close()
   }
 
   private def log(msg: Any) = LOG.append(msg.toString).append('\n')

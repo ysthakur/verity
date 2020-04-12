@@ -12,11 +12,11 @@ case class PatternAndConstructor[M <: Match[?], N <: Node](
 
   override val isFixed: Boolean = pattern.isFixed
   override val isEager: Boolean = pattern.isEager
-  override def tryMatch(input: Iterable[Input], offset: Int, trace: Trace): MatchResult =
+  override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult =
     pattern.tryMatch(input, offset, trace)
   override def create(matched: MatchIn): this.AsNode = ctor(matched.asInstanceOf)
   // override def copy: PatternAndConstructor[M, N] = PatternAndConstructor(pattern, ctor)
-  // override def tryCreate(input: Iterable[Input], offset: Int): (MatchResult, scala.Option[this.AsNode]) = ???
+  // override def tryCreate(input: Iterable[Node], offset: Int): (ParseResult, scala.Option[this.AsNode]) = ???
 }
 
 // case class ApplicablePattern[P <: Pattern](pattern: P) {

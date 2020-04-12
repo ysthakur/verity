@@ -15,7 +15,7 @@
 //     */
 //   override val isFixed: Boolean = false
 
-//   override def tryMatch(input: Iterable[Node]): MatchResult = {
+//   override def tryMatch(input: List[Node]): ParseResult = {
 //     if (input.size < 1) return NeedsMore()
 //     input.head match {
 //       case node: Node =>

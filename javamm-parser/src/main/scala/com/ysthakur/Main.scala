@@ -10,7 +10,7 @@ import com.ysthakur.parsing.lexer.{JMMTokenTypes, Lexer, Token, SymbolTokenType,
 object Main /*extends App*/ {
 
   def main(args: Array[String]): Unit = {
-    val f = new File(new File("").getAbsolutePath + "\\output")
+    /*val f = new File(new File("").getAbsolutePath + "\\output")
     f.createNewFile()
     val writer = new FileWriter(f)
     //writer.write("package com.ysthakur.parsing.parser\n\nimport scala.util.parsing.combinator.RegexParsers\n\nclass NewLexer extends RegexParsers {\n")
@@ -21,7 +21,7 @@ object Main /*extends App*/ {
       writer.write("\nobject " + symbol.name + " extends SymbolTokenType(" + tri + symbol.text + tri + ")")
     }
     writer.write("}")
-    writer.close()
+    writer.close()*/
     
     //val tokens = lex()
     //val ast    = parse(tokens)

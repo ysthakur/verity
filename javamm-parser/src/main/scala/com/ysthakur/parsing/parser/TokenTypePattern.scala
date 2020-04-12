@@ -1,29 +1,28 @@
 package com.ysthakur.parsing.parser
 
 import com.ysthakur.parsing._
-import com.ysthakur.parsing.lexer.{TokenType, Token}
+import com.ysthakur.parsing.ast.Node
+import com.ysthakur.parsing.lexer._
 
 case class TokenTypePattern(val tokenType: TokenType) extends Pattern {
-    override type AsNode = Token[TokenType]
-    override type Input = Token[TokenType]
-    type Tok = Token[tokenType.type]
+  override type AsNode = Token[TokenType]
+  //override type Input <: Token[TokenType]
+  type Tok = Token[tokenType.type]
 
-    override val isEager: Boolean = false
-    override val isFixed: Boolean = true
-    override def tryMatch(input: Iterable[Token[?]], offset: Int, trace: Trace): MatchResult = {
-        if (input.size < 1)
-            NeedsMore
-        else if (input.head.tokenType == tokenType) {
-            val matched = SingleMatch[Tok](input.head.asInstanceOf[Tok], offset)
-            if (input.size > 1) PartialMatch[Tok](matched)
-            else FullMatch[Tok](matched, false)
-        } else NoMatch
+  override val isEager: Boolean = false
+  override val isFixed: Boolean = true
+  override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult = {
+    input.head match {
+      case token: Token[?] => if (token.tokenType == tokenType) 
+          return Matched(token, input.tail, token.endOffset)
     }
-    override def create(matched: MatchIn): this.AsNode = {
-        ???
-    }
-    // override def tryCreate(input: Iterable[Input], offset: Int): (MatchResult, scala.Option[this.AsNode]) = ???
+    Failed
+  }
+  override def create(matched: MatchIn): this.AsNode = {
+    ???
+  }
+  // override def tryCreate(input: Iterable[Node], offset: Int): (ParseResult, scala.Option[this.AsNode]) = ???
 }
 
 implicit def toTokenTypePattern(tokenType: TokenType): TokenTypePattern =
-    TokenTypePattern(tokenType)
+TokenTypePattern(tokenType)

@@ -21,6 +21,8 @@ sealed abstract class Token[+T <: TokenType](
 object Token {
   def isValidId(token: Token[?]): Boolean = 
     token.tokenType.isInstanceOf[ValidIdentifierTokenType]
+  def unapply[T <: TokenType](arg: Token[T]): Option[(T, Int, Int)] = 
+    Some(arg.tokenType, arg.startOffset, arg.endOffset)
 }
 
 /**

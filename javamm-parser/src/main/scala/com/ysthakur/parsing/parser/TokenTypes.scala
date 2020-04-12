@@ -1,3 +1,4 @@
+/*
 package com.ysthakur.parsing.parser
 
 sealed trait TokenType
@@ -46,4 +47,4 @@ object EXCL_MARK extends SymbolTokenType("""!""")
 object AND extends SymbolTokenType("""&""")
 object MODULO extends SymbolTokenType("""%""")
 object MINUSX2 extends SymbolTokenType("""--""")
-object NOTEQ extends SymbolTokenType("""!=""")
+object NOTEQ extends SymbolTokenType("""!=""")*/

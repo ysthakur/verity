@@ -7,6 +7,7 @@ import com.ysthakur.util.as
 import com.ysthakur.util.utils
 
 import scala.collection.mutable.ListBuffer
+/*
 
 class CompositePattern[I <: Node](
     patterns_ : Iterable[Pattern] = Iterable.empty,
@@ -22,21 +23,21 @@ class CompositePattern[I <: Node](
 
   override val isFixed: Boolean = patterns.forall(_.isFixed)
 
-  // override def tryCreate(input: Iterable[Input], offset: Int): (MatchResult, scala.Option[this.AsNode]) = ???
-  // override def -[T <: Input](other: Pattern): CompositePattern[Input] = {
+  // override def tryCreate(input: Iterable[Node], offset: Int): (ParseResult, scala.Option[this.AsNode]) = ???
+  // override def -[T <: Input](other: Pattern): CompositePattern[Node] = {
   //   new CompositePattern(other match {
-  //     case x: CompositePattern[Input] =>
+  //     case x: CompositePattern[Node] =>
   //       patterns.concat[Pattern](x.patterns)
   //     case _ => patterns.appended[Pattern](other.asInstanceOf)
   //   })
   // }
 
-  override def tryMatch(input: Iterable[this.Input], offset: Int, trace: Trace): MatchResult = {
+  override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult = {
     val matches = ListBuffer[PatternMatch[Input]]()
     var currentOffset = 0
     var lastCouldMatchMore = false
     for (pattern <- patterns) {
-      pattern.tryMatch(input.asInstanceOf, offset, trace :+ this) match {
+      pattern.tryMatch(input.asInstanceOf, offset, trace) match {
         case FullMatch(matched, couldMatchMore) => {
           matches.addOne(PatternMatch(pattern, matched.matched.asInstanceOf[Iterable[Input]], matched.start, matched.end))
           lastCouldMatchMore = couldMatchMore
@@ -50,7 +51,8 @@ class CompositePattern[I <: Node](
         case x => return x
       }
     }
-    val match_ : Match[Input] = CompositeMatch(matches.toList)
+    //TODO FIX THIS!!!!!!!
+    val match_ : Match[Node] = null.asInstanceOf//CompositeMatch(matches.toList)
     if (currentOffset < input.size) PartialMatch(match_)
     else FullMatch(match_, lastCouldMatchMore)
   }
@@ -59,3 +61,4 @@ class CompositePattern[I <: Node](
   // override def copy: this.type = ???
   override def create(matched: MatchIn): AsNode = ???
 }
+*/
