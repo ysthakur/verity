@@ -1,9 +1,9 @@
-package com.ysthakur.parsing
+package com.ysthakur.parsing.lexer
 
-import math.Ordered.orderingToOrdered
-import math.Ordering.Implicits.infixOrderingOps
+import com.ysthakur.parsing.{Match, MatchResult}
 
-import com.ysthakur.parsing.Match
+import scala.math.Ordered.orderingToOrdered
+import scala.math.Ordering.Implicits.infixOrderingOps
 
 /**
   * Represents a range of text (or anything else, really).

@@ -5,7 +5,7 @@ import com.ysthakur.parsing.ast._
 import com.ysthakur.parsing.ast.infile.TextNode
 import com.ysthakur.parsing.lexer._
 
-case class Operator(
+case class Op(
     symbol: SymbolTokenType,
     override val startOffset: Int,
     override val endOffset: Int
