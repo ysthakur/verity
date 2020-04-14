@@ -1,4 +1,4 @@
-package com.ysthakur.parsing.parser
+/*package com.ysthakur.parsing.parser
 
 import com.ysthakur.parsing._
 import com.ysthakur.parsing.ast._
@@ -7,7 +7,7 @@ import com.ysthakur.util.as
 import com.ysthakur.util.utils
 
 import scala.collection.mutable.ListBuffer
-/*
+
 
 class CompositePattern[I <: Node](
     patterns_ : Iterable[Pattern] = Iterable.empty,

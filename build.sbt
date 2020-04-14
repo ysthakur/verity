@@ -34,6 +34,6 @@ lazy val libDeps = Seq(
 
 lazy val commonScalacOptions = Seq(
   "-language:implicitConversions",
-  "-explain",
-  "-Yexplicit-nulls"
+  "-explain"/*,
+  "-Yexplicit-nulls"*/
 )

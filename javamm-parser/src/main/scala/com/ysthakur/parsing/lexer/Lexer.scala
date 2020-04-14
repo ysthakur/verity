@@ -82,19 +82,12 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
       val (matched: Match[Char], tokenType: TokenType, pos: Position, acc: StringBuilder) =
         tryMatch(tokenTypes, offset, lastInput).getOrElse(
             throw BadCharacterError(lastInput.head), position.row, position.col, this.offset)
-      if (true/*!tokenType.isInstanceOf[IgnoredTokenType]*/) {
+      if (!tokenType.isInstanceOf[IgnoredTokenType]) {
         tokens.addOne(tokenType match {
           case textTokenType: FixedTextTokenType =>
-            InvariantToken(
-              textTokenType,
-              matched.start,
-              matched.end)
+            InvariantToken(textTokenType)
           case regexTokenType: RegexTokenType =>
-            VariantToken(
-              regexTokenType,
-              matched.matched.toString,
-              matched.start,
-              matched.end)
+            VariantToken(regexTokenType, matched.matched.toString)
         })
       }
       this.position = pos.copy()
@@ -125,7 +118,7 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
     while ({
       breakable {
           for (tokenType <- tokenTypes)
-            TokenTypeUtil.tryMatch(tokenType, acc, currentPos.offset) match {
+            TokenType.tryMatch(tokenType, acc, currentPos.offset) match {
               case FullMatch(matched: Match[Char], couldMatchMore: Boolean) => 
                 {
                   log(s"Full match! $matched, tokentype=$tokenType")

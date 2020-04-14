@@ -1,16 +1,15 @@
 package com.ysthakur.parsing.parser
 
 import com.ysthakur.parsing._
+import com.ysthakur.parsing.ast.Types._
 import com.ysthakur.parsing.ast._
-import com.ysthakur.parsing.ast.infile.ValidIdNode
-import com.ysthakur.parsing.ast.infile.expr._
 import com.ysthakur.parsing.lexer.KeywordTokenType._
 import com.ysthakur.parsing.lexer.RegexTokenType._
 import com.ysthakur.parsing.lexer.SymbolTokenType._
+import com.ysthakur.parsing.lexer.TokenType._
 import com.ysthakur.parsing.lexer._
 import com.ysthakur.parsing.parser.Pattern.{*, -, ||}
 import com.ysthakur.parsing.parser.{-, ||}
-import com.ysthakur.util._
 
 import scala.language.postfixOps
 
@@ -21,15 +20,25 @@ private object ParserPatterns {
 
   val opCtor = (op: Token[SymbolTokenType]) => Op(op)
   
-  val root = null
-  
-  val unaryPreOp = PLUSX2 | MINUSX2 | MINUS | EXCL_MARK >> opCtor
+  val root: Pattern = "importStatement"
+  val EOL: Pattern = SEMICOLON
+  val unaryPreOp = PLUSX2 | MINUSX2 | MINUS | EXCL_MARK | TILDE >> opCtor
   val unaryPostOp = PLUSX2 | MINUSX2 >> opCtor
   val identifier = FunctionPattern(
-    (input: List[Node], _) => input.head match {
-      case token@Token(tt: ValidIdentifierTokenType, _, _) => 
-        Matched(ValidIdNode(token), input.tail, token.endOffset)
+    (input: List[Node], offset: Int) => input.head match {
+      case token@Token(tt: ValidIdentifierTokenType) => 
+        Matched(ValidIdNode(token), input.tail, offset + token.text.length)
     })
+  val dotReference = identifier - ((DOT - identifier)*) >> {
+    case validId - (nodeList: NodeList[?]) =>
+      DotRef(validId :: nodeList.nodes.map(
+        _.asInstanceOf[ConsNode[?, ValidIdNode]].n2
+      ).toList)
+  }
+  val importStatement = IMPORT - dotReference - ((DOT - STAR)?) >> {
+    case impt - ref - star => ???
+  }
+  
   "unaryExpr" :=
     ("expr" - unaryPostOp) | (unaryPreOp - "expr") >> {
       case preExpr || postExpr => {
@@ -39,22 +48,44 @@ private object ParserPatterns {
         }
       }
     }
-  "dotReference" := "validId" - ((DOT - "validId")*) >> {
-    case validId - (nodeList: NodeList[?]) =>
-      DotRef(validId :: nodeList.nodes.map(
-        _.asInstanceOf[ConsNode[?, ValidIdNode]].n2
-      ).toList)
-  }
-  "dotChainedExpr" := "expr" - DOT - "validId" >> {
+  
+  "binaryExpr" := 
+      infix(STAR | FWDSLASH | MODULO)
+      | infix(PLUS | MINUS)
+      | infix(LTX2 | GTX2 | GTX3)
+      | infix(LT | LTEQ | GT | GTEQ)
+      | infix(EQX2 | NOTEQ)
+      | infix(AND)
+      | infix(CARET)
+      | infix(OR)
+      | infix(ANDX2)
+      | infix(ORX2)
+  
+  "dotSelect" := "expr" - DOT - identifier >> {
     case expr - dot - validId => DotChainedExpr(expr, validId)
   }
+  "parenExpr" := LPAREN - "expr" - RPAREN >> { case lparen - expr - rparen => expr }
+  "arrayAccess" := "expr" - LSQUARE - "expr" - RSQUARE
   "expr" :=
     PatternClass[Expr](
       identifier,
+      "parenExpr",
+      "arrayAccess",
+      "dotSelect",
       "unaryExpr",
-      "dotReference",
-      "dotChainedExpr")
+      "binaryExpr")
 
+  "assignment" := "expr" - ((PLUS | MINUS | STAR | FWDSLASH | MODULO)?) - EQ - "expr" - EOL >> {
+    case variable - op - eq - expr - eol => ???
+  }
+  
+  /**
+    * turn into an infix expression
+    * @param pattern
+    * @return
+    */
+  def infix(pattern: Pattern): Pattern = "expr" - pattern - "expr"
+  
   implicit def c[T <: Node](n: Node): T = n.asInstanceOf[T]
   
   def [M <: Match[_], N <: Node](p: Pattern) >> (ctor: M => N): PatternAndConstructor[M, N] =

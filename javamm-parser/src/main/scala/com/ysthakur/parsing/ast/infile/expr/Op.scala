@@ -13,9 +13,9 @@ import com.ysthakur.parsing.lexer._
   */
 case class Op(
     symbol: Token[SymbolTokenType]
-) extends TextNode {
+) extends Node with HasText {
   def isBinary: Boolean = ???
-  override def text: String = symbol.text
+  override def text: String = symbol.text/*
   override def startOffset: Int = symbol.startOffset
-  override def endOffset: Int = symbol.endOffset
+  override def endOffset: Int = symbol.endOffset*/
 }

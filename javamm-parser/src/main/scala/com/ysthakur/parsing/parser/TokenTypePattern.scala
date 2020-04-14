@@ -14,7 +14,7 @@ case class TokenTypePattern(val tokenType: TokenType) extends Pattern {
   override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult = {
     input.head match {
       case token: Token[?] => if (token.tokenType == tokenType) 
-          return Matched(token, input.tail, token.endOffset)
+          return Matched(token, input.tail, offset + token.text.size)
     }
     Failed
   }

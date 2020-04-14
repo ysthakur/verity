@@ -34,7 +34,7 @@ trait Pattern {
   
   // def copy: this.type
   def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult
-  def create(matched: MatchIn): this.AsNode
+  def create(matched: MatchIn): this.AsNode = ???
 
   /*final def tryCreate(input: Iterable[this.Input], offset: Int, trace: Trace): (ParseResult, Option[this.AsNode]) = {
     val matchres = tryMatch(input, offset, trace)
@@ -62,6 +62,7 @@ trait Pattern {
 
   def * : Pattern  = RepeatPattern(this, isEager = true)
   def *? : Pattern = RepeatPattern(this, isEager = false)
+  def ? : Pattern = MaybePattern(this)
 
   def Extends(superPattern: PatternClass[?]): this.type = {
     this.superPattern = superPattern
@@ -208,10 +209,18 @@ case class OrPattern[+T1 <: Pattern, +T2 <: Pattern](p1: T1, p2: T2)
   //override def copy: OrPattern[T1, T2] = OrPattern(p1.copy, p2.copy)
 }
 
+case class MaybePattern(pattern: Pattern) extends Pattern {
+  override val isEager: Boolean = false
+  override val isFixed: Boolean = false
+  override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult =
+    pattern.tryMatch(input, offset, trace)
+        .orElse(Matched(null, input, offset))
+}
+
 /**
   *
   */
-case class RepeatPattern (
+case class RepeatPattern(
     pattern: Pattern,
     override val isEager: Boolean
 ) extends Pattern {

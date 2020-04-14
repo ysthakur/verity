@@ -28,7 +28,7 @@ object Main /*extends App*/ {
     //println("AST = " + tokens)
   }
   
-  def makeDef(name: String|UncheckedNull, body: String): String = {
+  def makeDef(name: String /*|UncheckedNull*/, body: String): String = {
     new StringBuilder("def ")
         .append(name.toLowerCase)
         .append(": Parser[")

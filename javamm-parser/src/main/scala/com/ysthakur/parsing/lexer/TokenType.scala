@@ -37,6 +37,9 @@ enum SymbolTokenType(symbol: String)
   case PIPELINE extends SymbolTokenType("|>")
   case RT_ARROW extends SymbolTokenType("->")
   case DOT extends SymbolTokenType(".")
+  case LTX2 extends SymbolTokenType("<<")
+  case GTX3 extends SymbolTokenType(">>>")
+  case GTX2 extends SymbolTokenType(">>")
   case LTEQ extends SymbolTokenType("<=")
   case GTEQ extends SymbolTokenType(">=")
   case EQX3 extends SymbolTokenType("===")
@@ -148,9 +151,13 @@ object JMMTokenTypes {
 }
 
 
-object TokenTypeUtil {
+object TokenType {
 
   type Str = CharSequence & Iterable[Char]
+  
+  export com.ysthakur.parsing.lexer.SymbolTokenType._
+  export com.ysthakur.parsing.lexer.RegexTokenType._
+  export com.ysthakur.parsing.lexer.KeywordTokenType._
 
   def tryMatch(tokenType: TokenType, input: StringBuilder, offset: Int): MatchResult = {
     try {

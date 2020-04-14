@@ -3,8 +3,7 @@ package com.ysthakur.parsing
 import com.ysthakur.parsing.ast._
 import com.ysthakur.parsing.lexer.TextRange
 import com.ysthakur.parsing.parser._
-import com.ysthakur.util.as
-import com.ysthakur.util.utils
+import com.ysthakur.util.{as, utils}
 
 import scala.language.implicitConversions
 
@@ -58,7 +57,7 @@ object PatternMatch {
     new PatternMatch(pattern, matched, start, end)
 }
 
-case class ConsMatch[I1 <: Match[_], I2 <: Match[_]](m1: I1, m2: I2) 
+case class ConsMatch[I1 <: Match[_], I2 <: Match[_]](m1: I1, m2: I2)
     extends Match[? >: m1.I with m2.I] {
   override def start: Int = m1.start
   override def end: Int = m2.start
