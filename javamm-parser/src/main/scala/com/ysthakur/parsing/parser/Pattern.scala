@@ -27,7 +27,7 @@ trait Pattern {
     */
   def isFixed: Boolean
   def isEager: Boolean
-  var superPattern: PatternClass[?]|Null = null
+  //var superPattern: PatternClass[?]|Null = null
   
   def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult
   def create(matched: ParseResult): this.AsNode = ???
@@ -49,14 +49,21 @@ trait Pattern {
   def *? : Pattern = RepeatPattern(this, isEager = false)
   def ? : Pattern = MaybePattern(this)
 
-  def Extends(superPattern: PatternClass[?]): this.type = {
-    this.superPattern = superPattern
-    this
-  }
+//  def Extends(superPattern: PatternClass[?]): this.type = {
+//    this.superPattern = superPattern
+//    this
+//  }
 
-  def doesExtend(superPattern: PatternClass[?]): Boolean = this.superPattern == superPattern
-  def subOf(other: Pattern): Boolean = this.superPattern == other
+  //def doesExtend(superPattern: PatternClass[?]): Boolean = this.superPattern == superPattern
+  //def subOf(other: Pattern): Boolean = this.superPattern == other
   def ==(other: Pattern): Boolean = ???
+
+  /**
+    * Print this when it doesn't match
+    * @return
+    */
+  def expected(prevRes: ParseResult): List[String] // = List.empty
+  def headOrEmpty[T](it: Iterable[T]): Any = if (it.isEmpty) "nothing" else it.head
 }
 
 trait MultiPattern extends Pattern {
@@ -90,6 +97,8 @@ case class NamedPattern[+I <: Node, +N <: Node](name: String) extends Pattern {
       case e: Throwable => throw new Error(s"Exception in pattern $name", e)
     }
   }
+
+  override def expected(prevRes: ParseResult): List[String] = pattern.expected(prevRes)
   
   override def canEqual(that: Any): Boolean = that.isInstanceOf[NamedPattern[?, ?]]
   override def equals(obj: Any): Boolean = obj match {
@@ -127,10 +136,18 @@ case class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, p2: T2)
       case Matched(create, rest, offset) => p2.tryMatch(rest, offset, trace) match {
         case Matched(create2, rest2, offset2) => 
           Matched(ConsNode(create(), create2()), rest2, offset2)
-        case _ => Failed()
+        case _ => Failed(headOrEmpty(rest), p2.expected(match1))
       }
-      case _ => Failed()
+      case _ => {
+        val head = headOrEmpty(input)
+        Failed(head, p1.expected(Failed(head, List.empty)))
+      }
     }
+  }
+
+  override def expected(prevRes: ParseResult): List[String] = prevRes match {
+    case f: Failed => p1.expected(prevRes)
+    case m: Matched[?, ?] => p2.expected(Failed(m.rest, List.empty))
   }
 }
 
@@ -143,10 +160,12 @@ case class OrPattern[+T1 <: Pattern, +T2 <: Pattern](p1: T1, p2: T2)
   override def isEager: Boolean = p1.isEager || p2.isEager
   override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult = {
     p1.tryMatch(input, offset, trace) match {
-      case Failed(msg) => p2.tryMatch(input, offset, trace)
+      case Failed(_) => p2.tryMatch(input, offset, trace)
       case m => m
     }
   }
+  override def expected(prevRes: ParseResult): List[String] = 
+    p1.expected(prevRes) ++ p2.expected(prevRes)
 }
 
 case class MaybePattern(pattern: Pattern) extends Pattern {
@@ -155,6 +174,7 @@ case class MaybePattern(pattern: Pattern) extends Pattern {
   override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult =
     pattern.tryMatch(input, offset, trace)
         .orElse(new Matched(() => null, input, offset, true))
+  override def expected(prevRes: ParseResult): List[String] = "nothing" :: pattern.expected(prevRes)
 }
 
 /**
@@ -175,25 +195,31 @@ case class RepeatPattern(
   override val isFixed: Boolean = false
   
   override final def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult = {
+    tryMatch(input, offset, trace, 0, Matched.empty(input, Some(this)))
+  }
+
+  private def tryMatch(input: List[Node], offset: Int, trace: Trace, depth: Int, prevRes: ParseResult): ParseResult = {
     pattern.tryMatch(input, offset, trace) match {
-      case Failed(msg) => Failed()
-      case res@Matched(_, rest, offset2) => res + tryMatch(rest, offset2, trace)
+      case failed: Failed => Matched.empty(input, Some(this))
+      case res@Matched(_, rest, offset2) => res + tryMatch(rest, offset2, trace, depth, res)
     }
   }
+  
+  override def expected(prevRes: ParseResult): List[String] = pattern.expected(prevRes)
 }
-
-/**
- * A pattern that matches any one of a group of patterns
- */
-class PatternClass[N <: Node](val patterns: Pattern*) extends MultiPattern {
-
-  for (pattern <- patterns) pattern Extends this
-
-  override type AsNode = N
-
-  override lazy val isFixed: Boolean = patterns.forall(_.isFixed)
-  override lazy val isEager: Boolean = patterns.exists(_.isEager)
-
-  override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult =
-    patterns.view.map(_.tryMatch(input, offset, trace)).find{_ != Failed()}.getOrElse(Failed())
-}
+//
+///**
+// * A pattern that matches any one of a group of patterns
+// */
+//class PatternClass[N <: Node](val patterns: Pattern*) extends MultiPattern {
+//
+//  for (pattern <- patterns) pattern Extends this
+//
+//  override type AsNode = N
+//
+//  override lazy val isFixed: Boolean = patterns.forall(_.isFixed)
+//  override lazy val isEager: Boolean = patterns.exists(_.isEager)
+//
+//  override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult =
+//    patterns.view.map(_.tryMatch(input, offset, trace)).find{_.isInstanceOf[Matched[?, ?]]}.getOrElse(Failed(List.empty))
+//}

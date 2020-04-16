@@ -12,6 +12,7 @@ case class PatternAndConstructor[M <: Match[?], N <: Node](pattern: Pattern) ext
   override def isEager: Boolean = pattern.isEager
   override def tryMatch(input: List[Node], offset: Int, trace: Trace): ParseResult =
     pattern.tryMatch(input, offset, trace)
+  override def expected(prevRes: ParseResult): List[String] = pattern.expected(prevRes)
 }
 
 implicit def toApplicablePattern[P <: Pattern, M <: Match[?], N <: Node](

@@ -64,7 +64,7 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
     */
   @throws[BadCharacterError]
   def tokenize_(): Iterable[Token[?]] = {
-    var lastInput = StringBuilder().append(getNext.getOrElse(throw new Error("File is empty!")))
+    var lastInput = StringBuilder().append(getNext.getOrElse(return List.empty))
     val tokens = ListBuffer[Token[?]]()
     val tokenTypes = JMMTokenTypes.allTokenTypes//.filter(_.isInstanceOf[KeywordTokenType])
     // print(tokenTypes)

@@ -152,6 +152,12 @@ object JMMTokenTypes {
         .asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]]
 }
 
+object FixedTextTokenType {
+  def unapply(arg: FixedTextTokenType): Option[String] = Some(arg.text)
+}
+object RegexTokenType {
+  def unapply(arg: RegexTokenType): Option[String] = Some(arg.regex)
+}
 
 object TokenType {
 

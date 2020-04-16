@@ -30,8 +30,8 @@ private object ParserPatterns {
     (input: List[Node], offset: Int) => if (input.nonEmpty) input.head match {
       case token@Token(tt: ValidIdentifierTokenType) => 
         Matched(ValidIdNode(token.c), input.tail, offset + token.text.length)
-      case _ => Failed()
-    } else Failed() )
+      case h => Failed(h, List.empty)
+    } else Failed("nothing", List.empty), List("valid identifier"))
   val dotReference = identifier - ((DOT - identifier)*) >> {
     case (validId) - (nodeList: NodeList[?]) =>
       DotRef(validId.asInstanceOf[ValidIdNode] :: (nodeList.asInstanceOf[NodeList[_]]).nodes.map(
@@ -77,13 +77,12 @@ private object ParserPatterns {
     case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
   }
   "expr" :=
-    PatternClass[Expr](
-      identifier,
-      "parenExpr",
-      "arrayAccess",
-      "dotSelect",
-      "unaryExpr",
-      "binaryExpr")
+      identifier
+      | "parenExpr"
+      | "arrayAccess"
+      | "dotSelect"
+      | "unaryExpr"
+      | "binaryExpr"
 
   val assignment = "expr" - ((PLUS | MINUS | STAR | FWDSLASH | MODULO)?) - EQ - "expr" - EOL >> {
     case variable - op - eq - expr - eol => ???
