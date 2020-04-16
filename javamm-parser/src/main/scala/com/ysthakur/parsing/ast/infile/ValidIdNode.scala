@@ -8,5 +8,5 @@ case class ValidIdNode(token: Token[ValidIdentifierTokenType] /*,
   // def unapply(): (CharSequence, Int, Int) = ???
 //  def startOffset: Int = ???
 //  def endOffset: Int = ???
-  def text: String = token.text
+  override def text: String = token.text
 }

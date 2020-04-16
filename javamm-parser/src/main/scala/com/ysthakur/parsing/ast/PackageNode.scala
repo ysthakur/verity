@@ -1,7 +1,8 @@
 package com.ysthakur.parsing.ast
 
 case class PackageNode() extends ParentNode {
-  override lazy val children: Iterable[Node] = ???
+  override type Child = FileNode | PackageNode
+  override lazy val children: Iterable[Child] = ???
 }
 
 abstract class Directory extends Node

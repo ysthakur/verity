@@ -20,6 +20,7 @@ trait FixedTextTokenType(val text: String) extends TokenType {
   override val textMatters: Boolean = false
 }
 trait IgnoredTokenType extends TokenType {}
+trait Modifier extends FixedTextTokenType {}
 
 enum SymbolTokenType(symbol: String)
     extends java.lang.Enum[SymbolTokenType]
@@ -73,20 +74,20 @@ enum KeywordTokenType(text: String)
     with FixedTextTokenType(text) {
   case IMPORT extends KeywordTokenType("import")
   case PACKAGE extends KeywordTokenType("package")
-  case PUBLIC extends KeywordTokenType("public")
-  case PRIVATE extends KeywordTokenType("private")
-  case PROTECTED extends KeywordTokenType("protected")
-  case SUPER extends KeywordTokenType("super")
-  case DEFAULT extends KeywordTokenType("default")
-  case EXTENDS extends KeywordTokenType("extends")
-  case STATIC extends KeywordTokenType("static")
-  case ABSTRACT extends KeywordTokenType("abstract")
-  case FINAL extends KeywordTokenType("final")
-  case NATIVE extends KeywordTokenType("native")
-  case TRANSIENT extends KeywordTokenType("transient")
-  case VOLATILE extends KeywordTokenType("volatile")
-  case SYNCHRONIZED extends KeywordTokenType("synchronized")
-  case CONST extends KeywordTokenType("const")
+  case PUBLIC extends KeywordTokenType("public") with Modifier
+  case PRIVATE extends KeywordTokenType("private") with Modifier
+  case PROTECTED extends KeywordTokenType("protected") with Modifier
+  case SUPER extends KeywordTokenType("super") with Modifier
+  case DEFAULT extends KeywordTokenType("default") with Modifier
+  case EXTENDS extends KeywordTokenType("extends") with Modifier
+  case STATIC extends KeywordTokenType("static") with Modifier
+  case ABSTRACT extends KeywordTokenType("abstract") with Modifier
+  case FINAL extends KeywordTokenType("final") with Modifier
+  case NATIVE extends KeywordTokenType("native") with Modifier
+  case TRANSIENT extends KeywordTokenType("transient") with Modifier
+  case VOLATILE extends KeywordTokenType("volatile") with Modifier
+  case SYNCHRONIZED extends KeywordTokenType("synchronized") with Modifier
+  case CONST extends KeywordTokenType("const") with Modifier
   case RULE extends KeywordTokenType("rule") with ValidIdentifierTokenType
   case SWITCH extends KeywordTokenType("switch")
   case CASE extends KeywordTokenType("case")
@@ -138,6 +139,7 @@ enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] wi
   case CHAR_LITERAL extends RegexTokenType("""'([^\\']|\\.)'""")
   case STR_LITERAL extends RegexTokenType(""""(\\.|[^\\])*"""")
   case SINGLE_LINE_COMMENT extends RegexTokenType("""//.*?(\r\n|\r|\n)""") with IgnoredTokenType
+  case DOC_COMMENT extends RegexTokenType("""/\*\*(.|\n|\r\n|\r)*?\*/""") with IgnoredTokenType
   case MULTILINE_COMMENT extends RegexTokenType("""/\*(.|\n|\r\n|\r)*?\*/""") with IgnoredTokenType
 }
 

@@ -1,9 +1,12 @@
 package com.ysthakur.parsing.ast
 
-trait Node
+trait Node {
+  def as[T]: T = asInstanceOf[T]
+}
 
 trait ParentNode extends Node {
-  def children: Iterable[Node]
+  type Child <: Node
+  def children: Iterable[Child]
 }
 
 trait ChildNode extends Node {

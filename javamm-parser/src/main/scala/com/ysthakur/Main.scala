@@ -4,7 +4,8 @@ import java.io.{BufferedInputStream, File, FileInputStream, FileWriter}
 import java.util.regex.Pattern
 
 import com.ysthakur.parsing.ast.Node
-import com.ysthakur.parsing.lexer.{JMMTokenTypes, Lexer, Token, SymbolTokenType, RegexTokenType, KeywordTokenType}
+import com.ysthakur.parsing.lexer.{JMMTokenTypes, KeywordTokenType, Lexer, RegexTokenType, SymbolTokenType, Token}
+import com.ysthakur.parsing.parser.Parser
 // import com.ysthakur.parsing.parser.Parser
 
 object Main /*extends App*/ {
@@ -23,20 +24,10 @@ object Main /*extends App*/ {
     writer.write("}")
     writer.close()*/
     
-    //val tokens = lex()
-    //val ast    = parse(tokens)
-    //println("AST = " + tokens)
-  }
-  
-  def makeDef(name: String /*|UncheckedNull*/, body: String): String = {
-    new StringBuilder("def ")
-        .append(name.toLowerCase)
-        .append(": Parser[")
-        .append(name.toUpperCase)
-        .append("] = {\n    ")
-        .append(body)
-        .append("\n  }")
-        .toString
+    val tokens = lex()
+    println("Tokens = " + tokens)
+    val ast = Parser.parse(tokens.toList)
+    println("AST = " + ast)
   }
 
   // def parse(tokens: Iterable[Token]): Node = {

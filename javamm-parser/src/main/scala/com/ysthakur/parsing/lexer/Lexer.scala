@@ -3,7 +3,6 @@ package com.ysthakur.parsing.lexer
 import java.io.{BufferedInputStream, File, FileInputStream, FileWriter, IOException, InputStream}
 
 import com.ysthakur.parsing._
-import com.ysthakur.parsing.Match
 import com.ysthakur.parsing.lexer.TokenType
 
 import scala.collection.mutable
@@ -155,7 +154,18 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
           }
         }
       } else {
-        val next = getNext.getOrElse(throw new Exception("Unexpected end of file!"))
+        val next = getNext.getOrElse(
+          lastMatch match {
+            case null =>
+              throw new Exception("Unexpected end of file!")
+            case last: (Match[Char], TokenType) => {
+              log("Matched in else branch! Found=\"" + last._2 + "\"")
+              val matched = last._1
+              acc.delete(0, matched.end - matched.start)
+              log(s"Returning from else branch, acc = `$acc`")
+              return Some((last._1, last._2, currentPos.copy(), acc))
+            }
+          })
         acc.append(next)
         log(s"Acc with next=$acc")
         currentPos.offset += 1

@@ -1,7 +1,7 @@
 package com.ysthakur.parsing.lexer
 
 import com.ysthakur.parsing.ast.Node
-import com.ysthakur.parsing.{ExactMatch, HasText, Match}
+import com.ysthakur.parsing.HasText
 
 import scala.collection.mutable
 

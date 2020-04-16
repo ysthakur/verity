@@ -1,7 +1,5 @@
 package com.ysthakur.parsing.lexer
 
-import com.ysthakur.parsing.Match
-
 import scala.math.Ordered.orderingToOrdered
 import scala.math.Ordering.Implicits.infixOrderingOps
 
@@ -56,7 +54,7 @@ case class PartialMatch[Input](matched: Match[Input]) extends MatchResult {
 case class FullMatch[Input](matched: Match[Input], couldMatchMore: Boolean)
     extends MatchResult {  
   def >(other: MatchResult): Boolean = 
-    !(other.isInstanceOf[FullMatch[Input]] && 
+    !(other.isInstanceOf[FullMatch[?]] && 
     !this.couldMatchMore && 
     other.asInstanceOf[FullMatch[Input]].couldMatchMore)
 }
