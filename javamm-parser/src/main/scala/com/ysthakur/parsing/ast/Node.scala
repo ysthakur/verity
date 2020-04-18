@@ -2,6 +2,7 @@ package com.ysthakur.parsing.ast
 
 trait Node {
   def as[T]: T = asInstanceOf[T]
+  def flatten: Node = this
 }
 
 trait ParentNode extends Node {

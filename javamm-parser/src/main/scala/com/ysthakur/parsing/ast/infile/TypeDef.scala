@@ -9,6 +9,7 @@ import scala.collection.mutable.ListBuffer
 case class TypeDef(modifiers: List[Modifier]) extends TextNode with ParentNode {
   override type Child = Field | Method
   override val children: Iterable[Child] = ListBuffer()
+  override def text: String = ??? //modifiers.map(_.text).mkString(" ")
 }
 
 enum TypeDefType {

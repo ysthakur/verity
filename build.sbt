@@ -26,6 +26,13 @@ lazy val `javamm-parser` =
     scalacOptions ++= commonScalacOptions
   )
 
+lazy val `javamm-codegen` =
+  (project in file("javamm-codegen")).settings(
+      name := "javamm-codegen",
+    libraryDependencies ++= Seq("org.ow2.asm" % "asm" % "8.0.1", 
+      "org.ow2.asm" % "asm-util" % "8.0.1")
+  )
+
 lazy val libDeps = Seq(
   //"org.scala-lang" % "scala-reflect" % scala_version,
   //"org.scalatest"  %% "scalatest"    % "3.1.1" % "test",

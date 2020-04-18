@@ -1,6 +1,14 @@
 package com.ysthakur.parsing.ast
 
-sealed trait OrNode[L <: Node, R <: Node]
+import com.ysthakur.parsing.ast.infile.TextNode
 
-case class LeftNode[L <: Node, R <: Node](left: L) extends OrNode[L, R]
-case class RightNode[L <: Node, R <: Node](right: R) extends OrNode[L, R]
+sealed trait OrNode[L <: TextNode, R <: TextNode] extends TextNode
+
+case class LeftNode[L <: TextNode, R <: TextNode](left: L) extends OrNode[L, R] {
+  override def flatten: L = left
+  override def text: String = ???
+}
+case class RightNode[L <: TextNode, R <: TextNode](right: R) extends OrNode[L, R] {
+  override def flatten: R = right
+  override def text: String = ???
+}

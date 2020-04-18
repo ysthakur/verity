@@ -13,7 +13,7 @@ import com.ysthakur.parsing.lexer._
   */
 case class Op(
     symbol: Token[SymbolTokenType]
-) extends Node with HasText {
+) extends TextNode {
   def isBinary: Boolean = ???
   override def text: String = symbol.text/*
   override def startOffset: Int = symbol.startOffset

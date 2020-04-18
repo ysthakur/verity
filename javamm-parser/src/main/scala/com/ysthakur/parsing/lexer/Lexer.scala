@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.breakable
 
 case class Position(var row: Int, var col: Int, var offset: Int) {
-  def nextRow: Unit = {
+  def nextRow(): Unit = {
     row += 1
     col = 0
   }
@@ -27,7 +27,7 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
   @throws[IOException]
   def getNext: Option[Char] = {
     val res = file.read()
-    System.out.println(s"($res,${res.toChar})`")
+    //System.out.println(s"($res,${res.toChar})`")
     if (res == -1) None else Some(res.toChar)
   }
 
@@ -49,12 +49,12 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
       return tokenize_()
     } catch {
       case e: java.util.regex.PatternSyntaxException => {
-        println("`" + e.getPattern + "`")
+        //println("`" + e.getPattern + "`")
         end()
         throw e
       }
     } finally {
-      println("asdkfja;sldjf;askljdf")
+      //println("asdkfja;sldjf;askljdf")
       end()
     }
   }
@@ -79,14 +79,14 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
        })
     ) {
       val (matched: Match[Char], tokenType: TokenType, pos: Position, acc: StringBuilder) =
-        tryMatch(tokenTypes, offset, lastInput).getOrElse(
+        tryMatch(tokenTypes, position.copy(), lastInput).getOrElse(
             throw BadCharacterError(lastInput.head), position.row, position.col, this.offset)
       if (!tokenType.isInstanceOf[IgnoredTokenType]) {
         tokens.addOne(tokenType match {
           case textTokenType: FixedTextTokenType =>
-            InvariantToken(textTokenType)
+            InvariantToken(textTokenType, pos)
           case regexTokenType: RegexTokenType =>
-            VariantToken(regexTokenType, matched.matched.toString)
+            VariantToken(regexTokenType, matched.matched.toString, pos)
         })
       }
       this.position = pos.copy()
@@ -99,7 +99,7 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
 
   def tryMatch(
       tokenTypes: Iterable[TokenType],
-      startOffset: Int,
+      startPos: Position,
       lastInput: StringBuilder
   ): Option[(Match[Char], TokenType, Position, StringBuilder)] = {
     val acc = StringBuilder(lastInput.toString)
@@ -107,11 +107,11 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
 
     var lastMatch: (Match[Char], TokenType)|Null = null
     var (lastMatchLength, currentLength) = (0, 1)
-    var lastPos: Position = Position(position.row, position.col, offset)
+    var lastPos: Position = startPos.copy()
     var lastChar: Char = -1.toChar
     
-    var currentPos: Position = Position(position.row, position.col, offset)
-    var origOffset = offset
+    val currentPos: Position = startPos.copy()
+    val origOffset = startPos.copy()
 
     var possibleFutureMatches = mutable.Set[TokenType]()
     while ({

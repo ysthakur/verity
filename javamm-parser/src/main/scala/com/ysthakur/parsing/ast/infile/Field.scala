@@ -10,4 +10,5 @@ class Field(override val name: String,
                  mods: Iterable[Modifier],
                  var initExpr: Option[Expr] = None) extends IVariableDecl with HasModifiers {
   override val modifiers: ListBuffer[Modifier] = ListBuffer().addAll(mods)
+  override def text: String = ???
 }

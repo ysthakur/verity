@@ -4,45 +4,49 @@ import com.ysthakur.parsing._
 import com.ysthakur.parsing.ast._
 import com.ysthakur.parsing.ast.Types._
 import com.ysthakur.parsing.ast.infile.expr.{BinaryExpr, DotRef}
-//import com.ysthakur.parsing.ast._
+import com.ysthakur.parsing.lexer._
 import com.ysthakur.parsing.lexer.KeywordTokenType._
 import com.ysthakur.parsing.lexer.RegexTokenType._
 import com.ysthakur.parsing.lexer.SymbolTokenType._
 import com.ysthakur.parsing.lexer.TokenType._
-import com.ysthakur.parsing.lexer._
-import com.ysthakur.parsing.parser.Pattern.{*, -, ||}
 import com.ysthakur.parsing.parser.{-, ||}
+import com.ysthakur.parsing.parser.Pattern.{*, -, ||}
 
 import scala.language.postfixOps
 
 //noinspection ScalaUnnecessaryParentheses
 private object ParserPatterns {
-
-  type PAC[T <: Match[_], N <: Node] = PatternAndConstructor[T, N]
+  
   type TTP = TokenTypePattern
 
-  val opCtor = (op: Token[SymbolTokenType]) => Op(op)
+  val opCtor = (op: Node) => Op(op.asInstanceOf[Token[SymbolTokenType]])
   
   val EOL: Pattern = SEMICOLON
   val unaryPreOp = PLUSX2 | MINUSX2 | MINUS | EXCL_MARK | TILDE >> opCtor
   val unaryPostOp = PLUSX2 | MINUSX2 >> opCtor
   val identifier = FunctionPattern(
-    (input: List[Node], offset: Int) => if (input.nonEmpty) input.head match {
+    (input: List[Tok], offset: Int) => if (input.nonEmpty) input.head match {
       case token@Token(tt: ValidIdentifierTokenType) => 
-        Matched(ValidIdNode(token.c), input.tail, offset + token.text.length)
-      case h => Failed(h, List.empty)
-    } else Failed("nothing", List.empty), List("valid identifier"))
+        Matched(() => ValidIdNode(token.c), input.tail, offset + token.text.length)
+      case other => Failed(other, List("Valid identifier"), other.pos)
+    } else Failed(EmptyToken, List("Valid identifier"), Position(0, 0, offset)))
   val dotReference = identifier - ((DOT - identifier)*) >> {
-    case (validId) - (nodeList: NodeList[?]) =>
-      DotRef(validId.asInstanceOf[ValidIdNode] :: (nodeList.asInstanceOf[NodeList[_]]).nodes.map(
+    case (validId: ValidIdNode) => DotRef(List(validId))
+    case (validId: ValidIdNode) - (nodeList: NodeList[?]) =>
+      DotRef(validId :: (nodeList.asInstanceOf[NodeList[_]]).nodes.map(
         _.asInstanceOf[ConsNode[?, ValidIdNode]].n2
       ).toList)
   }
   val pkgStmt = PACKAGE - dotReference - EOL >> {
-    case pkg - (dotRef: DotRef) - eol => PackageStmt(dotRef)
+    case pkg - (dotRef: DotRef) - eol => 
+      println(s"Is package $pkg - $dotRef - $eol")
+      PackageStmt(dotRef)
   }
-  val importStatement = IMPORT - dotReference - ((DOT - STAR)?) >> {
-    case impt - ref - star => Import(ref.c, star == null)
+  val importStatement = IMPORT - dotReference - ((DOT - STAR)?) - SEMICOLON >> {
+    case impt - ref - star - semicolon => {
+      println(s"Is import $impt - $ref - $star")
+      Import(ref.c, star != null)
+    }
   }
   
   "unaryExpr" :=
@@ -72,7 +76,7 @@ private object ParserPatterns {
   "dotSelect" := "expr" - DOT - identifier >> {
     case expr - dot - validId => DotChainedExpr(expr.c, validId.c)
   }
-  "parenExpr" := LPAREN - "expr" - RPAREN >> { case lparen - expr - rparen => expr }
+  "parenExpr" := LPAREN - "expr" - RPAREN >> { case lparen - (expr: TextNode) - rparen => expr }
   "arrayAccess" := "expr" - LSQUARE - "expr" - RSQUARE >> {
     case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
   }
@@ -99,8 +103,8 @@ private object ParserPatterns {
   
   def [T <: Node](n: Any).c: T = n.asInstanceOf[T]
   
-  def [M <: Match[_], N <: Node](p: Pattern) >> (ctor: M => N): PatternAndConstructor[M, N] =
-    PatternAndConstructor(p)
+  def [N <: TextNode](p: Pattern) >> (ctor: TextNode => N): PatternAndConstructor[N] =
+    PatternAndConstructor(p, ctor)
   
   implicit def unwrapOption[A](option: Option[A]): A = option.get
 }

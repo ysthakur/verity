@@ -13,4 +13,5 @@ class LocalVar(override val name: String,
     case other: LocalVar => name == other.name && varType == other.varType && isFinal == other.isFinal
     case _ => false
   }
+  override def text: String = ???
 }

@@ -1,9 +1,12 @@
 package com.ysthakur.parsing.lexer
 
-import com.ysthakur.parsing.ast.Node
 import com.ysthakur.parsing.HasText
+import com.ysthakur.parsing.ast.Node
+import com.ysthakur.parsing.ast.infile.TextNode
 
 import scala.collection.mutable
+
+type Tok = Token[TokenType]
 
 /**
   *
@@ -11,15 +14,17 @@ import scala.collection.mutable
   * @param startOffset The index in the file where this token starts
   * @param endOffset The index in the file <em>before</em> which this token ends
   */
-sealed trait Token[+T <: TokenType](val tokenType: T) extends Node /*with HasText*/ {
+sealed trait Token[+T <: TokenType] extends TextNode {
+  def tokenType: T
   def text: String
+  def pos: Position
 }
 
 object Token {
-  def isValidId(token: Token[?]): Boolean = 
+  def isValidId(token: Token[?]): Boolean =
     token.tokenType.isInstanceOf[ValidIdentifierTokenType]
   def unapply[T <: TokenType](arg: Token[T]): Option[T] = Some(arg.tokenType)
-  /*def unapply[T <: TokenType](arg: Token[T]): Option[(T, Int, Int)] = 
+  /*def unapply[T <: TokenType](arg: Token[T]): Option[(T, Int, Int)] =
     Some(arg.tokenType, arg.startOffset, arg.endOffset)*/
 }
 
@@ -29,16 +34,20 @@ object Token {
   * @param tokenType
   */
 case class InvariantToken[+F <: FixedTextTokenType] private (
-    override val tokenType: F
-) extends Token[F](tokenType) {
+    override val tokenType: F,
+    override val pos: Position
+) extends Token[F] {
   override def text: String = tokenType.text
 }
 
 object InvariantToken {
-  private val invariantTokenPool = mutable.Set[InvariantToken[FixedTextTokenType]]()
-  def apply[F <: FixedTextTokenType](tt: F): InvariantToken[F] =
-    invariantTokenPool.find(token => token.tokenType == tt)
-        .getOrElse(new InvariantToken(tokenType=tt)).asInstanceOf[InvariantToken[F]]
+  private val invariantTokenPool =
+    mutable.Set[InvariantToken[FixedTextTokenType]]()
+  def apply[F <: FixedTextTokenType](tt: F, pos: Position): InvariantToken[F] =
+    invariantTokenPool
+      .find(token => token.tokenType == tt)
+      .getOrElse(new InvariantToken(tokenType = tt, pos))
+      .asInstanceOf[InvariantToken[F]]
 }
 
 /**
@@ -48,5 +57,12 @@ object InvariantToken {
   */
 case class VariantToken[+R <: RegexTokenType](
     override val tokenType: R,
-    override val text: String
-) extends Token[R](tokenType)
+    override val text: String,
+    override val pos: Position
+) extends Token[R]
+
+object EmptyToken extends Token[TokenType] {
+  override def pos: Position = ???
+  override def text: String = ""
+  override def tokenType: TokenType = ???
+}
