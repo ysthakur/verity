@@ -1,6 +1,6 @@
 import java.io.{File, FileInputStream}
 
-import com.ysthakur.parsing.lexer.Lexer
+import com.ysthakur.javamm.parsing.lexer.Lexer
 //import org.scalatest.flatspec.AnyFlatSpec
 //import org.scalatest.matchers.should.Matchers
 

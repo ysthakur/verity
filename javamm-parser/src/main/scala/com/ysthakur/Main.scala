@@ -3,10 +3,10 @@ package com.ysthakur
 import java.io.{BufferedInputStream, File, FileInputStream, FileWriter}
 import java.util.regex.Pattern
 
-import com.ysthakur.parsing.ast.Node
-import com.ysthakur.parsing.lexer.{JMMTokenTypes, KeywordTokenType, Lexer, RegexTokenType, SymbolTokenType, Token}
-import com.ysthakur.parsing.parser.Parser
-// import com.ysthakur.parsing.parser.Parser
+import com.ysthakur.javamm.parsing.ast.INode
+import com.ysthakur.javamm.parsing.lexer.{JMMTokenTypes, KeywordTokenType, Lexer, RegexTokenType, SymbolTokenType, Token}
+import com.ysthakur.javamm.parsing.parser.Parser
+// import com.ysthakur.javamm.parsing.parser.Parser
 
 object Main /*extends App*/ {
 
@@ -14,7 +14,7 @@ object Main /*extends App*/ {
     /*val f = new File(new File("").getAbsolutePath + "\\output")
     f.createNewFile()
     val writer = new FileWriter(f)
-    //writer.write("package com.ysthakur.parsing.parser\n\nimport scala.util.parsing.combinator.RegexParsers\n\nclass NewLexer extends RegexParsers {\n")
+    //writer.write("package com.ysthakur.javamm.parsing.parser\n\nimport scala.util.parsing.combinator.RegexParsers\n\nclass NewLexer extends RegexParsers {\n")
     writer.write("")
     val tri = "\"\"\""
     for (symbol <- SymbolTokenType.values) {
