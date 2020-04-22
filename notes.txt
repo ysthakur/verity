@@ -1,0 +1,6 @@
+use currying for lambdas with multiple params
+
+different syntax for static blocks, old static {} for applying same modifier
+to all fields within block
+
+apply rule to known truths to meet requirements for a method

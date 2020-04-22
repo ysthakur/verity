@@ -1,0 +1,11 @@
+name: Compile
+on: [push]
+
+jobs:
+  build:
+    name: SBT Compile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run sbt compile
+        run:
+          sbt compile
