@@ -6,4 +6,4 @@ import a;
 import b.lkas.dfkasldf.*;
 */
 
-(90 - 3456L) * (arr++) //.something[0 > 9]
+(90 - 3456L) * (arr++)[2344].abc
