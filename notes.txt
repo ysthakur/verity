@@ -4,3 +4,14 @@ different syntax for static blocks, old static {} for applying same modifier
 to all fields within block
 
 apply rule to known truths to meet requirements for a method
+
+
+/*package com.ysthakur;
+
+import java.util.ArrayList;
+import abcd.x;
+import a;
+import b.lkas.dfkasldf.*;
+*/
+
+(90 - 3456L) * (arr++)[2344].abc - this.abc234 * 45678 - (!true)

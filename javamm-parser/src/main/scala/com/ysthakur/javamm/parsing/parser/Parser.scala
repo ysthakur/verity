@@ -2,9 +2,8 @@ package com.ysthakur.javamm.parsing.parser
 
 import com.ysthakur.javamm.CompilationError
 import com.ysthakur.javamm.parsing.Position
-import com.ysthakur.javamm.parsing.ast.INode
-import com.ysthakur.javamm.parsing.ast.infile.Node
-import com.ysthakur.javamm.parsing.lexer.{Tok, Token, TokenType}
+import com.ysthakur.javamm.parsing.ast._
+import com.ysthakur.javamm.parsing.lexer.{Tok, TokenType}
 
 import scala.collection.mutable.ListBuffer
 

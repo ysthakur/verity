@@ -1,14 +1,12 @@
 package com.ysthakur.javamm.parsing.parser
 
-import com.ysthakur.javamm.parsing.{TextRange, Position}
-import com.ysthakur.javamm.parsing.ast._
-import com.ysthakur.javamm.parsing.ast.Types._
-import com.ysthakur.javamm.parsing.ast.infile.expr._
+import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange, Token}
+import com.ysthakur.javamm.parsing.ast.{ConsNode, NodeList, _}
 import com.ysthakur.javamm.parsing.lexer.KeywordTokenType._
 import com.ysthakur.javamm.parsing.lexer.RegexTokenType._
 import com.ysthakur.javamm.parsing.lexer.SymbolTokenType._
 import com.ysthakur.javamm.parsing.lexer.TokenType._
-import com.ysthakur.javamm.parsing.lexer._
+import com.ysthakur.javamm.parsing.lexer.{ModifierTokenType, ReservedWord, SymbolTokenType, Tok, ValidIdentifierTokenType}
 import com.ysthakur.javamm.parsing.parser.Pattern.{*, -, ||}
 import com.ysthakur.javamm.parsing.parser.{-, ||}
 
@@ -24,6 +22,20 @@ private object ParserPatterns {
   val EOL: Pattern = SEMICOLON
   val numLiteral = NUM_LITERAL |>> {
     case token: Token[?] => NumLiteral(token.text)
+  }
+  val booleanLiteral = TRUE | FALSE |>> {
+    case Token(TRUE) => TrueLiteral
+    case Token(FALSE) => FalseLiteral
+  }
+  val literal = numLiteral | booleanLiteral | 
+      (THIS |>> { case token: Tok => ThisRef(token.range)}) 
+    | (SUPER |>> { case token: Tok => SuperRef(token.range)})
+  val modifier: Pattern = (input: List[Tok], pos: Position, trace: Trace) => {
+    if (input.isEmpty) Matched.empty(input, TextRange.empty(pos))
+    else input.head match {
+      case token@Token(mod: ModifierTokenType) => Matched(() => Modifier.get(mod), input.tail, token.range)
+      case f => Failed(f, List("modifier"), pos)
+    }
   }
   val unaryPreOp = PLUSX2 | MINUSX2 | MINUS | EXCL_MARK | TILDE |>> opCtor
   val unaryPostOp = PLUSX2 | MINUSX2 |>> opCtor
@@ -57,7 +69,7 @@ private object ParserPatterns {
     case (validId: ValidIdNode) - (nodeList: NodeList[?]) =>
       DotRef(
         validId :: (nodeList.asInstanceOf[NodeList[?]].nodes)
-            .map(_.asInstanceOf[ConsNode[?, ValidIdNode]].n2)
+            .map(_.asInstanceOf[ConsNode[?, ValidIdNode]].n2.asInstanceOf)
             .toList)
   }
   val pkgStmt = PACKAGE - dotReference - EOL |>> {
@@ -72,7 +84,7 @@ private object ParserPatterns {
         Import(ref, star != null)
       }
     }
-  val firstLevelExpr = identifier | numLiteral
+  val firstLevelExpr = identifier | literal
 
   "unaryExpr" := ("expr" - unaryPostOp) | (unaryPreOp - "expr") |>> {
     case (op: Op) - (expr: Expr) => UnaryPreExpr(op, expr)
@@ -131,22 +143,10 @@ private object ParserPatterns {
   val localVarDecl = varDeclFirstPart - EOL
   "typeDecl" := "abcd"
 
-  val root: Pattern = /*(pkgStmt?) - (importStatement*) -*/ "expr"
-
-  /**
-    * turn into an infix expression
-    * @param op
-    * @return
-    */
-  def infix(op: Pattern): Pattern = "expr" - op - "expr" /* |>> {
-    case lexpr - (orNode: OrNode[?, ?]) - rexpr => println("AAHHH!!!!");ConsNode(ConsNode(lexpr, opCtor(orNode.flatten)), rexpr)
-    case lexpr - (op: Token[?]) - rexpr => println("YORTOWUR!!");ConsNode(lexpr, ConsNode(opCtor(op), rexpr))
-  }*/
-
-  //def [T <: Node](n: Any).c: T = n.asInstanceOf[T]
+  val root: Pattern = (pkgStmt?) - (importStatement*) - ("expr"?) |>> {
+    case pkg - imports - typeDefs => typeDefs
+  }
 
   def [N <: Node](p: Pattern) |>> (ctor: Node => N): PatternAndConstructor[N] =
     PatternAndConstructor(p, ctor)
-
-  implicit def unwrapOption[A](option: Option[A]): A = option.get
 }
