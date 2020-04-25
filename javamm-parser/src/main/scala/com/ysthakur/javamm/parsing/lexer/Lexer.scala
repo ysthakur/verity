@@ -4,7 +4,7 @@ import java.io.{BufferedInputStream, File, FileInputStream, FileWriter, IOExcept
 
 import com.ysthakur.javamm.CompilationError
 import com.ysthakur.javamm.parsing._
-import com.ysthakur.javamm.parsing.lexer.TokenType
+import com.ysthakur.javamm.parsing.TokenType
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer

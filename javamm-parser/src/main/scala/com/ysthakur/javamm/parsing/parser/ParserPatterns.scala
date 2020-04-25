@@ -1,12 +1,12 @@
 package com.ysthakur.javamm.parsing.parser
 
 import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange, Token}
-import com.ysthakur.javamm.parsing.ast.{ConsNode, NodeList, _}
-import com.ysthakur.javamm.parsing.lexer.KeywordTokenType._
-import com.ysthakur.javamm.parsing.lexer.RegexTokenType._
-import com.ysthakur.javamm.parsing.lexer.SymbolTokenType._
-import com.ysthakur.javamm.parsing.lexer.TokenType._
-import com.ysthakur.javamm.parsing.lexer.{ModifierTokenType, ReservedWord, SymbolTokenType, Tok, ValidIdentifierTokenType}
+import com.ysthakur.javamm.parsing.ast._
+import com.ysthakur.javamm.parsing.KeywordTokenType._
+import com.ysthakur.javamm.parsing.RegexTokenType._
+import com.ysthakur.javamm.parsing.SymbolTokenType._
+import com.ysthakur.javamm.parsing.TokenType._
+import com.ysthakur.javamm.parsing.{ModifierTokenType, ReservedWord, SymbolTokenType, Tok, ValidIdentifierTokenType}
 import com.ysthakur.javamm.parsing.parser.Pattern.{*, -, ||}
 import com.ysthakur.javamm.parsing.parser.{-, ||}
 
@@ -17,7 +17,7 @@ private object ParserPatterns {
 
   type TTP = TokenTypePattern
 
-  val opCtor = (op: Node) => Op(op.asInstanceOf[Token[SymbolTokenType]])
+  val opCtor = (op: Node) => Op(op.asInstanceOf[Token[SymbolTokenType]].toString)
 
   val EOL: Pattern = SEMICOLON
   val numLiteral = NUM_LITERAL |>> {
@@ -137,7 +137,7 @@ private object ParserPatterns {
     }
 
   val varDeclFirstPart = "typeRef" - unreservedId |>> {
-    case (typeRef: TypeRef) - (validId: ValidIdNode) =>
+    case (typeRef: com.ysthakur.javamm.parsing.ast.infile.TypeRef) - (validId: ValidIdNode) =>
       ConsNode(typeRef, validId)
   }
   val localVarDecl = varDeclFirstPart - EOL

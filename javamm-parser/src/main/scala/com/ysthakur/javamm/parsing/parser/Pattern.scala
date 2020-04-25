@@ -2,9 +2,8 @@ package com.ysthakur.javamm.parsing.parser
 
 import com.ysthakur.javamm.CompilationError
 import com.ysthakur.javamm.parsing.ast.infile.EmptyNode
-import com.ysthakur.javamm.parsing.ast.{ConsNode, LeftNode, OrNode, RightNode, _}
-import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange}
-import com.ysthakur.javamm.parsing.lexer.Tok
+import com.ysthakur.javamm.parsing.ast._
+import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange, Tok}
 
 import scala.collection.mutable.ListBuffer
 import scala.Option

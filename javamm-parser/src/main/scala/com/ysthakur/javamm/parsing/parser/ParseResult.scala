@@ -2,7 +2,8 @@ package com.ysthakur.javamm.parsing.parser
 
 import com.ysthakur.javamm.parsing.{Position, TextRange, Token}
 import com.ysthakur.javamm.parsing.ast.infile.{EmptyNode, Node}
-import com.ysthakur.javamm.parsing.lexer.Tok
+import com.ysthakur.javamm.parsing.ast.ConsNode
+import com.ysthakur.javamm.parsing.Tok
 
 sealed trait ParseResult {
   def orElse(res: => ParseResult): ParseResult =

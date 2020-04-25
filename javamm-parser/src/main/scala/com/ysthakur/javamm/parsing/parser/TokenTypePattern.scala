@@ -1,8 +1,6 @@
 package com.ysthakur.javamm.parsing.parser
 
-import com.ysthakur.javamm.parsing._
-import com.ysthakur.javamm.parsing.ast.INode
-import com.ysthakur.javamm.parsing.lexer._
+import com.ysthakur.javamm.parsing.{Token, TokenType, Tok, Position, EmptyToken}
 
 case class TokenTypePattern(val tokenType: TokenType) extends Pattern {
   

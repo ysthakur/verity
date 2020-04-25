@@ -5,8 +5,9 @@ import java.util.regex.Pattern
 
 import com.ysthakur.javamm.parsing.Token
 import com.ysthakur.javamm.parsing.ast.INode
-import com.ysthakur.javamm.parsing.lexer.{JMMTokenTypes, KeywordTokenType, Lexer, RegexTokenType, SymbolTokenType}
+import com.ysthakur.javamm.parsing.{KeywordTokenType, Lexer, RegexTokenType, SymbolTokenType}
 import com.ysthakur.javamm.parsing.parser.Parser
+import com.ysthakur.javamm.parsing.lexer.Lexer
 // import com.ysthakur.javamm.parsing.parser.Parser
 
 object Main /*extends App*/ {
