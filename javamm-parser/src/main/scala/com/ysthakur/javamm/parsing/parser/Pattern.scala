@@ -1,10 +1,10 @@
 package com.ysthakur.javamm.parsing.parser
 
 import com.ysthakur.javamm.CompilationError
-import com.ysthakur.javamm.parsing.ast._
-import com.ysthakur.javamm.parsing.ast.Types._
-import com.ysthakur.javamm.parsing.{Position, TextRange}
-import com.ysthakur.javamm.parsing.lexer.{EmptyToken, Tok}
+import com.ysthakur.javamm.parsing.ast.infile.EmptyNode
+import com.ysthakur.javamm.parsing.ast.{ConsNode, LeftNode, OrNode, RightNode, _}
+import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange}
+import com.ysthakur.javamm.parsing.lexer.Tok
 
 import scala.collection.mutable.ListBuffer
 import scala.Option
@@ -63,7 +63,10 @@ trait MultiPattern extends Pattern {
 }
 
 def (patternName: String) := (pattern: => Pattern): Unit = {
-  Pattern.allPatterns.put(patternName, pattern)
+
+import com.ysthakur.javamm.parsing.ast.infile.EmptyNode
+
+Pattern.allPatterns.put(patternName, pattern)
 }
 
 object Pattern {
@@ -131,11 +134,6 @@ case class PatternRef(override val name: String) extends INamedPattern {
       val x = 9;
       //TODO fix this with a variable or something
       if (trace.size > 100) throw new CompilationError(s"Trace is too big (${trace.mkString(",")}")
-//      if (trace.nonEmpty && trace.last == this) {
-//        //println(s"Trace = $trace")
-//        println("\t\tAnd I have failed")
-//        return Failed(headOrEmpty(input), List("Not left recursion"), start)
-//      }
       if (trace.nonEmpty && isLeftRecursive(trace)) {
         //println("\tAnd I have failed")
         return Failed(headOrEmpty(input), List(), start)
@@ -143,7 +141,7 @@ case class PatternRef(override val name: String) extends INamedPattern {
       val p = pattern
       val newTrace = if (trace.nonEmpty && trace.last.subOf(this)) trace else trace :+ this
       p.tryMatch(input, start, newTrace) match {
-        case Matched(create, rest, range) => println(s"Matched $name! ${create()}");Matched(() => create() match {
+        case Matched(create, rest, range) => /*println(s"Matched $name! ${create()}");*/Matched(() => create() match {
           case orNode: OrNode[?, ?] => orNode //.flatten
           case other => other
         }, rest, range)
@@ -159,16 +157,16 @@ case class PatternRef(override val name: String) extends INamedPattern {
 }
 
 object - {
-  def unapply[A <: Node, B <: Node](arg: ConsNode[A, B]): Option[(A, B)] = {
+  def unapply[A <: Node, B <: Node](arg: ConsNode[A, B]): Option[(A|EmptyNode.type, B|EmptyNode.type)] = {
     Some(arg.n1, arg.n2)
   }
 }
 
 object || {
-  def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node | Null, Node | Null)] = {
+  def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node|EmptyNode.type, Node|EmptyNode.type)] = {
     arg match {
-      case LeftNode(left) => Some((left, null))
-      case RightNode(right) => Some((null, right))
+      case LeftNode(left) => Some((left, EmptyNode))
+      case RightNode(right) => Some((EmptyNode, right))
     }
   }
 }
@@ -180,14 +178,34 @@ case class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, p2: T2)
 //  override def isEager: Boolean = p1.isEager && p2.isEager
   
   override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult = {
-    val match1 = p1.tryMatch(input, start, trace)
-    match1 match {
-      case Matched(create, rest, range) => p2.tryMatch(rest, range.end, ListBuffer()) match {
-        case Matched(create2, rest2, range2) => 
-          Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))
-        case failed => failed
-      }
-      case failed => failed
+    p2 match {
+      case pattern: TokenTypePattern =>
+        val firstPart = input.takeWhile(_.tokenType != pattern.tokenType)
+        if (firstPart.size == input.size) return Failed(headOrEmpty(input), List(), start)
+        else {
+          val token = input(firstPart.size)
+          p1.tryMatch(input, start, trace) match {
+            case Matched(create, rest, range) => 
+              if (rest.nonEmpty) {
+                if (rest.head == token) {
+                  Matched(() => ConsNode(create(), token), rest.tail, TextRange(start, token.range.end))
+                } else Failed(rest.head, List(token.tokenType.toString), range.end)
+              } else {
+                Failed(rest.head, List(token.tokenType.toString), range.end)
+              }
+            case f => f
+          }
+        }
+      case _ =>
+        val match1 = p1.tryMatch(input, start, trace)
+        match1 match {
+          case Matched(create, rest, range) => p2.tryMatch(rest, range.end, ListBuffer()) match {
+            case Matched(create2, rest2, range2) =>
+              Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))
+            case failed => failed
+          }
+          case failed => failed
+        }
     }
   }
 }
@@ -213,7 +231,7 @@ case class MaybePattern(pattern: Pattern) extends Pattern {
 //  override val isFixed: Boolean = false
   override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult =
     pattern.tryMatch(input, start, trace)
-        .orElse(new Matched(() => null, input, TextRange.empty(start), true))
+        .orElse(new Matched(() => EmptyNode, input, TextRange.empty(start), true))
 }
 
 /**
@@ -273,10 +291,10 @@ class PatternClass(override val name: String, val patterns: Pattern*)
   for (pattern <- patterns) pattern Extends this
   
   override def tryMatch(input: List[Tok], pos: Position, trace: Trace): ParseResult = {
-    println(s"Trace = $trace")
+    //println(s"Trace = $trace")
     patterns.view
-        .map(p => p.tryMatch(input, pos, {println(s"asdfasd$trace");trace}) match {
-          case m: Matched[?, ?] => println(s"Matched $p!!");m
+        .map(p => p.tryMatch(input, pos, {/*println(s"asdfasd$trace");*/trace}) match {
+          case m: Matched[?, ?] => /*println(s"Matched $p!!");*/m
           case f => f
         })
         .find(_.isInstanceOf[Matched[?, ?]])

@@ -1,5 +1,5 @@
 val projectName = "javamm-scala"
-val dottyVersion = "0.23.0-RC1"
+val dottyVersion = "0.22.0"
 val jmmVersion = "0.1.0"
 
 name := projectName
@@ -16,15 +16,22 @@ lazy val root = project
       libraryDependencies ++= libDeps)
     .disablePlugins()
     .aggregate(
-      `javamm-parser`
-    ).dependsOn(`javamm-parser`)
+      `javamm-ast`,
+      `javamm-parser`,
+      `javamm-codegen`
+    ).dependsOn(`javamm-ast`, `javamm-parser`)
+
+lazy val `javamm-ast` =
+  (project in file("javamm-ast")).settings(
+    name := "javamm-ast",
+    scalacOptions ++= commonScalacOptions
+  )
 
 lazy val `javamm-parser` =
   (project in file("javamm-parser")).settings(
     name := "javamm-parser",
-    libraryDependencies += "org.scala-lang.modules" % "scala-parser-combinators_2.13" % "1.1.2",
     scalacOptions ++= commonScalacOptions
-  )
+  ).dependsOn(`javamm-ast`)
 
 lazy val `javamm-codegen` =
   (project in file("javamm-codegen")).settings(

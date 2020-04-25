@@ -1,9 +1,8 @@
 package com.ysthakur.javamm.parsing.parser
 
-import com.ysthakur.javamm.parsing.{Position, TextRange}
-import com.ysthakur.javamm.parsing.ast.infile.Node
-import com.ysthakur.javamm.parsing.ast.{ConsNode, INode}
-import com.ysthakur.javamm.parsing.lexer.{Tok, Token}
+import com.ysthakur.javamm.parsing.{Position, TextRange, Token}
+import com.ysthakur.javamm.parsing.ast.infile.{EmptyNode, Node}
+import com.ysthakur.javamm.parsing.lexer.Tok
 
 sealed trait ParseResult {
   def orElse(res: => ParseResult): ParseResult =
@@ -28,7 +27,7 @@ class Matched[N <: Node, T](
 
 object Matched {
   def empty(rest: List[Tok], range: TextRange, pattern: Option[Pattern] = None) =
-    new Matched(() => null, rest, range, true, pattern)
+    new Matched(() => EmptyNode, rest, range, true, pattern)
 
   def apply[N <: Node, T](
       create: () => N | Null,

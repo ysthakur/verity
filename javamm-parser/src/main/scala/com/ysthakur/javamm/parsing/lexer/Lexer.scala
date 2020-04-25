@@ -10,7 +10,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.breakable
 
-case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
+case class Lexer(file: BufferedInputStream, logFile: String = "./mylog.txt") {
   private[lexer] var lastToken: Token[_] = _
   private var position = Position(0, 0, 0)
   private val LOG = new FileWriter(File(logFile))
@@ -39,14 +39,11 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
     try {
       return tokenize_()
     } catch {
-      case e: java.util.regex.PatternSyntaxException => {
+      case e => {
         //println("`" + e.getPattern + "`")
         end()
         throw e
       }
-    } finally {
-      //println("asdkfja;sldjf;askljdf")
-      end()
     }
   }
 
@@ -117,17 +114,15 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
       breakable {
           for (tokenType <- tokenTypes)
             TokenType.tryMatch(tokenType, acc, currentPos.offset) match {
-              case FullMatch(matched: Match, couldMatchMore: Boolean) =>
-                {
-                  log(s"Full match! $matched, tokentype=$tokenType")
-                  if (lastMatchLength < currentLength) {
+              case FullMatch(matched, couldMatchMore) =>
+                log(s"Full match! $matched, tokentype=$tokenType")
+                if (lastMatchLength < currentLength) {
                     lastMatch = (matched, tokenType)
                     lastPos = currentPos.copy()
                     lastMatchLength = currentLength
                     log(s"Setting to lastMatch, currentLength=$currentLength")
                   }
-                  if (couldMatchMore) possibleFutureMatches += tokenType
-                }
+                if (couldMatchMore) possibleFutureMatches += tokenType
               case `NeedsMore` => possibleFutureMatches.addOne(tokenType)
               case res => {
                 if (res.isInstanceOf[PartialMatch]) log(s"Partial match $res for tokentype=$tokenType")
@@ -141,6 +136,7 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
       if (possibleFutureMatches.isEmpty) {
         lastMatch match {
           case null =>
+            log(s"""Bad character(s) "$acc" at start offset $origOffset, $lastPos""")
             throw new Exception(
                 s"""Bad character(s) "$acc" at start offset $origOffset, $lastPos"""
             )
@@ -157,6 +153,7 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
           case Some(c) => c
           case None => lastMatch match {
             case null =>
+              end()
               throw new Exception("Unexpected end of file!")
             case last: (Match, TokenType) =>
               log("Matched in else branch! Found=\"" + last._2 + "\"")
@@ -183,7 +180,10 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./log.txt") {
     None
   }
 
-  private def log(msg: Any) = LOG.append(msg.toString).append('\n')
+  private def log(msg: Any): Unit = {
+    //println(msg)
+    LOG.write(msg.toString + '\n')
+  }
 }
 
 object Lexer {
