@@ -92,7 +92,7 @@ private object ParserPatterns {
       | ANDX2
       | ORX2) - "expr" |>> {
     case (lexpr: Expr) - op - (rexpr: Expr) =>
-      println(s"GJGKJGJDFSG!!! - [$rexpr]");
+      //println(s"GJGKJGJDFSG!!! - [$rexpr]");
       BinaryExpr(lexpr, opCtor(op), rexpr)
     case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
     case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x

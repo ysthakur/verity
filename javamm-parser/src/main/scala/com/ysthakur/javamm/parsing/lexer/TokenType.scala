@@ -204,7 +204,7 @@ object TokenType {
     val pattern = java.util.regex.Pattern.compile(s"^$regex$$").asInstanceOf[Pattern]
     val matcher = pattern.matcher(input).asInstanceOf[Matcher]
     if (input == " {" || regex == " {") {
-      println(s"Regex=$regex")
+      //println(s"Regex=$regex")
     }
     try {
       if (matcher.matches()) {

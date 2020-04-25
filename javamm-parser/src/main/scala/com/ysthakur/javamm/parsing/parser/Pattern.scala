@@ -106,7 +106,7 @@ case class PatternRef(override val name: String) extends INamedPattern {
 //    if (trace2.last == this) return true
     isLeftRecursive(trace.filter(p => !this.subOf(p)))*/
     if (!pattern.isInstanceOf[PatternClass] && trace.contains(this)) {
-      println(s"Is left-recursive this=$name $trace")
+      //println(s"Is left-recursive this=$name $trace")
       true
     } else false
    /* var res = false
@@ -127,7 +127,7 @@ case class PatternRef(override val name: String) extends INamedPattern {
 //  override def isEager: Boolean = pattern.isEager
   override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult = {
     try {
-      println(s"I am $name, Trace = $trace, input = ${headOrEmpty(input)}")
+      //println(s"I am $name, Trace = $trace, input = ${headOrEmpty(input)}")
       val x = 9;
       //TODO fix this with a variable or something
       if (trace.size > 100) throw new CompilationError(s"Trace is too big (${trace.mkString(",")}")
@@ -137,7 +137,7 @@ case class PatternRef(override val name: String) extends INamedPattern {
 //        return Failed(headOrEmpty(input), List("Not left recursion"), start)
 //      }
       if (trace.nonEmpty && isLeftRecursive(trace)) {
-        println("\tAnd I have failed")
+        //println("\tAnd I have failed")
         return Failed(headOrEmpty(input), List(), start)
       }
       val p = pattern
@@ -148,7 +148,8 @@ case class PatternRef(override val name: String) extends INamedPattern {
           case other => other
         }, rest, range)
         case f => {
-          println(s"\tPattern $pattern has failed!!! $f");f
+          //println(s"\tPattern $pattern has failed!!! $f");
+          f
         }
       }
     } catch {

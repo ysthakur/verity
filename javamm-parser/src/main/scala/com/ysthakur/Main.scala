@@ -26,14 +26,10 @@ object Main /*extends App*/ {
     
     val tokens = lex()
     println("Tokens = " + tokens)
-    val ast = Parser.parse(tokens.toList)
-    println("AST = " + ast)
-    println(ast.text)
+    //val ast = Parser.parse(tokens.toList)
+    //println("AST = " + ast)
+    //println(ast.text)
   }
-
-  // def parse(tokens: Iterable[Token]): Node = {
-  //   Parser.createAST(tokens)
-  // }
 
   def lex(): Iterable[Token[?]] = {
     val file = new File(
