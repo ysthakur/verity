@@ -1,5 +1,5 @@
 val projectName = "javamm-scala"
-val dottyVersion = "0.23.0-RC1"
+val dottyVersion = "0.22.0"
 val jmmVersion = "0.1.0"
 
 name := projectName
@@ -19,7 +19,7 @@ lazy val root = project
       `javamm-ast`,
       `javamm-parser`,
       `javamm-codegen`
-    ).dependsOn(`javamm-ast`, `javamm-parser`, `javamm-codegen`)
+    ).dependsOn(`javamm-ast`, `javamm-parser`)
 
 lazy val `javamm-ast` =
   (project in file("javamm-ast")).settings(
