@@ -1,9 +1,10 @@
 package com.ysthakur.javamm.parsing.parser
 
 import com.ysthakur.javamm.CompilationError
-import com.ysthakur.javamm.parsing.ast.infile.EmptyNode
+import com.ysthakur.javamm.parsing.ast.infile._
 import com.ysthakur.javamm.parsing.ast._
-import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange, Tok}
+import com.ysthakur.javamm.parsing.{Position, TextRange}
+import com.ysthakur.javamm.parsing.lexer.{EmptyToken, Tok}
 
 import scala.collection.mutable.ListBuffer
 import scala.Option
@@ -54,7 +55,7 @@ trait Pattern {
 
   //def doesExtend(superPattern: PatternClass): Boolean = this.superPattern == superPattern
   def subOf(other: Pattern): Boolean = other == this.superPattern
-  def ==(other: Pattern): Boolean = ???
+  //def ==(other: Pattern): Boolean = ???
   def headOrEmpty(it: Iterable[Tok]): Tok = if (it.isEmpty) EmptyToken else it.head
 }
 
@@ -69,10 +70,10 @@ Pattern.allPatterns.put(patternName, pattern)
 }
 
 object Pattern {
-  type -[A <: Pattern, B <: Pattern] = ConsPattern[A, B]
-  type ||[A <: Pattern, B <: Pattern] = OrPattern[A, B]
-  type *[T <: Pattern] = RepeatPattern
-  type *?[T <: Pattern] = RepeatPattern
+  //type -[A <: Pattern, B <: Pattern] = ConsPattern[A, B]
+  //type ||[A <: Pattern, B <: Pattern] = OrPattern[A, B]
+  //type *[T <: Pattern] = RepeatPattern
+  //type *?[T <: Pattern] = RepeatPattern
 
   val allPatterns: mutable.LinkedHashMap[String, Pattern] = mutable.LinkedHashMap()
 }
@@ -86,7 +87,7 @@ trait INamedPattern extends Pattern {
     case named: INamedPattern => this.name == named.name
     case _ => false
   }
-  override def ==(other: Pattern): Boolean = this.equals(other)
+  //override def ==(other: Pattern): Boolean = this.equals(other)
   override def hashCode: Int = name.hashCode
 }
 
@@ -140,10 +141,10 @@ case class PatternRef(override val name: String) extends INamedPattern {
       val p = pattern
       val newTrace = if (trace.nonEmpty && trace.last.subOf(this)) trace else trace :+ this
       p.tryMatch(input, start, newTrace) match {
-        case Matched(create, rest, range) => /*println(s"Matched $name! ${create()}");*/Matched(() => create() match {
+        case Matched(create, rest, range) => /*println(s"Matched $name! ${create()}");*/Matched(() => create() /*match {
           case orNode: OrNode[?, ?] => orNode //.flatten
           case other => other
-        }, rest, range)
+        }*/, rest, range)
         case f => {
           //println(s"\tPattern $pattern has failed!!! $f");
           f
@@ -162,7 +163,7 @@ object - {
 }
 
 object || {
-  def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node|EmptyNode.type, Node|EmptyNode.type)] = {
+  def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node, Node)] = {
     arg match {
       case LeftNode(left) => Some((left, EmptyNode))
       case RightNode(right) => Some((EmptyNode, right))
@@ -281,7 +282,7 @@ case class RepeatPattern(
 /**
  * A pattern that matches any one of a group of patterns
  */
-class PatternClass(override val name: String, val patterns: Pattern*) 
+class PatternClass(override val name: String, private val patterns: Pattern*) 
     extends MultiPattern with INamedPattern {
 
 //  override lazy val isFixed: Boolean = patterns.forall(_.isFixed)
@@ -290,14 +291,25 @@ class PatternClass(override val name: String, val patterns: Pattern*)
   for (pattern <- patterns) pattern Extends this
   
   override def tryMatch(input: List[Tok], pos: Position, trace: Trace): ParseResult = {
-    //println(s"Trace = $trace")
-    patterns.view
-        .map(p => p.tryMatch(input, pos, {/*println(s"asdfasd$trace");*/trace}) match {
+    val tabbing = List.fill(trace.size)("  ").mkString //String.repeat(" ", trace.size)
+    var skipped: Pattern|Null = null
+    println(s"\n$tabbing PatternClass, I'm $name, Trace = $trace")
+    println(s"$tabbing Input = ${input.map(_.text)}")
+    val filtered = patterns
+    //  (if (trace.nonEmpty) 
+    //   patterns.filter(pattern =>
+    //     if (pattern == (trace(trace.size - 1))) {
+    //       println(s"$tabbing skipping $pattern");skipped=pattern;false} else true) 
+    // else patterns)
+    println(s"$tabbing Filtered = $filtered")
+    filtered.view.map(p => p.tryMatch(input, pos, {/*println(s"asdfasd$trace");*/trace}) match {
           case m: Matched[?, ?] => /*println(s"Matched $p!!");*/m
           case f => f
         })
         .find(_.isInstanceOf[Matched[?, ?]])
-        .getOrElse(Failed(headOrEmpty(input), List.empty, pos))
+        .getOrElse(
+          if (skipped != null) (skipped.asInstanceOf[Pattern]).tryMatch(input, pos, trace)
+          else Failed(headOrEmpty(input), List.empty, pos))
   }
 }
 
@@ -312,7 +324,8 @@ case class FunctionPattern(matchFun: (List[Tok], Position) => ParseResult,
                               //    override val isFixed: Boolean = false,
                               //    override val isEager: Boolean = true
                           ) extends Pattern {
+  val id = new scala.util.Random().nextInt().toHexString               
   override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult =
     matchFun(input, start)
-  override def ==(other: Pattern): Boolean = this.equals(other)
+  override def toString: String = s"FunctionPattern$id"
 }

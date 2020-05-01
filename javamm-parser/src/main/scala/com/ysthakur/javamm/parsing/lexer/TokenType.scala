@@ -1,6 +1,6 @@
-package com.ysthakur.javamm.parsing
+package com.ysthakur.javamm.parsing.lexer
 
-import java.util.regex.{Pattern, Matcher}
+import com.ysthakur.javamm.parsing.ast.infile.Modifier
 
 /**
  *
@@ -8,13 +8,15 @@ import java.util.regex.{Pattern, Matcher}
  * textMatters - Whether or not it has a different text each time
  *                    or all tokens of this type have the same text
  */
-sealed trait TokenType(val textMatters: Boolean) {}
+sealed trait TokenType(val textMatters: Boolean)
 sealed trait ValidIdentifierTokenType extends TokenType
 sealed trait FixedTextTokenType(val text: String) extends TokenType {
   override val textMatters: Boolean = false
 }
-sealed trait IgnoredTokenType extends TokenType {}
-sealed trait ModifierTokenType extends FixedTextTokenType {}
+sealed trait IgnoredTokenType extends TokenType
+sealed trait ModifierTokenType extends FixedTextTokenType {
+  def toModifier: Modifier = Modifier.valueOf(this.text)
+}
 
 enum SymbolTokenType(symbol: String)
     extends /*java.lang.Enum[SymbolTokenType]
@@ -137,15 +139,6 @@ enum RegexTokenType(val regex: String) extends java.lang.Enum[RegexTokenType] wi
   case MULTILINE_COMMENT extends RegexTokenType("""/\*(.|\n|\r\n|\r)*?\*/""") with IgnoredTokenType
 }
 
-// object JMMTokenTypes {
-//  val allTokenTypes: Iterable[TokenType] =
-//      (ReservedWord.values.toIterable ++
-//        SymbolTokenType.values.toIterable ++ 
-//        KeywordTokenType.values.toIterable ++ 
-//        RegexTokenType.values.toIterable)
-//        .asInstanceOf[Iterable[java.lang.Enum[_] with TokenType]]
-// }
-
 object FixedTextTokenType {
   def unapply(arg: FixedTextTokenType): Option[String] = Some(arg.text)
 }
@@ -153,20 +146,22 @@ object RegexTokenType {
   def unapply(arg: RegexTokenType): Option[String] = Some(arg.regex)
 }
 
+import java.util.regex.{Matcher, Pattern}
+
+object TokenTypeObj {}
+
 object TokenType {
 
-  type Str = CharSequence & Iterable[Char]
-  
-  export com.ysthakur.javamm.parsing.SymbolTokenType._
-  export com.ysthakur.javamm.parsing.RegexTokenType._
-  export com.ysthakur.javamm.parsing.KeywordTokenType._
+  // export com.ysthakur.javamm.parsing.lexer.SymbolTokenType._
+  // export com.ysthakur.javamm.parsing.lexer.RegexTokenType._
+  // export com.ysthakur.javamm.parsing.lexer.KeywordTokenType._
+  // export com.ysthakur.javamm.parsing.lexer.ReservedWord._
 
   def tryMatch(tokenType: TokenType, input: StringBuilder, offset: Int): MatchResult = {
     try {
     (tokenType match {
       case ftt: FixedTextTokenType => tryMatchText(ftt.text)
       case rtt: RegexTokenType => tryMatchRegex(rtt.regex)
-      case _ => throw new Error()
     })(input, offset)
     } catch {
       case e: Exception => {

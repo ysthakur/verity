@@ -6,12 +6,11 @@ import com.ysthakur.javamm.parsing.ast.infile.{Field, Import, Method, TypeDef}
 
 import scala.collection.mutable.ListBuffer
 
-class FileNode(packageRef: DotRef, imports: ListBuffer[Import], typeDefs: ListBuffer[TypeDef])
+class FileNode(packageRef: DotRef, imports: ListBuffer[Import], override val children: ListBuffer[TypeDef])
     extends ParentNode
         with ChildNode {
   override type Parent = PackageNode
-  override type Child = Field | Method
-  override val children: ListBuffer[Child] = ListBuffer()
+  override type Child = TypeDef
   override def parent: Parent = {
     ???
   }

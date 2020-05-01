@@ -1,14 +1,14 @@
 package com.ysthakur.javamm.parsing.parser
 
-import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange, Token}
+import com.ysthakur.javamm.parsing.lexer._
+import com.ysthakur.javamm.parsing.{Position, TextRange}
 import com.ysthakur.javamm.parsing.ast._
-import com.ysthakur.javamm.parsing.KeywordTokenType._
-import com.ysthakur.javamm.parsing.RegexTokenType._
-import com.ysthakur.javamm.parsing.SymbolTokenType._
-import com.ysthakur.javamm.parsing.TokenType._
-import com.ysthakur.javamm.parsing.{ModifierTokenType, ReservedWord, SymbolTokenType, Tok, ValidIdentifierTokenType}
-import com.ysthakur.javamm.parsing.parser.Pattern.{*, -, ||}
-import com.ysthakur.javamm.parsing.parser.{-, ||}
+import com.ysthakur.javamm.parsing.lexer.SymbolTokenType._
+import com.ysthakur.javamm.parsing.lexer.RegexTokenType._
+import com.ysthakur.javamm.parsing.lexer.KeywordTokenType._
+import com.ysthakur.javamm.parsing.lexer.ReservedWord._
+import com.ysthakur.javamm.parsing.lexer.TokenType._
+import com.ysthakur.javamm.parsing.parser.Pattern._
 
 import scala.language.postfixOps
 
@@ -17,7 +17,7 @@ private object ParserPatterns {
 
   type TTP = TokenTypePattern
 
-  val opCtor = (op: Node) => Op(op.asInstanceOf[Token[SymbolTokenType]].toString)
+  val opCtor = (op: Node) => Op(op.text)
 
   val EOL: Pattern = SEMICOLON
   val numLiteral = NUM_LITERAL |>> {
@@ -33,7 +33,7 @@ private object ParserPatterns {
   val modifier: Pattern = (input: List[Tok], pos: Position, trace: Trace) => {
     if (input.isEmpty) Matched.empty(input, TextRange.empty(pos))
     else input.head match {
-      case token@Token(mod: ModifierTokenType) => Matched(() => Modifier.get(mod), input.tail, token.range)
+      case token@Token(mod: ModifierTokenType) => Matched(() => mod.toModifier, input.tail, token.range)
       case f => Failed(f, List("modifier"), pos)
     }
   }
@@ -42,7 +42,7 @@ private object ParserPatterns {
   val identifier = FunctionPattern((input: List[Tok], pos: Position) =>
     if (input.nonEmpty) input.head match {
       case token@Token(tt: ValidIdentifierTokenType) =>
-        Matched(() => ValidIdNode(token.asInstanceOf), input.tail, token.range)
+        Matched(() => ValidIdNode(token.text), input.tail, token.range)
       case other => Failed(other, List("Identifier"), pos)
     }
     else Failed(EmptyToken, List("Identifier"), pos)
@@ -54,7 +54,7 @@ private object ParserPatterns {
           Matched(
               () =>
                 ValidIdNode(
-                    token.asInstanceOf[Token[ValidIdentifierTokenType]]
+                    token.text
                 ),
               input.tail,
               token.range
@@ -69,7 +69,7 @@ private object ParserPatterns {
     case (validId: ValidIdNode) - (nodeList: NodeList[?]) =>
       DotRef(
         validId :: (nodeList.asInstanceOf[NodeList[?]].nodes)
-            .map(_.asInstanceOf[ConsNode[?, ValidIdNode]].n2.asInstanceOf)
+            .map(_.asInstanceOf[ConsNode[?, ValidIdNode]].n2.asInstanceOf[ValidIdNode])
             .toList)
   }
   val pkgStmt = PACKAGE - dotReference - EOL |>> {
@@ -84,25 +84,32 @@ private object ParserPatterns {
         Import(ref, star != null)
       }
     }
-  val firstLevelExpr = identifier | literal
+  "firstLevelExpr" := identifier | literal
 
   "unaryExpr" := ("expr" - unaryPostOp) | (unaryPreOp - "expr") |>> {
     case (op: Op) - (expr: Expr) => UnaryPreExpr(op, expr)
     case (expr: Expr) - (op: Op) => UnaryPostExpr(expr, op)
   }
   
-  "binaryExpr" :=
-    "expr" - (
-      (STAR | FWDSLASH | MODULO)
-      | (PLUS | MINUS)
-      | (LTX2 | GTX2 | GTX3)
-      | (LT | LTEQ | GT | GTEQ)
-      | (EQX2 | NOTEQ)
-      | AND
-      | CARET
-      | OR
-      | ANDX2
-      | ORX2) - "expr" |>> {
+  PatternClass.make(
+    name = "specialExpr",
+    "firstLevelExpr",
+    "binaryExpr"
+  )
+// "expr" - (
+    //   (STAR | FWDSLASH | MODULO)
+    //   | (PLUS | MINUS)
+    //   | (LTX2 | GTX2 | GTX3)
+    //   | (LT | LTEQ | GT | GTEQ)
+    //   | (EQX2 | NOTEQ)
+    //   | AND
+    //   | CARET
+    //   | OR
+    //   | ANDX2
+    //   | ORX2) - "expr"
+  "binaryExpr" := FunctionPattern((input, pos, trace) => {
+    val statement = input.findLast()
+  }) |>> {
     case (lexpr: Expr) - op - (rexpr: Expr) =>
       //println(s"GJGKJGJDFSG!!! - [$rexpr]");
       BinaryExpr(lexpr, opCtor(op), rexpr)
@@ -119,15 +126,21 @@ private object ParserPatterns {
   "arrayAccess" := "expr" - LSQUARE - "expr" - RSQUARE |>> {
     case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
   }
+  val expressions = List[Pattern](
+      "binaryExpr",
+      /*"dotSelect",
+      "arrayAccess",
+      "unaryExpr",*/
+      "firstLevelExpr",
+      /*"parenExpr"*/)
   PatternClass.make(
       name = "expr",
-      "binaryExpr",
-      "dotSelect",
-      "arrayAccess",
-      "unaryExpr",
-      firstLevelExpr,
-      "parenExpr"
+      expressions: _*
   )
+  /*PatternClass.make(
+    name = "shortExpr",
+    expressions.reverse: _*
+  )*/
 
   "typeRef" := ""
 

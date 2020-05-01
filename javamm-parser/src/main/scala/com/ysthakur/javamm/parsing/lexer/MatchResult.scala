@@ -1,4 +1,4 @@
-package com.ysthakur.javamm.parsing
+package com.ysthakur.javamm.parsing.lexer
 
 import scala.math.Ordered.orderingToOrdered
 import scala.math.Ordering.Implicits.infixOrderingOps

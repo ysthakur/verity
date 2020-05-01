@@ -1,8 +1,8 @@
-package com.ysthakur.javamm.parsing
+package com.ysthakur.javamm.parsing.lexer
 
 import com.ysthakur.javamm.parsing.ast._
 import com.ysthakur.javamm.parsing.ast.infile.Node
-import com.ysthakur.javamm.parsing.{Token, TokenType}
+import com.ysthakur.javamm.parsing.lexer.{Token, TokenType}
 import com.ysthakur.javamm.parsing.{HasText, Position, TextRange}
 
 import scala.collection.mutable

@@ -1,4 +1,4 @@
-package com.ysthakur.javamm.parsing
+package com.ysthakur.javamm.parsing.lexer
 
 /**
   * Merely wraps around a piece of input that was matched exactly.

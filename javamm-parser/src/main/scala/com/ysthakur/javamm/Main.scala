@@ -3,11 +3,9 @@ package com.ysthakur
 import java.io.{BufferedInputStream, File, FileInputStream, FileWriter}
 import java.util.regex.Pattern
 
-import com.ysthakur.javamm.parsing.Token
+import com.ysthakur.javamm.parsing.lexer.{Token, Lexer}
 import com.ysthakur.javamm.parsing.ast.INode
-import com.ysthakur.javamm.parsing.{KeywordTokenType, Lexer, RegexTokenType, SymbolTokenType}
 import com.ysthakur.javamm.parsing.parser.Parser
-import com.ysthakur.javamm.parsing.lexer.Lexer
 // import com.ysthakur.javamm.parsing.parser.Parser
 
 object Main /*extends App*/ {
@@ -27,10 +25,10 @@ object Main /*extends App*/ {
     writer.close()*/
     
     val tokens = lex()
-    println("Tokens = " + tokens)
-    //val ast = Parser.parse(tokens.toList)
+    //println("Tokens = " + tokens)
+    val ast = Parser.parse(tokens.toList)
     //println("AST = " + ast)
-    //println(ast.text)
+    println(s"\nText = ${ast.text}")
   }
 
   def lex(): Iterable[Token[?]] = {

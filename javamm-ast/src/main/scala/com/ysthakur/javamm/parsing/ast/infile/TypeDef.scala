@@ -1,7 +1,6 @@
 package com.ysthakur.javamm.parsing.ast.infile
 
 import com.ysthakur.javamm.parsing.ast.ParentNode
-import com.ysthakur.javamm.parsing.{ModifierTokenType, Token}
 
 import scala.collection.mutable.ListBuffer
 

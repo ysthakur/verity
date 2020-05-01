@@ -8,6 +8,6 @@ trait IMethodLike extends HasModifiers {
   def ctparams: CTParamList
   def params: ParamList
   
-  def body: Option[Block|Expr]
-  def body_=(newBody: Option[Block|Expr]): Unit
+  def body: Option[Block] //Option[Block|Expr]
+  def body_=(newBody: Option[Block] /*Option[Block|Expr]*/): Unit
 }
