@@ -12,7 +12,7 @@ sealed trait ParseResult {
   def pattern: Option[Pattern]
 }
 
-class Matched[N <: Node, T](
+case class Matched[N <: Node, T](
     val create: () => (N),
     val rest: List[Tok],
     val range: TextRange,
@@ -30,12 +30,11 @@ object Matched {
   def empty(rest: List[Tok], range: TextRange, pattern: Option[Pattern] = None) =
     new Matched(() => EmptyNode, rest, range, true, pattern)
 
-  def apply[N <: Node, T](
-      create: () => N,
-      rest: List[Tok],
-      range: TextRange
-  ): Matched[N, T] =
-    new Matched(create, rest, range)
+  // def apply[N <: Node, T](
+  //     create: () => N,
+  //     rest: List[Tok],
+  //     range: TextRange
+  // ): Matched[N, T] = new Matched(create, rest, range)
   def unapply[N <: Node, T](matched: Matched[N, T]): (() => N, List[Tok], TextRange) =
     (matched.create, matched.rest, matched.range)
 }

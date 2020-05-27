@@ -96,26 +96,81 @@ private object ParserPatterns {
     "firstLevelExpr",
     "binaryExpr"
   )
-// "expr" - (
-    //   (STAR | FWDSLASH | MODULO)
-    //   | (PLUS | MINUS)
-    //   | (LTX2 | GTX2 | GTX3)
-    //   | (LT | LTEQ | GT | GTEQ)
-    //   | (EQX2 | NOTEQ)
-    //   | AND
-    //   | CARET
-    //   | OR
-    //   | ANDX2
-    //   | ORX2) - "expr"
-  "binaryExpr" := FunctionPattern((input, pos, trace) => {
-    val statement = input.findLast()
-  }) |>> {
+
+  // "binaryExpr" := FunctionPattern((input, pos, trace) => {
+  //   val statement = input.findLast()
+  // }) |>> {
+  //   case (lexpr: Expr) - op - (rexpr: Expr) =>
+  //     //println(s"GJGKJGJDFSG!!! - [$rexpr]");
+  //     BinaryExpr(lexpr, opCtor(op), rexpr)
+  //   case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
+  //   case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
+  // } Extends PatternRef("expr")
+
+  "binaryExpr" := LeftAssocPattern(
+    p1 = "expr",
+    p2 = ((STAR | FWDSLASH | MODULO)
+      | (PLUS | MINUS)
+      | (LTX2 | GTX2 | GTX3)
+      | (LT | LTEQ | GT | GTEQ)
+      | (EQX2 | NOTEQ)
+      | AND
+      | CARET
+      | OR
+      | ANDX2
+      | ORX2) - "expr"
+  ) |>> {
     case (lexpr: Expr) - op - (rexpr: Expr) =>
-      //println(s"GJGKJGJDFSG!!! - [$rexpr]");
+      println(s"GJGKJGJDFSG!!! - [$rexpr]");
       BinaryExpr(lexpr, opCtor(op), rexpr)
-    case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
-    case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
+    //case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
+    case x => println(s"\n\nQPPETQeRWJ#5 ${x.getClass()} $x..."); unwrapBinaryExpr(x)
   } Extends PatternRef("expr")
+
+
+  def unwrapBinaryExpr(node: Node): BinaryExpr = {
+    node match {
+      case (lexpr: Expr) - ((op: Tok) - (rexpr: Expr)) => 
+        println("poiuytr")
+        BinaryExpr(lexpr, opCtor(op), rexpr)
+      case ConsNode(p1: ConsNode[_, _], ConsNode(op: Tok, rexpr: Expr)) => 
+        println("\nqwedfghhjk;")
+        BinaryExpr(unwrapBinaryExpr(p1), opCtor(op), rexpr)
+      case x => println(s"\nQPPETQeRWJ#5 ${x.getClass()} $x..."); throw new Error("alksdjfasdf")
+    }
+  }
+
+/*ConsNode(
+  ConsNode(
+    ValidIdNode(gah),
+    ConsNode(
+      InvariantToken(PLUS,TextRange(Position(7,4,118),Position(7,5,119))),
+      NumLiteral(78))
+  ),
+  ConsNode(
+    InvariantToken(PLUS,TextRange(Position(7,9,123),Position(7,10,124))),
+    NumLiteral(0)
+  )
+)*/
+
+  // "binaryExpr" :=
+  //   "expr" - (
+  //     (STAR | FWDSLASH | MODULO)
+  //     | (PLUS | MINUS)
+  //     | (LTX2 | GTX2 | GTX3)
+  //     | (LT | LTEQ | GT | GTEQ)
+  //     | (EQX2 | NOTEQ)
+  //     | AND
+  //     | CARET
+  //     | OR
+  //     | ANDX2
+  //     | ORX2) - "expr" |>> {
+  //   case (lexpr: Expr) - op - (rexpr: Expr) =>
+  //     println(s"GJGKJGJDFSG!!! - [$rexpr]");
+  //     BinaryExpr(lexpr, opCtor(op), rexpr)
+  //   case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
+  //   case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
+  // } Extends PatternRef("expr")
 
   "dotSelect" := "expr" - DOT - identifier |>> {
     case expr - dot - validId => DotChainedExpr(expr.asInstanceOf, validId.asInstanceOf)
@@ -126,12 +181,18 @@ private object ParserPatterns {
   "arrayAccess" := "expr" - LSQUARE - "expr" - RSQUARE |>> {
     case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
   }
+  // lazy val leftAssocExpr := PatternClass.make(
+  //   name = "leftAssocExpr",
+  //   expressions.reversed: _*
+  // )
+
   val expressions = List[Pattern](
-      "binaryExpr",
+      "firstLevelExpr",
+      "binaryExpr"//,
       /*"dotSelect",
       "arrayAccess",
       "unaryExpr",*/
-      "firstLevelExpr",
+      //"firstLevelExpr",
       /*"parenExpr"*/)
   PatternClass.make(
       name = "expr",
@@ -156,7 +217,7 @@ private object ParserPatterns {
   val localVarDecl = varDeclFirstPart - EOL
   "typeDecl" := "abcd"
 
-  val root: Pattern = (pkgStmt?) - (importStatement*) - ("expr"?) |>> {
+  val root: Pattern = (pkgStmt?) - (importStatement*) - ("binaryExpr"?) |>> {
     case pkg - imports - typeDefs => typeDefs
   }
 

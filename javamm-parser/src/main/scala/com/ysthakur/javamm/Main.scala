@@ -37,7 +37,7 @@ object Main /*extends App*/ {
     )
     val lexer = new Lexer(file)
     val tokens = lexer.tokenize().toList
-    println(tokens)
+    //println(tokens)
     // println(tokens.map(token => {
     //   val tt = token.tokenType
     //   JMMTokenTypes.allTokenTypes.map(p =>
