@@ -1,0 +1,1 @@
+["sbt.Task[scala.collection.immutable.Map[java.lang.String, scala.collection.Seq[scala.Tuple2[java.nio.file.Path, sbt.nio.FileStamp]]]]",{"0.24.0-RC1":{"hashes":[["C:\\Users\\thaku\\verity\\verity-parser\\src\\test\\scala\\LexerTest.scala","2bd4c175815c04f8063a73d4c3443edbc5e50aa6"]],"lastModifiedTimes":[]}}]
