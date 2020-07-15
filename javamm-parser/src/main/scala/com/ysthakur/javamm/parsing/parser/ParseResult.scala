@@ -1,8 +1,9 @@
 package com.ysthakur.javamm.parsing.parser
 
-import com.ysthakur.javamm.parsing.{Position, TextRange, Token}
+import com.ysthakur.javamm.parsing.{Position, TextRange}
 import com.ysthakur.javamm.parsing.ast.infile.{EmptyNode, Node}
-import com.ysthakur.javamm.parsing.lexer.Tok
+import com.ysthakur.javamm.parsing.ast.ConsNode
+import com.ysthakur.javamm.parsing.lexer.{Token, Tok}
 
 sealed trait ParseResult {
   def orElse(res: => ParseResult): ParseResult =
@@ -11,8 +12,8 @@ sealed trait ParseResult {
   def pattern: Option[Pattern]
 }
 
-class Matched[N <: Node, T](
-    val create: () => N | Null,
+case class Matched[N <: Node, T](
+    val create: () => (N),
     val rest: List[Tok],
     val range: TextRange,
     val isEmpty: Boolean = false,
@@ -29,13 +30,12 @@ object Matched {
   def empty(rest: List[Tok], range: TextRange, pattern: Option[Pattern] = None) =
     new Matched(() => EmptyNode, rest, range, true, pattern)
 
-  def apply[N <: Node, T](
-      create: () => N | Null,
-      rest: List[Tok],
-      range: TextRange
-  ): Matched[N, T] =
-    new Matched(create, rest, range)
-  def unapply[N <: Node, T](matched: Matched[N, T]): (() => N | Null, List[Tok], TextRange) =
+  // def apply[N <: Node, T](
+  //     create: () => N,
+  //     rest: List[Tok],
+  //     range: TextRange
+  // ): Matched[N, T] = new Matched(create, rest, range)
+  def unapply[N <: Node, T](matched: Matched[N, T]): (() => N, List[Tok], TextRange) =
     (matched.create, matched.rest, matched.range)
 }
 

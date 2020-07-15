@@ -1,6 +1,6 @@
 package com.ysthakur.javamm.parsing.ast.infile
 
-import com.ysthakur.javamm.parsing.ModifierTokenType
+import com.ysthakur.javamm.parsing.ast.Node
 
 import scala.collection.mutable.ListBuffer
 
@@ -20,8 +20,4 @@ enum Modifier extends Node {
   VOLATILE, SYNCHRONIZED, CONST
 
   override def text: String = this.toString.toLowerCase
-}
-
-object Modifier {
-  def get(modTokenType: ModifierTokenType): Modifier = Modifier.valueOf(modTokenType.text)
 }

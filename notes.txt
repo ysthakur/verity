@@ -4,7 +4,7 @@ different syntax for static blocks, old static {} for applying same modifier
 to all fields within block
 
 apply rule to known truths to meet requirements for a method
-
+keep track of depth while searching, return false if meets maximum depth while trying to prove predicate
 
 /*package com.ysthakur;
 

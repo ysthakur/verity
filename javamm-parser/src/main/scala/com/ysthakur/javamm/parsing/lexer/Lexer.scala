@@ -3,7 +3,7 @@ package com.ysthakur.javamm.parsing.lexer
 import java.io.{BufferedInputStream, File, FileInputStream, FileWriter, IOException, InputStream}
 
 import com.ysthakur.javamm.CompilationError
-import com.ysthakur.javamm.parsing._
+import com.ysthakur.javamm.parsing.{Position, TextRange}
 import com.ysthakur.javamm.parsing.lexer.TokenType
 
 import scala.collection.mutable
@@ -82,7 +82,6 @@ case class Lexer(file: BufferedInputStream, logFile: String = "./mylog.txt") {
             InvariantToken(textTokenType, range)
           case regexTokenType: RegexTokenType =>
             VariantToken(regexTokenType, matched.matched.toString, range)
-          case _ => throw new CompilationError("Oops! Match error")
         })
       }
       this.position = range.end

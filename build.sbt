@@ -1,11 +1,11 @@
 val projectName = "javamm-scala"
-val dottyVersion = "0.23.0-RC1"
+val scala_version = "0.24.0-RC1"
 val jmmVersion = "0.1.0"
 
 name := projectName
 version in ThisBuild := jmmVersion
 organization in ThisBuild := "com.ysthakur"
-scalaVersion in ThisBuild := dottyVersion
+scalaVersion in ThisBuild := scala_version
 mainClass in (Compile, run) := Some("com.ysthakur.Main")
 
 lazy val root = project
@@ -19,7 +19,7 @@ lazy val root = project
       `javamm-ast`,
       `javamm-parser`,
       `javamm-codegen`
-    ).dependsOn(`javamm-ast`, `javamm-parser`, `javamm-codegen`)
+    ).dependsOn(`javamm-ast`, `javamm-parser`)
 
 lazy val `javamm-ast` =
   (project in file("javamm-ast")).settings(
@@ -47,7 +47,7 @@ lazy val libDeps = Seq(
 )
 
 lazy val commonScalacOptions = Seq(
-  "-language:implicitConversions",
-  "-explain"/*,
+  "-language:implicitConversions"/*,
+  "-explain",
   "-Yexplicit-nulls"*/
 )

@@ -1,17 +1,17 @@
 package com.ysthakur.javamm.parsing.parser
 
 import com.ysthakur.javamm.CompilationError
-import com.ysthakur.javamm.parsing.ast.infile.EmptyNode
-import com.ysthakur.javamm.parsing.ast.{ConsNode, LeftNode, OrNode, RightNode, _}
-import com.ysthakur.javamm.parsing.{EmptyToken, Position, TextRange}
-import com.ysthakur.javamm.parsing.lexer.Tok
+import com.ysthakur.javamm.parsing.ast.infile._
+import com.ysthakur.javamm.parsing.ast._
+import com.ysthakur.javamm.parsing.{Position, TextRange}
+import com.ysthakur.javamm.parsing.lexer.{EmptyToken, Tok, Token}
 
 import scala.collection.mutable.ListBuffer
 import scala.Option
 import scala.collection.mutable
 import scala.util.control.Breaks._
 
-type Trace = ListBuffer[INamedPattern]
+type Trace = ListBuffer[(TextRange|Null, INamedPattern)]
 
 /**
   * A pattern, like regex, that matches input
@@ -28,7 +28,7 @@ trait Pattern {
 //  def isEager: Boolean
   var _superPattern: INamedPattern|Null = null
   def superPattern: INamedPattern|Null = _superPattern
-  
+
   def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult
 
   /**
@@ -55,7 +55,7 @@ trait Pattern {
 
   //def doesExtend(superPattern: PatternClass): Boolean = this.superPattern == superPattern
   def subOf(other: Pattern): Boolean = other == this.superPattern
-  def ==(other: Pattern): Boolean = ???
+  //def ==(other: Pattern): Boolean = ???
   def headOrEmpty(it: Iterable[Tok]): Tok = if (it.isEmpty) EmptyToken else it.head
 }
 
@@ -70,10 +70,10 @@ Pattern.allPatterns.put(patternName, pattern)
 }
 
 object Pattern {
-  type -[A <: Pattern, B <: Pattern] = ConsPattern[A, B]
-  type ||[A <: Pattern, B <: Pattern] = OrPattern[A, B]
-  type *[T <: Pattern] = RepeatPattern
-  type *?[T <: Pattern] = RepeatPattern
+  //type -[A <: Pattern, B <: Pattern] = ConsPattern[A, B]
+  //type ||[A <: Pattern, B <: Pattern] = OrPattern[A, B]
+  //type *[T <: Pattern] = RepeatPattern
+  //type *?[T <: Pattern] = RepeatPattern
 
   val allPatterns: mutable.LinkedHashMap[String, Pattern] = mutable.LinkedHashMap()
 }
@@ -87,7 +87,7 @@ trait INamedPattern extends Pattern {
     case named: INamedPattern => this.name == named.name
     case _ => false
   }
-  override def ==(other: Pattern): Boolean = this.equals(other)
+  //override def ==(other: Pattern): Boolean = this.equals(other)
   override def hashCode: Int = name.hashCode
 }
 
@@ -100,30 +100,11 @@ case class PatternRef(override val name: String) extends INamedPattern {
   lazy val pattern: Pattern = 
     Pattern.allPatterns.getOrElse(name, 
       throw new Error(s"Couldn't find pattern $name in allPatterns=${Pattern.allPatterns}"))
-  def isLeftRecursive(trace: ListBuffer[INamedPattern]): Boolean = {
-    /*if (trace.isEmpty || !trace.exists(_ == this)) return false
-    if (trace.last == this) return true
-//    val trace2 = trace.filter(p => this.subOf(p))
-//    if (trace2.isEmpty) return false
-//    if (!trace2.exists(_ == this)) return false
-//    if (trace2.last == this) return true
-    isLeftRecursive(trace.filter(p => !this.subOf(p)))*/
-    if (!pattern.isInstanceOf[PatternClass] && trace.contains(this)) {
+  def isLeftRecursive(trace: Trace, tr: TextRange): Boolean = {
+    if (!pattern.isInstanceOf[PatternClass] && trace.exists(p => p._2 == this && p._1 == tr)) {
       //println(s"Is left-recursive this=$name $trace")
       true
     } else false
-   /* var res = false
-    breakable {
-      for (i <- (trace.size - 1 to 0) by -1) {
-        val elem = trace.apply(i)
-        if (elem == this) {
-          res = true
-          break
-        }
-        else if (!this.subOf(elem)) break
-      }
-    }
-    return res*/
   }
   override def superPattern: INamedPattern = pattern.superPattern
 //  override def isFixed: Boolean = pattern.isFixed
@@ -134,17 +115,17 @@ case class PatternRef(override val name: String) extends INamedPattern {
       val x = 9;
       //TODO fix this with a variable or something
       if (trace.size > 100) throw new CompilationError(s"Trace is too big (${trace.mkString(",")}")
-      if (trace.nonEmpty && isLeftRecursive(trace)) {
+      if (trace.nonEmpty && isLeftRecursive(trace, textRangeToEnd(start, input))) {
         //println("\tAnd I have failed")
         return Failed(headOrEmpty(input), List(), start)
       }
       val p = pattern
-      val newTrace = if (trace.nonEmpty && trace.last.subOf(this)) trace else trace :+ this
+      val newTrace = if (trace.nonEmpty && trace.last._2.subOf(this)) trace else trace :+ (textRangeToEnd(start, input), this)
       p.tryMatch(input, start, newTrace) match {
-        case Matched(create, rest, range) => /*println(s"Matched $name! ${create()}");*/Matched(() => create() match {
+        case Matched(create, rest, range) => /*println(s"Matched $name! ${create()}");*/Matched(() => create() /*match {
           case orNode: OrNode[?, ?] => orNode //.flatten
           case other => other
-        }, rest, range)
+        }*/, rest, range)
         case f => {
           //println(s"\tPattern $pattern has failed!!! $f");
           f
@@ -156,6 +137,8 @@ case class PatternRef(override val name: String) extends INamedPattern {
   }
 }
 
+def textRangeToEnd(start: Position, it: Iterable[Token[_]]): TextRange = TextRange(start, it.last.range.end)
+
 object - {
   def unapply[A <: Node, B <: Node](arg: ConsNode[A, B]): Option[(A|EmptyNode.type, B|EmptyNode.type)] = {
     Some(arg.n1, arg.n2)
@@ -163,7 +146,7 @@ object - {
 }
 
 object || {
-  def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node|EmptyNode.type, Node|EmptyNode.type)] = {
+  def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node, Node)] = {
     arg match {
       case LeftNode(left) => Some((left, EmptyNode))
       case RightNode(right) => Some((EmptyNode, right))
@@ -235,6 +218,83 @@ case class MaybePattern(pattern: Pattern) extends Pattern {
 }
 
 /**
+ * @param p1 The first part (an expression)
+ * @param p2 The second part (some binary operator and another expression)
+ */
+case class LeftAssocPattern(p1: Pattern, p2: Pattern) extends Pattern {
+  override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult =
+    p1.tryMatch(input, start, trace) match {
+      case m@Matched(create1, rest1, tr1) => 
+        println(s"Matched first, create1=${create1()}")
+        p2.tryMatch(rest1, tr1.end, trace) match {
+          case m2@Matched(create2, rest2, tr2) => 
+            println(s"Iin tryMatch, create2=${create2()}")
+            keepMatching(Matched(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end)))
+          case f => 
+            println("Failed on second")
+            f
+        }
+      case f => 
+        println(s"Failed p1=$p1, boohoo")
+        f
+    }
+
+  def keepMatching(lastRes: Matched[_, _]): ParseResult = {
+    val Matched(create1, rest1, tr1) = lastRes
+    p2.tryMatch(rest1, tr1.end, ListBuffer()) match {
+      case m2@Matched(create2, rest2, tr2) => 
+        println(s"Matched m2, create2=${create2()}")
+        keepMatching(Matched(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end)))
+      case f => 
+        println(s"Failed, lastRes=${lastRes.create()}")
+        lastRes
+    }
+  }
+}
+
+/**
+ * @param p1 The first part, e.g., an expression and some binary operator
+ * @param p2 The second part, e.g., expression
+ */
+case class RightAssocPattern(p1: Pattern, p2: Pattern) extends Pattern {
+  override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult =
+    p1.tryMatch(input, start, trace) match {
+      case m@Matched(create1, rest1, tr1) => 
+        p1.tryMatch(rest1, tr1.end, trace) match {
+          case m2@Matched(create2, rest2, tr2) => 
+            new Matched(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end))
+          case f => p2.tryMatch(rest1, tr1.end, trace)
+        }
+      case f => f
+    }
+  
+  private def keepMatching(input: List[Tok], start: Position, trace: Trace): ParseResult = {
+    p1.tryMatch(input, start, trace) match {
+      case Matched(create1, rest1, tr1) => 
+        keepMatching(rest1, tr1.end, trace) match {
+          case f: Failed => f
+          case Matched(create2, rest2, tr2) =>
+            Matched(() => ConsNode(create1(), create2()), rest2, tr1.start to tr2.end)
+        }
+      case f => p2.tryMatch(input, start, trace)
+    }
+  }
+}
+
+// case class BinaryOpPattern(p1: Pattern, op: TokenTypePattern, p2: Pattern)(leftAssoc: Boolean) 
+//   extends Pattern {
+//   private val fn = if (leftAssoc) leftAssocMatch else rightAssocMatch
+//   override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult =
+//     fn(input, start, trace)
+//   def leftAssocMatch(input: List[Tok], start: Position, trace: Trace): ParseResult = {
+//     null
+//   }
+//   def rightAssocMatch(input: List[Tok], start: Position, trace: Trace): ParseResult = {
+//     null
+//   }
+// }
+
+/**
   *
   */
 case class RepeatPattern(
@@ -282,7 +342,7 @@ case class RepeatPattern(
 /**
  * A pattern that matches any one of a group of patterns
  */
-class PatternClass(override val name: String, val patterns: Pattern*) 
+class PatternClass(override val name: String, private val patterns: Pattern*) 
     extends MultiPattern with INamedPattern {
 
 //  override lazy val isFixed: Boolean = patterns.forall(_.isFixed)
@@ -291,14 +351,25 @@ class PatternClass(override val name: String, val patterns: Pattern*)
   for (pattern <- patterns) pattern Extends this
   
   override def tryMatch(input: List[Tok], pos: Position, trace: Trace): ParseResult = {
-    //println(s"Trace = $trace")
-    patterns.view
-        .map(p => p.tryMatch(input, pos, {/*println(s"asdfasd$trace");*/trace}) match {
+    val tabbing = List.fill(trace.size)("  ").mkString //String.repeat(" ", trace.size)
+    var skipped: Pattern|Null = null
+    //println(s"\n$tabbing PatternClass, I'm $name, Trace = $trace")
+    //println(s"$tabbing Input = ${input.map(_.text)}")
+    val filtered = patterns
+    //  (if (trace.nonEmpty) 
+    //   patterns.filter(pattern =>
+    //     if (pattern == (trace(trace.size - 1))) {
+    //       println(s"$tabbing skipping $pattern");skipped=pattern;false} else true) 
+    // else patterns)
+    //println(s"$tabbing Filtered = $filtered")
+    filtered.view.map(p => p.tryMatch(input, pos, {/*println(s"asdfasd$trace");*/trace}) match {
           case m: Matched[?, ?] => /*println(s"Matched $p!!");*/m
           case f => f
         })
         .find(_.isInstanceOf[Matched[?, ?]])
-        .getOrElse(Failed(headOrEmpty(input), List.empty, pos))
+        .getOrElse(
+          if (skipped != null) (skipped.asInstanceOf[Pattern]).tryMatch(input, pos, trace)
+          else Failed(headOrEmpty(input), List.empty, pos))
   }
 }
 
@@ -309,11 +380,12 @@ object PatternClass {
 }
 
 
-case class FunctionPattern(matchFun: (List[Tok], Position) => ParseResult,
+case class FunctionPattern(matchFun: (List[Tok], Position) => ParseResult
                               //    override val isFixed: Boolean = false,
                               //    override val isEager: Boolean = true
                           ) extends Pattern {
+  val id = new scala.util.Random().nextInt().toHexString               
   override def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult =
     matchFun(input, start)
-  override def ==(other: Pattern): Boolean = this.equals(other)
+  override def toString: String = s"FunctionPattern$id"
 }

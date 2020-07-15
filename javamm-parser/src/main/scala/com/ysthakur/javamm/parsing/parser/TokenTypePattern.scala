@@ -1,10 +1,9 @@
 package com.ysthakur.javamm.parsing.parser
 
-import com.ysthakur.javamm.parsing._
-import com.ysthakur.javamm.parsing.ast.INode
-import com.ysthakur.javamm.parsing.lexer._
+import com.ysthakur.javamm.parsing.lexer.{TokenType, Tok, EmptyToken, Token}
+import com.ysthakur.javamm.parsing.Position
 
-case class TokenTypePattern(val tokenType: TokenType) extends Pattern {
+case class TokenTypePattern(val tokenType: com.ysthakur.javamm.parsing.lexer.TokenType) extends Pattern {
   
 //  override val isEager: Boolean = false
 //  override val isFixed: Boolean = true
