@@ -1,9 +1,0 @@
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E056] Syntax Error: C:\Users\thaku\javamm-scala\javamm-parser\src\main\scala\com\ysthakur\javamm\parsing\parser\ParserPatterns.scala:133:33 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m133 |[0m      [33mcase[0m (lexpr: Expr) - ((op: Token) - (rexpr: Expr)) => [0m
-[0m[[0m[31merror[0m] [0m[0m    |                                 [31m^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |    Missing type parameter for com.ysthakur.javamm.parsing.lexer.Token[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E056] Syntax Error: C:\Users\thaku\javamm-scala\javamm-parser\src\main\scala\com\ysthakur\javamm\parsing\parser\ParserPatterns.scala:136:53 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m136 |[0m      [33mcase[0m ConsNode(p1: ConsNode[_, _], ConsNode(op: Token, rexpr: Expr)) => [0m
-[0m[[0m[31merror[0m] [0m[0m    |                                                     [31m^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |    Missing type parameter for com.ysthakur.javamm.parsing.lexer.Token[0m
-[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m

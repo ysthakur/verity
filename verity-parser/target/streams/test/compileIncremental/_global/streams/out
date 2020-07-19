@@ -2,12 +2,12 @@
 [0m[[0m[0mdebug[0m] [0m[0mAll sources are invalidated.[0m
 [0m[[0m[0mdebug[0m] [0m[0mInitial set of included nodes: [0m
 [0m[[0m[0mdebug[0m] [0m[0mRecompiling all sources: number of invalidated sources > 50.0% of all sources[0m
-[0m[[0m[0minfo[0m] [0m[0mCompiling 1 Scala source to C:\Users\thaku\verity\verity-parser\target\scala-0.24\test-classes ...[0m
-[0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-sbt-bridge\0.24.0-RC1\dotty-sbt-bridge-0.24.0-RC1.jar.[0m
-[0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-sbt-bridge\0.24.0-RC1\dotty-sbt-bridge-0.24.0-RC1.jar.[0m
+[0m[[0m[0minfo[0m] [0m[0mCompiling 1 Scala source to C:\Users\thaku\verity\verity-parser\target\scala-0.25\test-classes ...[0m
+[0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-sbt-bridge\0.25.0-RC2\dotty-sbt-bridge-0.25.0-RC2.jar.[0m
+[0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-sbt-bridge\0.25.0-RC2\dotty-sbt-bridge-0.25.0-RC2.jar.[0m
 [0m[[0m[0mdebug[0m] [0m[0mCalling Dotty compiler with arguments  (CompilerInterface):[0m
 [0m[[0m[0mdebug[0m] [0m[0m	-language:implicitConversions[0m
 [0m[[0m[0mdebug[0m] [0m[0m	-classpath[0m
-[0m[[0m[0mdebug[0m] [0m[0m	C:\Users\thaku\verity\verity-parser\target\scala-0.24\test-classes;C:\Users\thaku\verity\verity-parser\target\scala-0.24\classes;C:\Users\thaku\verity\verity-ast\target\scala-0.24\classes;C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-lang\scala-library\2.13.2\scala-library-2.13.2.jar;C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-library_0.24\0.24.0-RC1\dotty-library_0.24-0.24.0-RC1.jar[0m
-[0m[[0m[0mdebug[0m] [0m[0mScala compilation took 2.1140159 s[0m
+[0m[[0m[0mdebug[0m] [0m[0m	C:\Users\thaku\verity\verity-parser\target\scala-0.25\test-classes;C:\Users\thaku\verity\verity-parser\target\scala-0.25\classes;C:\Users\thaku\verity\verity-ast\target\scala-0.25\classes;C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-lang\scala-library\2.13.2\scala-library-2.13.2.jar;C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-library_0.25\0.25.0-RC2\dotty-library_0.25-0.25.0-RC2.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0mScala compilation took 1.6860855 s[0m
 [0m[[0m[0mdebug[0m] [0m[0mDone compiling.[0m

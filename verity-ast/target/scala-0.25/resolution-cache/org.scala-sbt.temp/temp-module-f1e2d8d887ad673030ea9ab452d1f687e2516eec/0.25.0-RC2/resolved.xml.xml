@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
+	<info organisation="org.scala-sbt.temp"
+		module="temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec"
+		revision="0.25.0-RC2"
+		status="integration"
+		publication="20200719150406"
+	/>
+	<configurations>
+		<conf name="compile" visibility="public" description=""/>
+		<conf name="runtime" visibility="public" description="" extends="compile"/>
+		<conf name="test" visibility="public" description="" extends="runtime"/>
+		<conf name="provided" visibility="public" description=""/>
+		<conf name="optional" visibility="public" description=""/>
+	</configurations>
+	<publications>
+	</publications>
+	<dependencies>
+		<dependency org="ch.epfl.lamp" name="dotty-compiler_0.25" rev="0.25.0-RC2" conf="compile->default(compile)"/>
+	</dependencies>
+</ivy-module>

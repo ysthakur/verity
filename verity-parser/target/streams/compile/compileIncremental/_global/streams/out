@@ -1,13 +1,32 @@
-[0m[[0m[0mdebug[0m] [0m[0mFull compilation, no sources in previous analysis.[0m
-[0m[[0m[0mdebug[0m] [0m[0mAll sources are invalidated.[0m
-[0m[[0m[0mdebug[0m] [0m[0mInitial set of included nodes: [0m
-[0m[[0m[0mdebug[0m] [0m[0mRecompiling all sources: number of invalidated sources > 50.0% of all sources[0m
-[0m[[0m[0minfo[0m] [0m[0mCompiling 15 Scala sources to C:\Users\thaku\verity\verity-parser\target\scala-0.25\classes ...[0m
+[0m[[0m[0mdebug[0m] [0m[0m[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial source changes: [0m
+[0m[[0m[0mdebug[0m] [0m[0m	removed:Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	added: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	modified: Set(C:\Users\thaku\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0mInvalidated products: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mExternal API changes: API Changes: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mModified binary dependencies: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial directly invalidated classes: Set(com.ysthakur.verity.parsing.parser.Extractor, com.ysthakur.verity.parsing.parser.ParserPatterns)[0m
+[0m[[0m[0mdebug[0m] [0m[0m[0m
+[0m[[0m[0mdebug[0m] [0m[0mSources indirectly invalidated by:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	product: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	binary dep: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0m	external source: Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll initially invalidated classes: Set(com.ysthakur.verity.parsing.parser.Extractor, com.ysthakur.verity.parsing.parser.ParserPatterns)[0m
+[0m[[0m[0mdebug[0m] [0m[0mAll initially invalidated sources:Set(C:\Users\thaku\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala)[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial set of included nodes: com.ysthakur.verity.parsing.parser.Extractor, com.ysthakur.verity.parsing.parser.ParserPatterns[0m
+[0m[[0m[0minfo[0m] [0m[0mCompiling 1 Scala source to C:\Users\thaku\verity\verity-parser\target\scala-0.25\classes ...[0m
 [0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-sbt-bridge\0.25.0-RC2\dotty-sbt-bridge-0.25.0-RC2.jar.[0m
 [0m[[0m[0mdebug[0m] [0m[0mReturning already retrieved and compiled bridge: C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-sbt-bridge\0.25.0-RC2\dotty-sbt-bridge-0.25.0-RC2.jar.[0m
 [0m[[0m[0mdebug[0m] [0m[0mCalling Dotty compiler with arguments  (CompilerInterface):[0m
 [0m[[0m[0mdebug[0m] [0m[0m	-language:implicitConversions[0m
 [0m[[0m[0mdebug[0m] [0m[0m	-classpath[0m
 [0m[[0m[0mdebug[0m] [0m[0m	C:\Users\thaku\verity\verity-parser\target\scala-0.25\classes;C:\Users\thaku\verity\verity-ast\target\scala-0.25\classes;C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\org\scala-lang\scala-library\2.13.2\scala-library-2.13.2.jar;C:\Users\thaku\AppData\Local\Coursier\cache\v1\https\repo1.maven.org\maven2\ch\epfl\lamp\dotty-library_0.25\0.25.0-RC2\dotty-library_0.25-0.25.0-RC2.jar[0m
-[0m[[0m[0mdebug[0m] [0m[0mScala compilation took 7.3242209 s[0m
+[0m[[0m[0mdebug[0m] [0m[0mScala compilation took 16.4514612 s[0m
 [0m[[0m[0mdebug[0m] [0m[0mDone compiling.[0m
+[0m[[0m[0mdebug[0m] [0m[0mNew invalidations:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mInitial set of included nodes: [0m
+[0m[[0m[0mdebug[0m] [0m[0mPreviously invalidated, but (transitively) depend on new invalidations:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	Set()[0m
+[0m[[0m[0mdebug[0m] [0m[0mNo classes were invalidated.[0m

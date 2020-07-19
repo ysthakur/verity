@@ -1,0 +1,24 @@
+[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\thaku\verity\verity-ast\src\main\scala\com\ysthakur\javamm\parsing\ast\infile\expr\ParenExpr.scala:5:11 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m5 |[0m[33mcase class[0m [35mParenExpr[0m([36mexpr[0m: [35mExpr[0m, [36mtr[0m: [35mTextRange[0m) [33mextends[0m [35mExpr[0m {[0m
+[0m[[0m[31merror[0m] [0m[0m  |           [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m  |  class ParenExpr needs to be abstract, since:[0m
+[0m[[0m[31merror[0m] [0m[0m  |  it has 2 unimplemented members.[0m
+[0m[[0m[31merror[0m] [0m[0m  |  /** As seen from class ParenExpr, the missing signatures are as follows.[0m
+[0m[[0m[31merror[0m] [0m[0m  |   *  For convenience, these are usable as stub implementations.[0m
+[0m[[0m[31merror[0m] [0m[0m  |   */[0m
+[0m[[0m[31merror[0m] [0m[0m  |    // Members declared in com.ysthakur.verity.parsing.HasText[0m
+[0m[[0m[31merror[0m] [0m[0m  |    def text: => CharSequence = ???[0m
+[0m[[0m[31merror[0m] [0m[0m  |    [0m
+[0m[[0m[31merror[0m] [0m[0m  |    // Members declared in com.ysthakur.verity.parsing.ast.infile.Node[0m
+[0m[[0m[31merror[0m] [0m[0m  |    def text: => String = ???[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\thaku\verity\verity-ast\src\main\scala\com\ysthakur\javamm\parsing\ast\infile\expr\UnaryExpr.scala:8:53 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m8 |[0m[33mcase class[0m [35mUnaryPreExpr[0m[[35mO[0m [35m<: Op[0m, +[35mE[0m [35m<: Expr[0m]([36mop[0m: [35mOp[0m, [36mexpr[0m: [35mE[0m) [33mextends[0m [35mUnaryExpr[E][0m(expr) {[0m
+[0m[[0m[31merror[0m] [0m[0m  |                                                     [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m  |                 error overriding [33mvalue[0m [35mexpr[0m in [33mtrait[0m [35mUnaryExpr[0m of type E;[0m
+[0m[[0m[31merror[0m] [0m[0m  |                   [33mvalue[0m [35mexpr[0m of type E needs `override` modifier[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\thaku\verity\verity-ast\src\main\scala\com\ysthakur\javamm\parsing\ast\infile\expr\UnaryExpr.scala:14:45 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m14 |[0m[33mcase class[0m [35mUnaryPostExpr[0m[[35mE[0m [35m<: Expr[0m, [35mO[0m [35m<: Op[0m]([36mexpr[0m: [35mE[0m, [36mop[0m: [35mO[0m) [33mextends[0m [35mUnaryExpr[E][0m(expr) {[0m
+[0m[[0m[31merror[0m] [0m[0m   |                                             [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |               error overriding [33mvalue[0m [35mexpr[0m in [33mtrait[0m [35mUnaryExpr[0m of type E;[0m
+[0m[[0m[31merror[0m] [0m[0m   |                 [33mvalue[0m [35mexpr[0m of type E needs `override` modifier[0m
+[0m[[0m[31merror[0m] [0m[0mthree errors found[0m
