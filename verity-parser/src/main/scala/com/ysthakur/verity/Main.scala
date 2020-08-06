@@ -33,10 +33,11 @@ object Main /*extends App*/ {
 
   def lex(): Iterable[Token[?]] = {
     val file = new File(
-        "C:\\Users\\thaku\\verity\\verity-parser\\src\\test\\resources\\lexertest"
+        "C:\\Users\\yasht\\verity\\verity-parser\\src\\test\\resources\\lexertest"
     )
     val lexer = new Lexer(file)
     val tokens = lexer.tokenize().toList
+    println(s"tokens: $tokens")
     //println(tokens)
     // println(tokens.map(token => {
     //   val tt = token.tokenType

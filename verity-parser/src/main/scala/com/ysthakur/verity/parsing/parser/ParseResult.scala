@@ -6,8 +6,7 @@ import com.ysthakur.verity.parsing.ast.ConsNode
 import com.ysthakur.verity.parsing.lexer.{Token, Tok}
 
 sealed trait ParseResult {
-  def orElse(res: => ParseResult): ParseResult =
-    if (this.isInstanceOf[Failed]) res else this
+  def orElse(res: => ParseResult): ParseResult
   def +(other: => ParseResult): ParseResult
   def pattern: Option[Pattern]
 }
@@ -24,6 +23,7 @@ case class Matched[N <: Node, T](
       Matched(() => ConsNode(create(), create2()), rest2, offset2)
     case _ => this
   }
+  override def orElse(other: => ParseResult) = this
 }
 
 object Matched {
@@ -46,9 +46,10 @@ case class Failed(
     override val pattern: Option[Pattern] = None
 ) extends ParseResult {
   override def +(other: => ParseResult): ParseResult = this
+  override def orElse(other: => ParseResult) = other
 }
 
 object Failed {
-  def unapply(arg: Failed): Option[(Token[?], Iterable[String], Position)] =
+  def unapply(arg: Failed): Some[(Token[?], Iterable[String], Position)] =
     Some((arg.got, arg.expected, arg.pos))
 }

@@ -2,6 +2,7 @@ package com.ysthakur.verity.parsing.parser
 
 import com.ysthakur.verity.parsing.lexer._
 import com.ysthakur.verity.parsing.{Position, TextRange}
+import com.ysthakur.verity.parsing.ast.NodeList
 import com.ysthakur.verity.parsing.ast._
 import com.ysthakur.verity.parsing.lexer.SymbolTokenType._
 import com.ysthakur.verity.parsing.lexer.RegexTokenType._
@@ -15,12 +16,12 @@ import scala.language.postfixOps
 //noinspection ScalaUnnecessaryParentheses
 private object ParserPatterns {
 
-  type TTP = TokenTypePattern
+  //type TTP = TokenTypePattern
 
   val opCtor = (op: Node) => Op(op.text)
 
   val EOL: Pattern = SEMICOLON
-  val numLiteral = NUM_LITERAL |>> {
+  val numLiteral = FunctionPattern((toks, pos) => {println(s"num toks: $toks");TokenTypePattern(NUM_LITERAL).apply(toks, pos, null)}) |>> {
     case token: Token[?] => NumLiteral(token.text)
   }
   val booleanLiteral = TRUE | FALSE |>> {
@@ -50,13 +51,14 @@ private object ParserPatterns {
   val unreservedId = FunctionPattern((input: List[Tok], pos: Position) => {
     if (input.nonEmpty) input.head match {
       case token @ Token(tt: ValidIdentifierTokenType) =>
+        println(s"Found token $token")
         if (!token.isInstanceOf[ReservedWord])
           Matched(() => ValidIdNode(token.text), input.tail, token.range)
         else 
           Failed(token, List("Non-reserved identifier"), token.range.start)
       case other => Failed(other, List("Valid identifier"), pos)
     }
-    Failed(EmptyToken, List("Valid identifier"), pos)
+    else Failed(EmptyToken, List("Valid identifier"), pos)
   })
   val dotReference = identifier - ((DOT - identifier) *) |>> {
     case (validId: ValidIdNode) => DotRef(List(validId))
@@ -78,18 +80,6 @@ private object ParserPatterns {
         Import(ref, star != null)
       }
     }
-  "firstLevelExpr" := identifier | literal
-
-  "unaryExpr" := ("expr" - unaryPostOp) | (unaryPreOp - "expr") |>> {
-    case (op: Op) - (expr: Expr) => UnaryPreExpr(op, expr)
-    case (expr: Expr) - (op: Op) => UnaryPostExpr(expr, op)
-  }
-  
-  PatternClass.make(
-    name = "specialExpr",
-    "firstLevelExpr",
-    "binaryExpr"
-  )
 
   // "binaryExpr" := FunctionPattern((input, pos, trace) => {
   //   val statement = input.findLast()
@@ -127,7 +117,7 @@ private object ParserPatterns {
   // lazy val indexExpr = expr - LSQUARE - expr - RSQUARE |>> {
   //   case obj - lsq - ind - rsq => ArraySelect(obj, ind)
   // }
-  lazy val topExpr = numLiteral | unreservedId | expr
+  lazy val topExpr = numLiteral | unreservedId | parenExpr | expr
    /*| dotExpr | indexExpr*/
    
   // lazy val unaryPost = topExpr - (PLUSX2 | MINUSX2) |>> {
@@ -138,11 +128,31 @@ private object ParserPatterns {
   }
   lazy val mulDivMod = {
     println("muldiv")
-    binExpr(topExpr, STAR | FWDSLASH | MODULO)
+    //binExpr(topExpr, STAR | FWDSLASH | MODULO)
+
+    topExpr - ((STAR | FWDSLASH | MODULO) - topExpr).* |>> {
+      case (e1: Expr) - NodeList(nodes) => 
+        println(s"in muldivmod, nodes=$nodes")
+        nodes.foldLeft(e1){(e, p) =>
+        p match {
+          case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
+        }
+      }
+    }
   }
   lazy val addSub = {
-    println("addSub")
-    binExpr(mulDivMod, PLUS | MINUS)
+    //println("addSub")
+    //binExpr(mulDivMod, PLUS | MINUS)
+
+    mulDivMod - ((PLUS | MINUS) - mulDivMod).* |>> {
+      case (e1: Expr) - NodeList(nodes) => 
+        println(s"in addsub, nodes=$nodes")
+        nodes.foldLeft(e1){(e, p) =>
+        p match {
+          case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
+        }
+      }
+    }
   }
   // lazy val bitExpr = addSub - (LTX2 | GTX2 | GTX3) - expr |>> binExprCtor
   // lazy val boolExpr = bitExpr - (LT | LTEQ | GT | GTEQ | IS) - expr |>> binExprCtor
@@ -214,24 +224,24 @@ private object ParserPatterns {
   }
 
 
-  // "binaryExpr" :=
-  //   "expr" - (
-  //     (STAR | FWDSLASH | MODULO)
-  //     | (PLUS | MINUS)
-  //     | (LTX2 | GTX2 | GTX3)
-  //     | (LT | LTEQ | GT | GTEQ)
-  //     | (EQX2 | NOTEQ)
-  //     | AND
-  //     | CARET
-  //     | OR
-  //     | ANDX2
-  //     | ORX2) - "expr" |>> {
-  //   case (lexpr: Expr) - op - (rexpr: Expr) =>
-  //     println(s"GJGKJGJDFSG!!! - [$rexpr]");
-  //     BinaryExpr(lexpr, opCtor(op), rexpr)
-  //   case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
-  //   case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
-  // } Extends PatternRef("expr")
+  /*"binaryExpr" :=
+    "expr" - (
+      (STAR | FWDSLASH | MODULO)
+      | (PLUS | MINUS)
+      | (LTX2 | GTX2 | GTX3)
+      | (LT | LTEQ | GT | GTEQ)
+      | (EQX2 | NOTEQ)
+      | AND
+      | CARET
+      | OR
+      | ANDX2
+      | ORX2) - "expr" |>> {
+    case (lexpr: Expr) - op - (rexpr: Expr) =>
+      println(s"GJGKJGJDFSG!!! - [$rexpr]");
+      BinaryExpr(lexpr, opCtor(op), rexpr)
+    case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
+    case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
+  } Extends PatternRef("expr")*/
 
   
 
