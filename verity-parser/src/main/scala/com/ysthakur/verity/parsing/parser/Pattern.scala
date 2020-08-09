@@ -31,9 +31,12 @@ trait Pattern {
 
   def apply(input: List[Tok], start: Position, trace: Trace): ParseResult
 
-  inline def tryMatch(input: List[Tok], start: Position, trace: Trace) =
+  inline def tryMatch(input: List[Tok], start: Position, trace: Trace): ParseResult =
     try {
-      apply(input, start, trace)
+      Pattern.indent += 2
+      val res = apply(input, start, trace)
+      Pattern.indent -= 2
+      res
     } catch {
       case e if !e.isInstanceOf[CompilationError] => 
         throw new CompilationError(s"Exception on input ${headOrEmpty(input)}", e)
@@ -71,14 +74,11 @@ trait Pattern {
   def subOf(other: Pattern): Boolean = other == this.superPattern
   //def ==(other: Pattern): Boolean = ???
   def headOrEmpty(it: Iterable[Tok]): Tok = if (it.isEmpty) EmptyToken else it.head
-}
 
-trait MultiPattern extends Pattern {
+  def println(s: Any) = System.out.println(""+Pattern.indent+"  ".repeat(Pattern.indent) + s)
 }
 
 def (patternName: String) := (pattern: => Pattern): Unit = {
-
-import com.ysthakur.verity.parsing.ast.infile.EmptyNode
 
 Pattern.allPatterns.put(patternName, pattern)
 }
@@ -90,6 +90,7 @@ object Pattern {
   //type *?[T <: Pattern] = RepeatPattern
 
   val allPatterns: mutable.LinkedHashMap[String, Pattern] = mutable.LinkedHashMap()
+  var indent: Int = 0
 }
 
 implicit def toNamedPattern(patternName: String): INamedPattern = PatternRef(patternName)
@@ -168,8 +169,7 @@ object || {
   }
 }
 
-class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, _p2: => T2)
-    extends MultiPattern {
+class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, _p2: => T2, val name: String = "") extends Pattern {
   
 //  override def isFixed: Boolean = p1.isFixed && p2.isFixed
 //  override def isEager: Boolean = p1.isEager && p2.isEager
@@ -196,27 +196,30 @@ class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, _p2: => T2)
           }
         }
       case _ =>*/
+        println("--------------------")
+        println(s"incons name=$name, input=${input.map(_.text)}")
         p1.tryMatch(input, start, trace) match {
           case Matched(create, rest, range) =>
-            println(s"Matched pattern 1, now matching $rest")
+            println("~~~~~~~~~~~~~~~")
+            //println(s"Matched pattern 1, now matching $rest")
             p2.tryMatch(rest, range.end, ListBuffer()) match {
             case Matched(create2, rest2, range2) =>
-              println(s"\nMatched conspattern!!!, \n\t input=$input \n rest2=$rest")
+              //println(s"\nMatched conspattern!!!, \n\t input=$input \n rest2=$rest")
+              println(s"Matched, name=$name, rest2=${rest2.map(_.text)}")
               Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))
-            case failed => 
-              println(s"Didn't match conspattern, input=$input, failed=$failed")
+            case failed =>
+              println(s"Didn't match conspattern, name=$name failed=$failed")
               failed
           }
-          case failed => 
-            println(s"Didn't match cons 2, input=$input")
+          case failed =>
+            println(s"Didn't match cons 2, name=$name failed=$failed")
             failed
         }
     //}
   }
 }
 
-class OrPattern[+T1 <: Pattern, +T2 <: Pattern](p1: T1, _p2: => T2, shouldFlatten: Boolean = true)
-    extends MultiPattern {
+class OrPattern[+T1 <: Pattern, +T2 <: Pattern](p1: T1, _p2: => T2, shouldFlatten: Boolean = true) extends Pattern {
 //  override def isFixed: Boolean = p1.isFixed && p2.isFixed
 //  override def isEager: Boolean = p1.isEager || p2.isEager
   lazy val p2 = _p2
@@ -232,9 +235,9 @@ case class MaybePattern(pattern: Pattern) extends Pattern {
 //  override val isEager: Boolean = false
 //  override val isFixed: Boolean = false
   override def apply(input: List[Tok], start: Position, trace: Trace): ParseResult =
-    println(s"\nTrying to match $input")
+    // println(s"\nTrying to match $input")
     val x = pattern.tryMatch(input, start, trace)
-    println(s"matched $x")
+    // println(s"matched $x")
     x.orElse(Matched(() => EmptyNode, input, TextRange.empty(start), true))
 }
 
@@ -246,17 +249,17 @@ case class LeftAssocPattern(p1: Pattern, p2: Pattern) extends Pattern {
   override def apply(input: List[Tok], start: Position, trace: Trace): ParseResult =
     p1.tryMatch(input, start, trace) match {
       case m@Matched(create1, rest1, tr1) => 
-        println(s"Matched first, create1=${create1()}")
+        // println(s"Matched first, create1=${create1()}")
         p2.tryMatch(rest1, tr1.end, trace) match {
           case m2@Matched(create2, rest2, tr2) => 
-            println(s"Iin tryMatch, create2=${create2()}")
+            // println(s"Iin tryMatch, create2=${create2()}")
             keepMatching(Matched(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end)))
           case f => 
-            println("Failed on second")
+            // println("Failed on second")
             f
         }
       case f => 
-        println(s"Failed p1, boohoo")
+        // println(s"Failed p1, boohoo")
         f
     }
 
@@ -264,10 +267,10 @@ case class LeftAssocPattern(p1: Pattern, p2: Pattern) extends Pattern {
     val Matched(create1, rest1, tr1) = lastRes
     p2.tryMatch(rest1, tr1.end, ListBuffer()) match {
       case m2@Matched(create2, rest2, tr2) => 
-        println(s"Matched m2, create2=${create2()}")
+        // println(s"Matched m2, create2=${create2()}")
         keepMatching(Matched(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end)))
       case f => 
-        println(s"Failed, lastRes=${lastRes.create()}")
+        // println(s"Failed, lastRes=${lastRes.create()}")
         lastRes
     }
   }
@@ -321,22 +324,14 @@ case class RightAssocPattern(p1: Pattern, p2: Pattern) extends Pattern {
 case class RepeatPattern(
     pattern: Pattern,
     min: Int = 0,
-    max: Int = Int.MaxValue
+    max: Int = Int.MaxValue,
+    name: String = ""
 //    override val isEager: Boolean
 ) extends Pattern {
-
-  /**
-    * Whether or not it always matches the same input.
-    * If false, it might be a valid identifier or something
-    * that takes a variable length input or something like that
-    */
-//  override val isFixed: Boolean = false
- 
   private def makeNodeList(results: List[ParseResult], end: Position, rest: List[Tok]) = {
-    println(s"results are $results")
-    val x = NodeList(results.map(r => r.asInstanceOf[Matched[?, ?]].create()))
+    println(s"name=$name, results are ${results.map{x=>x.asInstanceOf[Matched[?, ?]].create()}}")
     Matched(
-      () => x,
+      () => NodeList(results.map(r => r.asInstanceOf[Matched[?, ?]].create())),
       rest,
       TextRange(results match {
         case Matched(_, _, range) :: _ => range.start
@@ -344,14 +339,13 @@ case class RepeatPattern(
       }, end))
   }
 
-//a->b->IntStream.range(a,b+1).flatMap(i->(""+i).chars()).filter(x->x==49).count()
-
   @annotation.tailrec
   private def recMatch(input: List[Tok], start: Position, trace: Trace, count: Int, prev: List[ParseResult]): ParseResult = {
-    if (input.isEmpty) return makeNodeList(prev, start, input)
+    println(s"input=${input.map(_.text)}")
+    if (input.isEmpty) return makeNodeList(prev.reverse, start, input)
     pattern.tryMatch(input, start, trace) match {
       case m@Matched(create, rest, range) =>
-        println(s"\nprev=$prev\n")
+        // println(s"\nprev=$prev\n")
         if (count < max) recMatch(rest, range.end, trace, count + 1, m :: prev)
         else makeNodeList((m :: prev).reverse, m.range.end, rest)
       case f@Failed(got, expected, pos) =>
@@ -361,34 +355,10 @@ case class RepeatPattern(
   }
 
   override final def apply(input: List[Tok], start: Position, trace: Trace): ParseResult = {
+    println("--------------------")
+    println(s"inrepeat name=$name, input=${input.map{_.text}}")
     if (input.isEmpty) println("\n\n\nINput is empty!!!!!!!!")
     recMatch(input, start, trace, 0, List.empty)
-    // if (input.nonEmpty) {
-    //   val (nodes: ListBuffer[() => Node], rest: List[Tok], startPos: Position, endPos: Position) =
-    //     tryMatch(input, start, trace, ListBuffer())
-    //   Matched(() => NodeList(nodes.map(_())), rest, TextRange(startPos, endPos))
-    // } else {
-    //   new Matched(() => NodeList(ListBuffer()), input, TextRange.empty(start), true)
-    // }
-  }
-
-  @scala.annotation.tailrec
-  private def tryMatch(input: List[Tok],
-                       start: Position,
-                       trace: Trace,
-                       prev: ListBuffer[() => Node]
-                      ): (ListBuffer[() => Node], List[Tok], Position, Position) = {
-    pattern.tryMatch(input, start, trace) match {
-      case Matched(create, rest, offset2) => {
-        prev.addOne(create)
-        //println(s"Matched! ${create()}")
-        tryMatch(rest, start, trace, prev)
-      }
-      case f: Failed => {
-        //println(s"Didn't match $input $f")
-        (prev, input, start, f.pos)
-      }
-    }
   }
 }
 
@@ -396,7 +366,7 @@ case class RepeatPattern(
  * A pattern that matches any one of a group of patterns
  */
 class PatternClass(override val name: String, private val patterns: Pattern*) 
-    extends MultiPattern with INamedPattern {
+    extends INamedPattern {
 
 //  override lazy val isFixed: Boolean = patterns.forall(_.isFixed)
 //  override lazy val isEager: Boolean = patterns.exists(_.isEager)

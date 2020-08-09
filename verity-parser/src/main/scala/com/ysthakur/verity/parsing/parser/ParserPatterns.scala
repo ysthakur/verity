@@ -2,8 +2,8 @@ package com.ysthakur.verity.parsing.parser
 
 import com.ysthakur.verity.parsing.lexer._
 import com.ysthakur.verity.parsing.{Position, TextRange}
-import com.ysthakur.verity.parsing.ast.NodeList
 import com.ysthakur.verity.parsing.ast._
+import com.ysthakur.verity.parsing.ast.infile.expr._
 import com.ysthakur.verity.parsing.lexer.SymbolTokenType._
 import com.ysthakur.verity.parsing.lexer.RegexTokenType._
 import com.ysthakur.verity.parsing.lexer.KeywordTokenType._
@@ -21,12 +21,12 @@ private object ParserPatterns {
   val opCtor = (op: Node) => Op(op.text)
 
   val EOL: Pattern = SEMICOLON
-  val numLiteral = FunctionPattern((toks, pos) => {println(s"num toks: $toks");TokenTypePattern(NUM_LITERAL).apply(toks, pos, null)}) |>> {
+  val numLiteral = FunctionPattern((toks, pos) => {/*println(s"num toks: $toks");*/TokenTypePattern(NUM_LITERAL).apply(toks, pos, null)}) |>> {
     case token: Token[?] => NumLiteral(token.text)
   }
   val booleanLiteral = TRUE | FALSE |>> {
-    case Token(TRUE) => TrueLiteral
-    case Token(FALSE) => FalseLiteral
+    case Token(TRUE) => BoolLiteral.TrueLiteral
+    case Token(FALSE) => BoolLiteral.FalseLiteral
   }
   val literal = numLiteral | booleanLiteral | 
       (THIS |>> { case token: Tok => ThisRef(token.range)}) 
@@ -51,7 +51,7 @@ private object ParserPatterns {
   val unreservedId = FunctionPattern((input: List[Tok], pos: Position) => {
     if (input.nonEmpty) input.head match {
       case token @ Token(tt: ValidIdentifierTokenType) =>
-        println(s"Found token $token")
+        //println(s"Found token $token")
         if (!token.isInstanceOf[ReservedWord])
           Matched(() => ValidIdNode(token.text), input.tail, token.range)
         else 
@@ -108,7 +108,7 @@ private object ParserPatterns {
       println(s"GJGKJGJDFSG!!! - [$rexpr]");
       BinaryExpr(lexpr, opCtor(op), rexpr)
     //case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
-    case x => println(s"\n\nQPPETQeRWJ#5 ${x.getClass()} $x..."); unwrapBinaryExpr(x)
+    case x => /*println(s"\n\nQPPETQeRWJ#5 ${x.getClass()} $x...");*/ unwrapBinaryExpr(x)
   } Extends PatternRef("expr")
 
   // lazy val dotExpr = expr - DOT - unreservedId /*|>> {
@@ -130,9 +130,10 @@ private object ParserPatterns {
     println("muldiv")
     //binExpr(topExpr, STAR | FWDSLASH | MODULO)
 
-    topExpr - ((STAR | FWDSLASH | MODULO) - topExpr).* |>> {
+    ConsPattern(topExpr, RepeatPattern((STAR | FWDSLASH | MODULO) - topExpr, name="muldivmod"), "muldivcons1") |>> {
       case (e1: Expr) - NodeList(nodes) => 
-        println(s"in muldivmod, nodes=$nodes")
+        //println("\n--------------\nmulDivMod") 
+        //println(s"nodes=$nodes, e1=$e1")
         nodes.foldLeft(e1){(e, p) =>
         p match {
           case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
@@ -144,13 +145,15 @@ private object ParserPatterns {
     //println("addSub")
     //binExpr(mulDivMod, PLUS | MINUS)
 
-    mulDivMod - ((PLUS | MINUS) - mulDivMod).* |>> {
-      case (e1: Expr) - NodeList(nodes) => 
-        println(s"in addsub, nodes=$nodes")
+    ConsPattern(mulDivMod, RepeatPattern((PLUS | MINUS) - mulDivMod, name="addsub"), "addsubcons1") |>> {
+      case (e1: Expr) - NodeList(nodes) =>
+        //println("\n--------------\naddSub") 
+        //println(s"nodes=$nodes, e1=$e1")
         nodes.foldLeft(e1){(e, p) =>
-        p match {
-          case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
-        }
+          //println(s"e = $e, p=$p")
+          p match {
+            case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
+          }
       }
     }
   }
@@ -205,7 +208,7 @@ private object ParserPatterns {
 
   lazy val exprList = expr - ((COMMA - expr)*)
 
-  lazy val parenExpr = LPAREN - expr - RPAREN |>> {
+  lazy val parenExpr = ConsPattern(ConsPattern(LPAREN, expr, "pareninner"), RPAREN, "parenouter") |>> {
     case (lparen: Tok) - (expr: Expr) - (rparen: Tok) => 
       ParenExpr(expr, lparen.range.start.to(rparen.range.end))
   }

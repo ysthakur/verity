@@ -1,13 +1,22 @@
 package com.ysthakur.verity.parsing.ast.infile.expr
 
-trait Literal extends Expr {
+import com.ysthakur.verity.parsing.TextRange
 
+trait Literal extends Expr
+
+enum BoolLiteral(override val text: String) extends Literal {
+  case TrueLiteral extends BoolLiteral("true")
+  case FalseLiteral extends BoolLiteral("false")
 }
 
-sealed trait BooleanLiteral extends Literal
-object TrueLiteral extends BooleanLiteral {
-  override def text: String = "true"
+
+case class NumLiteral(override val text: String) extends Expr
+
+
+case class ThisRef(textRange: TextRange) extends Expr {
+  override def text: String = "this"
 }
-object FalseLiteral extends BooleanLiteral {
-  override def text: String = "false"
+
+case class SuperRef(textRange: TextRange) extends Expr {
+  override def text: String = "super"
 }

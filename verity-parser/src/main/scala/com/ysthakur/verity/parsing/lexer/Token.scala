@@ -49,6 +49,9 @@ object InvariantToken {
       .find(token => token.tokenType == tt)
       .getOrElse(new InvariantToken(tokenType = tt, range))
       .asInstanceOf[InvariantToken[F]]
+
+  def unapply[F <: FixedTextTokenType](token: InvariantToken[F]): Option[(F, TextRange)] =
+    Some((token.tokenType, token.range))
 }
 
 /**
