@@ -111,13 +111,23 @@ private object ParserPatterns {
     case x => /*println(s"\n\nQPPETQeRWJ#5 ${x.getClass()} $x...");*/ unwrapBinaryExpr(x)
   } Extends PatternRef("expr")
 
+
+
+  "dotSelect" := "expr" - DOT - identifier |>> {
+    case expr - dot - validId => DotChainedExpr(expr.asInstanceOf, validId.asInstanceOf)
+  }
+
+  lazy val arrayAccess = expr - LSQUARE - expr - RSQUARE |>> {
+    case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
+  }
+
   // lazy val dotExpr = expr - DOT - unreservedId /*|>> {
   //   case (expr: Expr) - dot - (id: ValidIdNode) => DotChainedExpr(expr, id)
   // }*/
   // lazy val indexExpr = expr - LSQUARE - expr - RSQUARE |>> {
   //   case obj - lsq - ind - rsq => ArraySelect(obj, ind)
   // }
-  lazy val topExpr = numLiteral | unreservedId | parenExpr | expr
+  lazy val topExpr = literal | unreservedId | parenExpr
    /*| dotExpr | indexExpr*/
    
   // lazy val unaryPost = topExpr - (PLUSX2 | MINUSX2) |>> {
@@ -157,54 +167,24 @@ private object ParserPatterns {
       }
     }
   }
-  // lazy val bitExpr = addSub - (LTX2 | GTX2 | GTX3) - expr |>> binExprCtor
-  // lazy val boolExpr = bitExpr - (LT | LTEQ | GT | GTEQ | IS) - expr |>> binExprCtor
-  // lazy val eqExpr = boolExpr - (EQX2 - NOTEQ) - expr |>> binExprCtor
-  // lazy val bitAnd = eqExpr - AND - expr |>> binExprCtor
-  // lazy val bitXor = binExpr(bitAnd, CARET)
-  // lazy val logicAnd = binExpr(bitXor, ANDX2)
-  
-  def createExpr(ops: Pattern*): Pattern = {
-    lazy val compute: () => Pattern = ops.foldLeft(() => res) { (patt: () => Pattern, op) =>
-      () => (patt()) - op - expr |>> binExprCtor
-    }
-    def helper(base: => Pattern, ops: List[Pattern]): Pattern = {
-      ops match {
-        case head :: tail => {
-          helper(base - head - base |>> binExprCtor, tail)
-        }
-        case Nil => base
-      }
-    }
-    lazy val res: Pattern = helper(res, ops.toList)
-    res
-  }
+  lazy val bitExpr = binExpr(addSub, (LTX2 | GTX2 | GTX3) - expr)
+  lazy val boolExpr = binExpr(bitExpr, (LT | LTEQ | GT | GTEQ | IS))
+  lazy val eqExpr = binExpr(boolExpr, (EQX2 - NOTEQ))
+  lazy val bitAnd = binExpr(eqExpr, AND)
+  lazy val bitXor = binExpr(bitAnd, CARET)
+  lazy val logicAnd = binExpr(bitXor, ANDX2)
 
   def binExpr(prev: Pattern, operator: Pattern) =
-    prev - (MaybePattern(operator - prev)) |>> {
-      case (p: Expr) - EmptyNode => p
-      case (e1: Expr) - (op - (e2: Expr)) => BinaryExpr(e1, opCtor(op), e2)
+    prev - (operator - prev).* |>> {
+      case (e1: Expr) - NodeList(nodes) =>
+        nodes.foldLeft(e1){(e, p) =>
+          p match {
+            case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
+          }
+      }
     }
 
-  def binExprCtor = (p: Node) => p match {
-      case expr: BinaryExpr => expr
-      case (expr1: Expr) - op - (expr2: Expr) => BinaryExpr(expr1, opCtor(op), expr2)
-    }
-
-  lazy val expr: Pattern = addSub
-
-  lazy val x = createExpr(
-      (STAR | FWDSLASH | MODULO),
-      (PLUS | MINUS),
-       (LTX2 | GTX2 | GTX3),
-       (LT | LTEQ | GT | GTEQ),
-       (EQX2 | NOTEQ),
-       AND,
-       CARET,
-       OR,
-       ANDX2,
-       ORX2
-  )
+  lazy val expr: Pattern = logicAnd
 
   lazy val exprList = expr - ((COMMA - expr)*)
 
@@ -246,30 +226,9 @@ private object ParserPatterns {
     case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
   } Extends PatternRef("expr")*/
 
-  
-
-  "dotSelect" := "expr" - DOT - identifier |>> {
-    case expr - dot - validId => DotChainedExpr(expr.asInstanceOf, validId.asInstanceOf)
-  }
-  "parenExpr" := LPAREN - "expr" - RPAREN |>> {
-    case lparen - (expr: Node) - rparen => expr
-  }
-  "arrayAccess" := "expr" - LSQUARE - "expr" - RSQUARE |>> {
-    case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
-  }
-
-  val expressions = List[Pattern](
-      "firstLevelExpr",
-      "binaryExpr"//,
-      /*"dotSelect",
-      "arrayAccess",
-      "unaryExpr",*/
-      //"firstLevelExpr",
-      /*"parenExpr"*/)
-
   val assignment =
-    "expr" - ((PLUS | MINUS | STAR | FWDSLASH | MODULO) ?) - EQ - "expr" - EOL |>> {
-      case variable - op - eq - expr - eol => ???
+    expr - (PLUS | MINUS | STAR | FWDSLASH | MODULO).? - EQ - expr - EOL |>> {
+      case variable - NodeList(Seq(op)) - eq - expr - eol => ???
     }
 
   val varDeclFirstPart = "typeRef" - unreservedId |>> {

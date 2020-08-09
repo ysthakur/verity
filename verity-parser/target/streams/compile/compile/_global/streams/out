@@ -1,67 +1,7 @@
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:145:10 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m145 |[0m          f[0m
-[0m[[0m[31merror[0m] [0m[0m    |          [31m^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |          Found:    (f : Unit)[0m
-[0m[[0m[31merror[0m] [0m[0m    |          Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:210:14 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m210 |[0m              failed[0m
-[0m[[0m[31merror[0m] [0m[0m    |              [31m^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Found:    (failed : Unit)[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:214:12 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m214 |[0m            failed[0m
-[0m[[0m[31merror[0m] [0m[0m    |            [31m^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |            Found:    (failed : Unit)[0m
-[0m[[0m[31merror[0m] [0m[0m    |            Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:227:35 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m227 |[0m      [33mcase[0m Failed(_) => p2.tryMatch(input, start, trace)[0m
-[0m[[0m[31merror[0m] [0m[0m    |                        [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Found:    Unit[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:228:16 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m228 |[0m      [33mcase[0m m => m[0m
-[0m[[0m[31merror[0m] [0m[0m    |                [31m^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Found:    (m : Unit)[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E008] Not Found Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:239:6 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m239 |[0m    x.orElse(Matched(() => EmptyNode, input, TextRange.empty(start), [31mtrue[0m))[0m
-[0m[[0m[31merror[0m] [0m[0m    |    [31m^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |    value orElse is not a member of Unit[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:257:12 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m257 |[0m            f[0m
-[0m[[0m[31merror[0m] [0m[0m    |            [31m^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |            Found:    (f : Unit)[0m
-[0m[[0m[31merror[0m] [0m[0m    |            Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:261:8 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m261 |[0m        f[0m
-[0m[[0m[31merror[0m] [0m[0m    |        [31m^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |        Found:    (f : Unit)[0m
-[0m[[0m[31merror[0m] [0m[0m    |        Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:288:31 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m288 |[0m          [33mcase[0m f => p2.tryMatch(rest1, tr1.end, trace)[0m
-[0m[[0m[31merror[0m] [0m[0m    |                    [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Found:    Unit[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:290:16 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m290 |[0m      [33mcase[0m f => f[0m
-[0m[[0m[31merror[0m] [0m[0m    |                [31m^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Found:    (f : Unit)[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:301:27 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m301 |[0m      [33mcase[0m f => p2.tryMatch(input, start, trace)[0m
-[0m[[0m[31merror[0m] [0m[0m    |                [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Found:    Unit[0m
-[0m[[0m[31merror[0m] [0m[0m    |              Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:391:18 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m386 |[0m    filtered.view.map([36mp[0m => p.tryMatch(input, pos, {[34m/*println(s"asdfasd$trace");*/[0mtrace}) [33mmatch[0m {[0m
-[0m[[0m[31merror[0m] [0m[0m[31m387 |[0m          [33mcase[0m m: [35mMatched[?, ?][0m => [34m/*println(s"Matched $p!!");*/[0mm[0m
-[0m[[0m[31merror[0m] [0m[0m[31m388 |[0m          [33mcase[0m f => f[0m
-[0m[[0m[31merror[0m] [0m[0m[31m389 |[0m        })[0m
-[0m[[0m[31merror[0m] [0m[0m[31m390 |[0m        .find(_.isInstanceOf[[35mMatched[?, ?][0m])[0m
-[0m[[0m[31merror[0m] [0m[0m[31m391 |[0m        .getOrElse([0m
-[0m[[0m[31merror[0m] [0m[0m    |    [31m^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |    Found:    Any[0m
-[0m[[0m[31merror[0m] [0m[0m    |    Required: com.ysthakur.verity.parsing.parser.ParseResult[0m
-[0m[[0m[31merror[0m] [0m[0m[31m392 |[0m          [33mif[0m (skipped != [31mnull[0m) (skipped.asInstanceOf[[35mPattern[0m]).tryMatch(input, pos, trace)[0m
-[0m[[0m[31merror[0m] [0m[0m[31m393 |[0m          [33melse[0m Failed(headOrEmpty(input), List.empty, pos))[0m
-[0m[[0m[31merror[0m] [0m[0m12 errors found[0m
+[0m[[0m[33mwarn[0m] [0m[0m[33m-- Warning: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\lexer\TokenTypeObj.scala:1:36 [0m[0m
+[0m[[0m[33mwarn[0m] [0m[0m[33m1 |[0m[33mpackage[0m com.ysthakur.verity.parsing.lexer[0m
+[0m[[0m[33mwarn[0m] [0m[0m  |[33m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
+[0m[[0m[33mwarn[0m] [0m[0m  |No class, trait or object is defined in the compilation unit.[0m
+[0m[[0m[33mwarn[0m] [0m[0m  |The incremental compiler cannot record the dependency information in such case.[0m
+[0m[[0m[33mwarn[0m] [0m[0m  |Some errors like unused import referring to a non-existent class might not be reported.[0m
+[0m[[0m[33mwarn[0m] [0m[0mone warning found[0m
