@@ -5,7 +5,13 @@ import abcd.x;
 import a;
 import b.lkas.dfkasldf.*;
 */
-gah + 78 + 0
-
 
 //(x - 90 / 3456L) * (arr++)[2344].abc - this.abc234 * 45678 - (!true)
+
+//1 / ads  % 9 + (x - 90 / 3456L) * (arr) // - abc234 * 45678 //- (true) / 467890
+
+1 / ads % 9 + (foo) - abc234 * 4
+
+//1 + ads - 9 + (foo) - abc234 * 4
+
+//1 / ads % 9 * (foo) / abc324 * 4

@@ -1,5 +1,5 @@
-val projectName = "javamm-scala"
-val scala_version = "0.24.0-RC1"
+val projectName = "verity"
+val scala_version = "0.25.0-RC2"
 val jmmVersion = "0.1.0"
 
 name := projectName
@@ -11,31 +11,31 @@ mainClass in (Compile, run) := Some("com.ysthakur.Main")
 lazy val root = project
     .in(file("."))
     .settings(
-      name := "javamm-scala",
+      name := "verity",
       scalacOptions ++= commonScalacOptions,
       libraryDependencies ++= libDeps)
     .disablePlugins()
     .aggregate(
-      `javamm-ast`,
-      `javamm-parser`,
-      `javamm-codegen`
-    ).dependsOn(`javamm-ast`, `javamm-parser`)
+      `verity-ast`,
+      `verity-parser`,
+      `verity-codegen`
+    ).dependsOn(`verity-ast`, `verity-parser`)
 
-lazy val `javamm-ast` =
-  (project in file("javamm-ast")).settings(
-    name := "javamm-ast",
+lazy val `verity-ast` =
+  (project in file("verity-ast")).settings(
+    name := "verity-ast",
     scalacOptions ++= commonScalacOptions
   )
 
-lazy val `javamm-parser` =
-  (project in file("javamm-parser")).settings(
-    name := "javamm-parser",
+lazy val `verity-parser` =
+  (project in file("verity-parser")).settings(
+    name := "verity-parser",
     scalacOptions ++= commonScalacOptions
-  ).dependsOn(`javamm-ast`)
+  ).dependsOn(`verity-ast`)
 
-lazy val `javamm-codegen` =
-  (project in file("javamm-codegen")).settings(
-      name := "javamm-codegen",
+lazy val `verity-codegen` =
+  (project in file("verity-codegen")).settings(
+      name := "verity-codegen",
     libraryDependencies ++= Seq("org.ow2.asm" % "asm" % "8.0.1", 
       "org.ow2.asm" % "asm-util" % "8.0.1")
   )
