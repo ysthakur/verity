@@ -1,6 +1,7 @@
 package com.ysthakur.verity.parsing.ast.infile
 
-import com.ysthakur.verity.parsing.ast.ParentNode
+import com.ysthakur.verity.parsing.TextRange
+import com.ysthakur.verity.parsing.ast.{ParentNode, INode}
 
 import scala.collection.mutable.ListBuffer
 
@@ -8,7 +9,8 @@ case class TypeDef(
     modifiers: ModifierList,
     metaclass: TypeDefType,
     name: String,
-    override val children: ListBuffer[Field | Method | Rule]
+    override val children: ListBuffer[Field | Method | Rule],
+    override val textRange: TextRange
 ) extends Node
     with ParentNode
     with HasModifiers
@@ -18,7 +20,7 @@ case class TypeDef(
     s"${modifiers.text} ${metaclass.text} $name { ${children.map(_.text).mkString(" ")}}"
 }
 
-enum TypeDefType(override val text: String) extends Node {
+enum TypeDefType(val text: String) extends INode {
   case CLASS extends TypeDefType("class")
   case INTERFACE extends TypeDefType("interface")
   case ENUM extends TypeDefType("enum")

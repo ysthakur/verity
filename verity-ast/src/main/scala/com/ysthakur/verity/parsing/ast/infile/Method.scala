@@ -1,5 +1,6 @@
 package com.ysthakur.verity.parsing.ast.infile
 
+import com.ysthakur.verity.parsing.TextRange
 import com.ysthakur.verity.parsing.ast.infile.expr.Expr
 
 import scala.collection.mutable.ListBuffer
@@ -10,7 +11,8 @@ case class Method(
     name: String,
     ctparams: CTParamList,
     params: ParamList,
-    private var _body: Option[Block] /*Option[Block|Expr]*/
+    private var _body: Option[Block], /*Option[Block|Expr]*/
+    override val textRange: TextRange
 ) extends IMethodLike {
   def text: String = ???
   override def body: Option[Block] /*Option[Block|Expr]*/ = _body

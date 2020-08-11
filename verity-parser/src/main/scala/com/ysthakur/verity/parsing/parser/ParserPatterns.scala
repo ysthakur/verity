@@ -81,44 +81,8 @@ private object ParserPatterns {
       }
     }
 
-  // "binaryExpr" := FunctionPattern((input, pos, trace) => {
-  //   val statement = input.findLast()
-  // }) |>> {
-  //   case (lexpr: Expr) - op - (rexpr: Expr) =>
-  //     //println(s"GJGKJGJDFSG!!! - [$rexpr]");
-  //     BinaryExpr(lexpr, opCtor(op), rexpr)
-  //   case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
-  //   case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
-  // } Extends PatternRef("expr")
-
-  "binaryExpr" := LeftAssocPattern(
-    p1 = "expr",
-    p2 = ((STAR | FWDSLASH | MODULO)
-      | (PLUS | MINUS)
-      | (LTX2 | GTX2 | GTX3)
-      | (LT | LTEQ | GT | GTEQ)
-      | (EQX2 | NOTEQ)
-      | AND
-      | CARET
-      | OR
-      | ANDX2
-      | ORX2) - "expr"
-  ) |>> {
-    case (lexpr: Expr) - op - (rexpr: Expr) =>
-      println(s"GJGKJGJDFSG!!! - [$rexpr]");
-      BinaryExpr(lexpr, opCtor(op), rexpr)
-    //case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
-    case x => /*println(s"\n\nQPPETQeRWJ#5 ${x.getClass()} $x...");*/ unwrapBinaryExpr(x)
-  } Extends PatternRef("expr")
-
-
-
-  "dotSelect" := "expr" - DOT - identifier |>> {
+  lazy val dotSelect = expr - DOT - identifier |>> {
     case expr - dot - validId => DotChainedExpr(expr.asInstanceOf, validId.asInstanceOf)
-  }
-
-  lazy val arrayAccess = expr - LSQUARE - expr - RSQUARE |>> {
-    case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
   }
 
   // lazy val dotExpr = expr - DOT - unreservedId /*|>> {
@@ -127,52 +91,61 @@ private object ParserPatterns {
   // lazy val indexExpr = expr - LSQUARE - expr - RSQUARE |>> {
   //   case obj - lsq - ind - rsq => ArraySelect(obj, ind)
   // }
-  lazy val topExpr = literal | unreservedId | parenExpr
-   /*| dotExpr | indexExpr*/
    
-  // lazy val unaryPost = topExpr - (PLUSX2 | MINUSX2) |>> {
-  //   case (expr: Expr) - op => UnaryPostExpr(expr, opCtor(op))
-  // }
+  lazy val unaryPost = unreservedId - (PLUSX2 | MINUSX2) |>> {
+    case (expr: Expr) - op => UnaryPostExpr(expr, opCtor(op))
+  }
   lazy val unaryPre = (PLUSX2 | MINUSX2 | PLUS | MINUS | EXCL_MARK | TILDE) - unreservedId |>> {
     case op - (id: ValidIdNode) => UnaryPreExpr(opCtor(op), id)
   }
-  lazy val mulDivMod = {
-    println("muldiv")
-    //binExpr(topExpr, STAR | FWDSLASH | MODULO)
 
-    ConsPattern(topExpr, RepeatPattern((STAR | FWDSLASH | MODULO) - topExpr, name="muldivmod"), "muldivcons1") |>> {
-      case (e1: Expr) - NodeList(nodes) => 
-        //println("\n--------------\nmulDivMod") 
-        //println(s"nodes=$nodes, e1=$e1")
-        nodes.foldLeft(e1){(e, p) =>
-        p match {
-          case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
-        }
+  lazy val actualTopExpr = unreservedId | parenExpr
+
+  lazy val arrayAccess = actualTopExpr - LSQUARE - expr - RSQUARE |>> {
+    case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)
+  }
+  lazy val dotExpr = actualTopExpr - (DOT - unreservedId).* |>> {
+    case (obj: Expr) - NodeList(nodes) => 
+      nodes.foldLeft(obj){(p, n) => n match {
+        case dot - (name: ValidIdNode) => DotChainedExpr(p, name)
       }
     }
   }
-  lazy val addSub = {
-    //println("addSub")
-    //binExpr(mulDivMod, PLUS | MINUS)
 
-    ConsPattern(mulDivMod, RepeatPattern((PLUS | MINUS) - mulDivMod, name="addsub"), "addsubcons1") |>> {
-      case (e1: Expr) - NodeList(nodes) =>
-        //println("\n--------------\naddSub") 
-        //println(s"nodes=$nodes, e1=$e1")
-        nodes.foldLeft(e1){(e, p) =>
-          //println(s"e = $e, p=$p")
-          p match {
-            case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
-          }
-      }
-    }
-  }
-  lazy val bitExpr = binExpr(addSub, (LTX2 | GTX2 | GTX3) - expr)
-  lazy val boolExpr = binExpr(bitExpr, (LT | LTEQ | GT | GTEQ | IS))
-  lazy val eqExpr = binExpr(boolExpr, (EQX2 - NOTEQ))
+  lazy val topExpr = literal | unreservedId | parenExpr
+   /*| dotExpr | indexExpr*/
+  
+  lazy val mulDivMod = binExpr(topExpr, STAR | FWDSLASH | MODULO)
+    // ConsPattern(topExpr, RepeatPattern((STAR | FWDSLASH | MODULO) - topExpr, name="muldivmod"), "muldivcons1") |>> {
+    //   case (e1: Expr) - NodeList(nodes) =>
+    //     nodes.foldLeft(e1){(e, p) =>
+    //     p match {
+    //       case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
+    //     }
+    //   }
+    // }
+  
+  lazy val addSub = binExpr(mulDivMod, (PLUS | MINUS))
+    // ConsPattern(mulDivMod, RepeatPattern((PLUS | MINUS) - mulDivMod, name="addsub"), "addsubcons1") |>> {
+    //   case (e1: Expr) - NodeList(nodes) =>
+    //     nodes.foldLeft(e1){(e, p) =>
+    //       p match {
+    //         case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
+    //       }
+    //   }
+    // }
+  
+  lazy val bitExpr = binExpr(addSub, (LTX2 | GTX2 | GTX3))
+  lazy val relationalExpr = binExpr(bitExpr, (LT | LTEQ | GT | GTEQ | IS))
+  lazy val eqExpr = binExpr(relationalExpr, (EQX2 - NOTEQ))
   lazy val bitAnd = binExpr(eqExpr, AND)
   lazy val bitXor = binExpr(bitAnd, CARET)
-  lazy val logicAnd = binExpr(bitXor, ANDX2)
+  lazy val bitOr = binExpr(bitXor, OR)
+  lazy val logicAnd = binExpr(bitOr, ANDX2)
+  lazy val logicOr = binExpr(logicAnd, ORX2)
+  lazy val assignment = unreservedId - (PLUS | MINUS | STAR | FWDSLASH | MODULO).? - EQ - expr |>> {
+      case variable - NodeList(Seq(op)) - eq - expr - eol => ???
+    }
 
   def binExpr(prev: Pattern, operator: Pattern) =
     prev - (operator - prev).* |>> {
@@ -184,7 +157,23 @@ private object ParserPatterns {
       }
     }
 
-  lazy val expr: Pattern = logicAnd
+  lazy val methodCall = {
+
+  }
+
+  lazy val valueArgList = LPAREN - expr - (COMMA - expr).* - RPAREN |>> {
+    case (lp: Tok) - (arg1: Expr) - NodeList(args) - (rp: Tok) => ArgList(
+      List(arg1) ++ args.map{ case c - (arg: Expr) => arg },
+      TextRange(lp.range.start, rp.range.end))
+  }
+  
+  // import com.ysthakur.verity.parsing.ast.infile.expr._
+  
+  lazy val sugaredApply = expr - valueArgList.* |>> {
+    case (obj: Expr) - NodeList(nodes) => nodes.foldLeft(obj){(p, n) => ApplyCall(p, n.asInstanceOf[ArgList])}
+  }
+
+  lazy val expr: Pattern = unaryPost | unaryPre | logicOr | assignment
 
   lazy val exprList = expr - ((COMMA - expr)*)
 
@@ -192,44 +181,6 @@ private object ParserPatterns {
     case (lparen: Tok) - (expr: Expr) - (rparen: Tok) => 
       ParenExpr(expr, lparen.range.start.to(rparen.range.end))
   }
-
-
-  def unwrapBinaryExpr(node: Node): BinaryExpr = {
-    node match {
-      case (lexpr: Expr) - ((op: Tok) - (rexpr: Expr)) => 
-        println("poiuytr")
-        BinaryExpr(lexpr, opCtor(op), rexpr)
-      case ConsNode(p1: ConsNode[_, _], ConsNode(op: Tok, rexpr: Expr)) => 
-        println("\nqwedfghhjk;")
-        BinaryExpr(unwrapBinaryExpr(p1), opCtor(op), rexpr)
-      case x => println(s"\nQPPETQeRWJ#5 ${x.getClass()} $x..."); throw new Error("alksdjfasdf")
-    }
-  }
-
-
-  /*"binaryExpr" :=
-    "expr" - (
-      (STAR | FWDSLASH | MODULO)
-      | (PLUS | MINUS)
-      | (LTX2 | GTX2 | GTX3)
-      | (LT | LTEQ | GT | GTEQ)
-      | (EQX2 | NOTEQ)
-      | AND
-      | CARET
-      | OR
-      | ANDX2
-      | ORX2) - "expr" |>> {
-    case (lexpr: Expr) - op - (rexpr: Expr) =>
-      println(s"GJGKJGJDFSG!!! - [$rexpr]");
-      BinaryExpr(lexpr, opCtor(op), rexpr)
-    case a - b - (c - d) => println(s"$c \n\t\t$d"); throw new Error("riyto8tq64")
-    case x => println(s"QPPETQeRWJ#5 ${x.getClass()} $x"); x
-  } Extends PatternRef("expr")*/
-
-  val assignment =
-    expr - (PLUS | MINUS | STAR | FWDSLASH | MODULO).? - EQ - expr - EOL |>> {
-      case variable - NodeList(Seq(op)) - eq - expr - eol => ???
-    }
 
   val varDeclFirstPart = "typeRef" - unreservedId |>> {
     case (typeRef: com.ysthakur.verity.parsing.ast.infile.TypeRef) - (validId: ValidIdNode) =>
@@ -244,8 +195,4 @@ private object ParserPatterns {
 
   def [N <: Node](p: Pattern) |>> (ctor: Node => N): PatternAndConstructor[N] =
     PatternAndConstructor(p, ctor)
-}
-
-trait Extractor[T] {
-  def unapply(input: List[Tok]): Option[T]
 }

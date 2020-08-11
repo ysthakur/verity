@@ -1,8 +1,10 @@
 package com.ysthakur.verity.parsing.ast.infile
 
+import com.ysthakur.verity.parsing.TextRange
 import com.ysthakur.verity.parsing.ast.infile.expr.Expr
 
 class LocalVar(override val name: String,
+               override val textRange: TextRange,
                var _myType: ITypeRef | Null = null,
                var initExpr: Option[Expr] = None,
                val isFinal: Boolean = false) extends IVariableDecl {

@@ -1,8 +1,10 @@
 package com.ysthakur.verity.parsing.ast.infile
 
+import com.ysthakur.verity.parsing.TextRange
+
 import scala.collection.mutable.ListBuffer
 
-case class JTypeParam(name: String, bounds: ListBuffer[TypeParamBound]) extends CTParam {
+case class JTypeParam(name: String, bounds: ListBuffer[TypeParamBound], override val textRange: TextRange) extends CTParam {
   override def text: String = if (bounds.isEmpty) "name" else s"name "
 }
 

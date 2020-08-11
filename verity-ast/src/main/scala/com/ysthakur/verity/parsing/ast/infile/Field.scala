@@ -1,5 +1,6 @@
 package com.ysthakur.verity.parsing.ast.infile
 
+import com.ysthakur.verity.parsing.TextRange
 import com.ysthakur.verity.parsing.ast.infile.expr.Expr
 
 import scala.collection.mutable.ListBuffer
@@ -9,7 +10,8 @@ class Field(
                typeRef: Option[TypeRef] = None,
                private var _myType: ITypeRef | Null,
                override val modifiers: ModifierList,
-               var initExpr: Option[Expr] = None
+               var initExpr: Option[Expr] = None,
+               override val textRange: TextRange
            ) extends IVariableDecl
     with HasModifiers
     with HasType {
