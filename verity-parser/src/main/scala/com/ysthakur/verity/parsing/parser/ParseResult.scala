@@ -28,7 +28,7 @@ case class Matched[N <: Node, T](
 
 object Matched {
   def empty(rest: List[Tok], range: TextRange, pattern: Option[Pattern] = None) =
-    new Matched(() => EmptyNode, rest, range, true, pattern)
+    new Matched(() => EmptyNode(range.start), rest, range, true, pattern)
 
   def apply[N <: Node, T](
       create: => N,

@@ -8,7 +8,7 @@ trait MethodCall() extends Expr {
 
 }
 
-case class ApplyCall(obj: Expr, args: ArgList, override val textRange: TextRange) extends Expr {
+case class ApplyCall(obj: Expr, args: ArgList, override val textRange: TextRange) extends MethodCall() {
   def text = obj.text + args.text
 }
 

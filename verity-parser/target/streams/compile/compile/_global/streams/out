@@ -1,202 +1,35 @@
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E008] Not Found Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\lexer\TokenType.scala:18:38 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m18 |[0m  [33mdef[0m [36mtoModifier[0m: [35mModifier[0m = Modifier.valueOf([33mthis[0m.text)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                             [31m^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |value valueOf is not a member of object com.ysthakur.verity.parsing.ast.infile.Modifier[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParseResult.scala:23:20 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m23 |[0m      Matched(() => ConsNode(create(), create2()), rest2, offset2)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                    [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Found:    () => com.ysthakur.verity.parsing.ast.[1m[31mConsNode[0m[1m[31m[[0m[1m[31mN[0m[1m[31m,[0m[1m[31m [0m[1m[31mN[0m[1m[31m$[0m[1m[31m1[0m[1m[31m][0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Required: () => com.ysthakur.verity.parsing.ast.[1m[32minfile[0m[1m[32m.[0m[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |[0m
-[0m[[0m[31merror[0m] [0m[0m   |where:    N$1 is a type in [33mmethod[0m [35m+[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParseResult.scala:31:22 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m31 |[0m    [33mnew[0m [35mMatched[0m(() => EmptyNode, rest, range, [31mtrue[0m, pattern)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                      [31m^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |         Found:    com.ysthakur.verity.parsing.ast.infile.[1m[31mEmptyNode[0m[1m[31m.[0m[1m[31mtype[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |         Required: com.ysthakur.verity.parsing.ast.infile.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:21:31 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m21 |[0m  [33mval[0m [36mopCtor[0m = ([36mop[0m: [35mNode[0m) => Op(op.text)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                             [31m^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (symbol: String, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.expr.Op[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:25:38 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m25 |[0m    [33mcase[0m token: Token[?] => NumLiteral(token.text)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                            [31m^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (text: String, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.expr.NumLiteral[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:28:36 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m28 |[0m    [33mcase[0m Token(TRUE) => BoolLiteral.TrueLiteral[0m
-[0m[[0m[31merror[0m] [0m[0m   |                        [31m^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Found:    com.ysthakur.verity.parsing.ast.[1m[31minfile[0m[1m[31m.[0m[1m[31mexpr[0m[1m[31m.[0m[1m[31mBoolLiteral[0m[1m[31m.[0m[1m[31mTrueLiteral[0m[1m[31m.[0m[1m[31mtype[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Required: com.ysthakur.verity.parsing.ast.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:29:37 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m29 |[0m    [33mcase[0m Token(FALSE) => BoolLiteral.FalseLiteral[0m
-[0m[[0m[31merror[0m] [0m[0m   |                         [31m^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Found:    com.ysthakur.verity.parsing.ast.[1m[31minfile[0m[1m[31m.[0m[1m[31mexpr[0m[1m[31m.[0m[1m[31mBoolLiteral[0m[1m[31m.[0m[1m[31mFalseLiteral[0m[1m[31m.[0m[1m[31mtype[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Required: com.ysthakur.verity.parsing.ast.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:46:33 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m46 |[0m        Matched(() => ValidIdNode(token.text), input.tail, token.range)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                      [31m^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mconstructor[0m [35mValidIdNode[0m: (name: String, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.ValidIdNode[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:56:35 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m56 |[0m          Matched(() => ValidIdNode(token.text), input.tail, token.range)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                        [31m^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mconstructor[0m [35mValidIdNode[0m: (name: String, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.ValidIdNode[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:64:41 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m64 |[0m    [33mcase[0m (validId: ValidIdNode) => DotRef(List(validId))[0m
-[0m[[0m[31merror[0m] [0m[0m   |                                   [31m^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (iterable: Iterable[com.ysthakur.verity.parsing.ast.infile.ValidIdNode], [0m
-[0m[[0m[31merror[0m] [0m[0m   |  textRange[0m
-[0m[[0m[31merror[0m] [0m[0m   |: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.expr.DotRef[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:66:12 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m66 |[0m      DotRef([0m
-[0m[[0m[31merror[0m] [0m[0m   |      [31m^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (iterable: Iterable[com.ysthakur.verity.parsing.ast.infile.ValidIdNode], [0m
-[0m[[0m[31merror[0m] [0m[0m   |  textRange[0m
-[0m[[0m[31merror[0m] [0m[0m   |: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.expr.DotRef[0m
-[0m[[0m[31merror[0m] [0m[0m[31m67 |[0m        validId :: (nodeList.asInstanceOf[[35mNodeList[?][0m].nodes)[0m
-[0m[[0m[31merror[0m] [0m[0m[31m68 |[0m            .map(_.asInstanceOf[[35mConsNode[?, ValidIdNode][0m].n2.asInstanceOf[[35mValidIdNode[0m])[0m
-[0m[[0m[31merror[0m] [0m[0m[31m69 |[0m            .toList)[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:74:17 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m74 |[0m      PackageStmt(dotRef)[0m
-[0m[[0m[31merror[0m] [0m[0m   |      [31m^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mconstructor[0m [35mPackageStmt[0m: (dotRef: com.ysthakur.verity.parsing.ast.infile.expr.DotRef, textRange: [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.TextRange[0m
-[0m[[0m[31merror[0m] [0m[0m   |): com.ysthakur.verity.parsing.ast.infile.PackageStmt[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:80:20 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m80 |[0m        Import(ref, star != [31mnull[0m)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                    [31m^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |                    Found:    Boolean[0m
-[0m[[0m[31merror[0m] [0m[0m   |                    Required: com.ysthakur.verity.parsing.TextRange[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:85:47 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m85 |[0m    [33mcase[0m expr - dot - validId => DotChainedExpr(expr.asInstanceOf, validId.asInstanceOf)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                                 [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (expr: com.ysthakur.verity.parsing.ast.infile.expr.Expr, validId: [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.ValidIdNode[0m
-[0m[[0m[31merror[0m] [0m[0m   |, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m   |  com.ysthakur.verity.parsing.ast.infile.expr.DotChainedExpr[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:96:57 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m96 |[0m    [33mcase[0m (expr: Expr) - op => UnaryPostExpr(expr, opCtor(op))[0m
-[0m[[0m[31merror[0m] [0m[0m   |                                                         [31m^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Found:    [1m[31m([0m[1m[31mop[0m[1m[31m [0m[1m[31m:[0m[1m[31m [0m[1m[31mB[0m[1m[31m$[0m[1m[31m9[0m[1m[31m [0m[1m[31m|[0m[1m[31m [0mcom.ysthakur.verity.parsing.ast.[1m[31minfile[0m[1m[31m.[0m[1m[31mEmptyNode[0m[1m[31m.[0m[1m[31mtype[0m[1m[31m)[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Required: com.ysthakur.verity.parsing.ast.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |[0m
-[0m[[0m[31merror[0m] [0m[0m   |where:    B$9 is a type in an anonymous function in the initializer of [33mlazy value[0m [35munaryPost[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:99:55 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m99 |[0m    [33mcase[0m op - (id: ValidIdNode) => UnaryPreExpr(opCtor(op), id)[0m
-[0m[[0m[31merror[0m] [0m[0m   |                                                       [31m^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Found:    [1m[31m([0m[1m[31mop[0m[1m[31m [0m[1m[31m:[0m[1m[31m [0m[1m[31mA[0m[1m[31m$[0m[1m[31m10[0m[1m[31m [0m[1m[31m|[0m[1m[31m [0mcom.ysthakur.verity.parsing.ast.[1m[31minfile[0m[1m[31m.[0m[1m[31mEmptyNode[0m[1m[31m.[0m[1m[31mtype[0m[1m[31m)[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |Required: com.ysthakur.verity.parsing.ast.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m   |[0m
-[0m[[0m[31merror[0m] [0m[0m   |where:    A$10 is a type in an anonymous function in the initializer of [33mlazy value[0m [35munaryPre[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:105:59 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m105 |[0m    [33mcase[0m (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index)[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                                [31m^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (arr: com.ysthakur.verity.parsing.ast.infile.expr.Expr, index: [0m
-[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.verity.parsing.ast.infile.expr.Expr[0m
-[0m[[0m[31merror[0m] [0m[0m    |, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.verity.parsing.ast.infile.expr.ArraySelect[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:110:56 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m110 |[0m        [33mcase[0m dot - (name: ValidIdNode) => DotChainedExpr(p, name)[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                          [31m^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (expr: com.ysthakur.verity.parsing.ast.infile.expr.Expr, validId: [0m
-[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.verity.parsing.ast.infile.ValidIdNode[0m
-[0m[[0m[31merror[0m] [0m[0m    |, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.verity.parsing.ast.infile.expr.DotChainedExpr[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:155:57 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m155 |[0m            [33mcase[0m op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                                         [31m^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Found:    [1m[31m([0m[1m[31mop[0m[1m[31m [0m[1m[31m:[0m[1m[31m [0m[1m[31mA[0m[1m[31m$[0m[1m[31m19[0m[1m[31m [0m[1m[31m|[0m[1m[31m [0mcom.ysthakur.verity.parsing.ast.[1m[31minfile[0m[1m[31m.[0m[1m[31mEmptyNode[0m[1m[31m.[0m[1m[31mtype[0m[1m[31m)[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Required: com.ysthakur.verity.parsing.ast.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m
-[0m[[0m[31merror[0m] [0m[0m    |where:    A$19 is a type in an anonymous function in [33mmethod[0m [35mbinExpr[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:173:81 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m173 |[0m    [33mcase[0m (obj: Expr) - NodeList(nodes) => nodes.foldLeft(obj){(p, n) => ApplyCall(p, n.asInstanceOf[ArgList])}[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                                                        [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |missing argument for parameter textRange of [33mmethod[0m [35mapply[0m: (obj: com.ysthakur.verity.parsing.ast.infile.expr.Expr, args: [0m
-[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.verity.parsing.ast.infile.expr.ArgList[0m
-[0m[[0m[31merror[0m] [0m[0m    |, textRange: com.ysthakur.verity.parsing.TextRange): [0m
-[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.verity.parsing.ast.infile.expr.ApplyCall[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\ParserPatterns.scala:187:14 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m187 |[0m      ConsNode(typeRef, validId)[0m
-[0m[[0m[31merror[0m] [0m[0m    |      [31m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Found:    com.ysthakur.verity.parsing.ast.ConsNode[A$29 & [0m
-[0m[[0m[31merror[0m] [0m[0m    |  com.ysthakur.verity.parsing.ast.infile.TypeRef[0m
-[0m[[0m[31merror[0m] [0m[0m    |, B$29 & com.ysthakur.verity.parsing.ast.ValidIdNode][0m
-[0m[[0m[31merror[0m] [0m[0m    |Required: com.ysthakur.verity.parsing.ast.Node[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m
-[0m[[0m[31merror[0m] [0m[0m    |where:    A$29 is a type in an anonymous function in [33mobject[0m [35mParserPatterns[0m with bounds >: (?1 : com.ysthakur.verity.parsing.ast.infile.TypeRef) and <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m    |          B$29 is a type in an anonymous function in [33mobject[0m [35mParserPatterns[0m with bounds >: (?2 : com.ysthakur.verity.parsing.ast.infile.ValidIdNode) and <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:166:41 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m166 |[0m      [33mcase[0m LeftNode(left) => Some((left, EmptyNode))[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                         [31m^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |       Found:    com.ysthakur.verity.parsing.ast.infile.[1m[31mEmptyNode[0m[1m[31m.[0m[1m[31mtype[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |       Required: com.ysthakur.verity.parsing.ast.infile.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:167:37 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m167 |[0m      [33mcase[0m RightNode(right) => Some((EmptyNode, right))[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                     [31m^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |       Found:    com.ysthakur.verity.parsing.ast.infile.[1m[31mEmptyNode[0m[1m[31m.[0m[1m[31mtype[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |       Required: com.ysthakur.verity.parsing.ast.infile.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:209:28 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m209 |[0m              Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))[0m
-[0m[[0m[31merror[0m] [0m[0m    |                            [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Found:    () => com.ysthakur.verity.parsing.ast.[1m[31mConsNode[0m[1m[31m[[0m[1m[31mN[0m[1m[31m$[0m[1m[31m2[0m[1m[31m,[0m[1m[31m [0m[1m[31mN[0m[1m[31m$[0m[1m[31m3[0m[1m[31m][0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Required: () => com.ysthakur.verity.parsing.ast.[1m[32minfile[0m[1m[32m.[0m[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m
-[0m[[0m[31merror[0m] [0m[0m    |where:    N$2 is a type in [33mmethod[0m [35mapply[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m    |          N$3 is a type in [33mmethod[0m [35mapply[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:241:27 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m241 |[0m    x.orElse(Matched(() => EmptyNode, input, TextRange.empty(start), [31mtrue[0m))[0m
-[0m[[0m[31merror[0m] [0m[0m    |                           [31m^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |       Found:    com.ysthakur.verity.parsing.ast.infile.[1m[31mEmptyNode[0m[1m[31m.[0m[1m[31mtype[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |       Required: com.ysthakur.verity.parsing.ast.infile.[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:256:39 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m256 |[0m            keepMatching(Matched(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end)))[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                       [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Found:    () => com.ysthakur.verity.parsing.ast.[1m[31mConsNode[0m[1m[31m[[0m[1m[31mN[0m[1m[31m$[0m[1m[31m4[0m[1m[31m,[0m[1m[31m [0m[1m[31mN[0m[1m[31m$[0m[1m[31m5[0m[1m[31m][0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Required: () => com.ysthakur.verity.parsing.ast.[1m[32minfile[0m[1m[32m.[0m[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m
-[0m[[0m[31merror[0m] [0m[0m    |where:    N$4 is a type in [33mmethod[0m [35mapply[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m    |          N$5 is a type in [33mmethod[0m [35mapply[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:271:35 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m271 |[0m        keepMatching(Matched(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end)))[0m
-[0m[[0m[31merror[0m] [0m[0m    |                                   [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Found:    () => [1m[31m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[1m[31m [0m[1m[31m [0mcom.ysthakur.verity.parsing.ast.[1m[31mConsNode[0m[1m[31m[[0m[1m[31m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[1m[31m [0m[1m[31m [0m[1m[31m [0m[1m[31m [0m[1m[31mcom[0m[1m[31m.[0m[1m[31mysthakur[0m[1m[31m.[0m[1m[31mverity[0m[1m[31m.[0m[1m[31mparsing[0m[1m[31m.[0m[1m[31mast[0m[1m[31m.[0minfile.Node[1m[31m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[1m[31m [0m[1m[31m [0m[1m[31m,[0m[1m[31m [0m[1m[31mN[0m[1m[31m$[0m[1m[31m7[0m[1m[31m][0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Required: () => com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m
-[0m[[0m[31merror[0m] [0m[0m    |where:    N$7 is a type in [33mmethod[0m [35mkeepMatching[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:289:38 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m289 |[0m            [33mnew[0m [35mMatched[0m(() => ConsNode(create1(), create2()), rest2, TextRange(tr1.start, tr2.end))[0m
-[0m[[0m[31merror[0m] [0m[0m    |                              [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Found:    com.ysthakur.verity.parsing.ast.[1m[31mConsNode[0m[1m[31m[[0m[1m[31mN[0m[1m[31m$[0m[1m[31m8[0m[1m[31m,[0m[1m[31m [0m[1m[31mN[0m[1m[31m$[0m[1m[31m9[0m[1m[31m][0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Required: com.ysthakur.verity.parsing.ast.[1m[32minfile[0m[1m[32m.[0m[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m
-[0m[[0m[31merror[0m] [0m[0m    |where:    N$8 is a type in [33mmethod[0m [35mapply[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m    |          N$9 is a type in [33mmethod[0m [35mapply[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:301:26 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m301 |[0m            Matched(() => ConsNode(create1(), create2()), rest2, tr1.start to tr2.end)[0m
-[0m[[0m[31merror[0m] [0m[0m    |                          [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Found:    () => com.ysthakur.verity.parsing.ast.[1m[31mConsNode[0m[1m[31m[[0m[1m[31mN[0m[1m[31m$[0m[1m[31m10[0m[1m[31m,[0m[1m[31m [0m[1m[31mN[0m[1m[31m$[0m[1m[31m11[0m[1m[31m][0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |Required: () => com.ysthakur.verity.parsing.ast.[1m[32minfile[0m[1m[32m.[0m[1m[32mNode[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |[0m
-[0m[[0m[31merror[0m] [0m[0m    |where:    N$10 is a type in [33mmethod[0m [35mkeepMatching[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m    |          N$11 is a type in [33mmethod[0m [35mkeepMatching[0m with bounds <: com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E007] Type Mismatch Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\parser\Pattern.scala:334:12 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m334 |[0m      () => NodeList(results.map([36mr[0m => r.asInstanceOf[[35mMatched[?, ?][0m].create())),[0m
-[0m[[0m[31merror[0m] [0m[0m    |            [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m    |           Found:    () => [0m
-[0m[[0m[31merror[0m] [0m[0m    |             com.ysthakur.verity.parsing.ast.NodeList[[0m
-[0m[[0m[31merror[0m] [0m[0m    |               com.ysthakur.verity.parsing.parser.Matched[?, ?]#N[0m
-[0m[[0m[31merror[0m] [0m[0m    |             ][0m
-[0m[[0m[31merror[0m] [0m[0m    |           Required: () => com.ysthakur.verity.parsing.ast.infile.Node[0m
-[0m[[0m[31merror[0m] [0m[0m30 errors found[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\lexer\Token.scala:37:11 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m37 |[0m[33mcase class[0m [35mInvariantToken[0m[+[35mF[0m [35m<: FixedTextTokenType[0m]([0m
+[0m[[0m[31merror[0m] [0m[0m   |           [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |class InvariantToken needs to be abstract, since:[0m
+[0m[[0m[31merror[0m] [0m[0m   |it has 2 unimplemented members.[0m
+[0m[[0m[31merror[0m] [0m[0m   |/** As seen from class InvariantToken, the missing signatures are as follows.[0m
+[0m[[0m[31merror[0m] [0m[0m   | *  For convenience, these are usable as stub implementations.[0m
+[0m[[0m[31merror[0m] [0m[0m   | */[0m
+[0m[[0m[31merror[0m] [0m[0m   |  // Members declared in com.ysthakur.verity.parsing.ast.infile.Node[0m
+[0m[[0m[31merror[0m] [0m[0m   |  def textRange: => com.ysthakur.verity.parsing.TextRange = ???[0m
+[0m[[0m[31merror[0m] [0m[0m   |  [0m
+[0m[[0m[31merror[0m] [0m[0m   |  // Members declared in com.ysthakur.verity.parsing.lexer.Token[0m
+[0m[[0m[31merror[0m] [0m[0m   |  def textRange: => com.ysthakur.verity.parsing.TextRange = ???[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- [E037] Declaration Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\lexer\Token.scala:39:17 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m39 |[0m    [33moverride[0m [33mval[0m range: TextRange[0m
+[0m[[0m[31merror[0m] [0m[0m   |                 [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |                 [33mvalue[0m [35mrange[0m overrides nothing[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\lexer\Token.scala:62:11 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m62 |[0m[33mcase class[0m [35mVariantToken[0m[+[35mR[0m [35m<: RegexTokenType[0m]([0m
+[0m[[0m[31merror[0m] [0m[0m   |           [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |class VariantToken needs to be abstract, since:[0m
+[0m[[0m[31merror[0m] [0m[0m   |it has 2 unimplemented members.[0m
+[0m[[0m[31merror[0m] [0m[0m   |/** As seen from class VariantToken, the missing signatures are as follows.[0m
+[0m[[0m[31merror[0m] [0m[0m   | *  For convenience, these are usable as stub implementations.[0m
+[0m[[0m[31merror[0m] [0m[0m   | */[0m
+[0m[[0m[31merror[0m] [0m[0m   |  // Members declared in com.ysthakur.verity.parsing.ast.infile.Node[0m
+[0m[[0m[31merror[0m] [0m[0m   |  def textRange: => com.ysthakur.verity.parsing.TextRange = ???[0m
+[0m[[0m[31merror[0m] [0m[0m   |  [0m
+[0m[[0m[31merror[0m] [0m[0m   |  // Members declared in com.ysthakur.verity.parsing.lexer.Token[0m
+[0m[[0m[31merror[0m] [0m[0m   |  def textRange: => com.ysthakur.verity.parsing.TextRange = ???[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- [E037] Declaration Error: C:\Users\yasht\verity\verity-parser\src\main\scala\com\ysthakur\verity\parsing\lexer\Token.scala:65:17 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m65 |[0m    [33moverride[0m [33mval[0m range: TextRange[0m
+[0m[[0m[31merror[0m] [0m[0m   |                 [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |                 [33mvalue[0m [35mrange[0m overrides nothing[0m
+[0m[[0m[31merror[0m] [0m[0mfour errors found[0m

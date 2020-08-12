@@ -18,7 +18,7 @@ type Tok = Token[TokenType]
 sealed trait Token[+T <: TokenType] extends Node {
   def tokenType: T
   def text: String
-  def range: TextRange
+  def textRange: TextRange
 }
 
 object Token {
@@ -34,24 +34,24 @@ object Token {
   *
   * @param tokenType
   */
-case class InvariantToken[+F <: FixedTextTokenType] private (
+case class InvariantToken[+F <: FixedTextTokenType](
     override val tokenType: F,
-    override val range: TextRange
+    override val textRange: TextRange
 ) extends Token[F] {
   override def text: String = tokenType.text
 }
 
 object InvariantToken {
-  private val invariantTokenPool =
-    mutable.Set[InvariantToken[FixedTextTokenType]]()
-  def apply[F <: FixedTextTokenType](tt: F, range: TextRange): InvariantToken[F] =
-    invariantTokenPool
-      .find(token => token.tokenType == tt)
-      .getOrElse(new InvariantToken(tokenType = tt, range))
-      .asInstanceOf[InvariantToken[F]]
+  // private val invariantTokenPool =
+  //   mutable.Set[InvariantToken[FixedTextTokenType]]()
+  // def apply[F <: FixedTextTokenType](tt: F, range: TextRange): InvariantToken[F] =
+  //   invariantTokenPool
+  //     .find(token => token.tokenType == tt)
+  //     .getOrElse(new InvariantToken(tokenType = tt, range))
+  //     .asInstanceOf[InvariantToken[F]]
 
   def unapply[F <: FixedTextTokenType](token: InvariantToken[F]): Option[(F, TextRange)] =
-    Some((token.tokenType, token.range))
+    Some((token.tokenType, token.textRange))
 }
 
 /**
@@ -62,12 +62,5 @@ object InvariantToken {
 case class VariantToken[+R <: RegexTokenType](
     override val tokenType: R,
     override val text: String,
-    override val range: TextRange
+    override val textRange: TextRange
 ) extends Token[R]
-
-//TODO remove this or replace it with a class
-object EmptyToken extends Token[TokenType] {
-  override def range: TextRange = ???
-  override def text: String = ""
-  override def tokenType: TokenType = ???
-}

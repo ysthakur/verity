@@ -1,6 +1,6 @@
 package com.ysthakur.verity.parsing.parser
 
-import com.ysthakur.verity.parsing.lexer.{TokenType, Tok, EmptyToken, Token}
+import com.ysthakur.verity.parsing.lexer.{TokenType, Tok, Token}
 import com.ysthakur.verity.parsing.Position
 
 case class TokenTypePattern(val tokenType: com.ysthakur.verity.parsing.lexer.TokenType) extends Pattern {
@@ -13,11 +13,11 @@ case class TokenTypePattern(val tokenType: com.ysthakur.verity.parsing.lexer.Tok
     if (input.size >= 1) input.head match {
       case token: Token[?] => if (token.tokenType == tokenType) 
           // println(s"Matched $token")
-          return Matched(() => token, input.tail, token.range)
+          return Matched(() => token, input.tail, token.textRange)
     }
     // println("didnt match :(\n")
     val head = headOrEmpty(input)
-    Failed(head, List.empty, if (head != EmptyToken) head.range.start else Position(0, -1, -1))
+    Failed(head, List.empty, head.textRange.start)
   }
 }
 

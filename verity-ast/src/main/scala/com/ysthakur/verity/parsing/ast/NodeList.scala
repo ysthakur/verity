@@ -1,9 +1,9 @@
 package com.ysthakur.verity.parsing.ast
 
-import com.ysthakur.verity.parsing.HasText
+import com.ysthakur.verity.parsing.{HasText, TextRange}
 import com.ysthakur.verity.parsing.ast.infile.Node
 
-case class NodeList[+T <: INode](val nodes: List[T]) extends INode {
+case class NodeList[+T <: Node](val nodes: List[T], override val textRange: TextRange) extends Node {
 
   //println(s"\n----------------------------\nCreated nodelist, nodes=$nodes\n")
 
@@ -13,5 +13,5 @@ case class NodeList[+T <: INode](val nodes: List[T]) extends INode {
     case list: NodeList[?] => nodes == list.nodes
     case _ => false
   }
-  // override def text: String = nodes.map(_.text).mkString
+  override def text: String = nodes.map(_.text).mkString
 }

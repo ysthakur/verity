@@ -253,22 +253,22 @@
 [0m[[0m[0mdebug[0m] [0m[0m== resolving dependencies for org.scala-sbt.temp#temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec;0.26.0-RC1 [optional][0m
 [0m[[0m[0mdebug[0m] [0m[0m	resolved ivy file produced in cache[0m
 [0m[[0m[0mdebug[0m] [0m[0m:: downloading artifacts ::[0m
-[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] ch.epfl.lamp#dotty-library_0.26;0.26.0-RC1!dotty-library_0.26.jar[0m
 [0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] ch.epfl.lamp#dotty-interfaces;0.26.0-RC1!dotty-interfaces.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] ch.epfl.lamp#dotty-library_0.26;0.26.0-RC1!dotty-library_0.26.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] ch.epfl.lamp#dotty-compiler_0.26;0.26.0-RC1!dotty-compiler_0.26.jar[0m
 [0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.scala-lang.modules#scala-asm;7.3.1-scala-1!scala-asm.jar(bundle)[0m
 [0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.scala-sbt#compiler-interface;1.2.5!compiler-interface.jar[0m
-[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] ch.epfl.lamp#dotty-compiler_0.26;0.26.0-RC1!dotty-compiler_0.26.jar[0m
 [0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] ch.epfl.lamp#tasty-core_0.26;0.26.0-RC1!tasty-core_0.26.jar[0m
-[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.jline#jline-terminal-jna;3.15.0!jline-terminal-jna.jar[0m
-[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.jline#jline-terminal;3.15.0!jline-terminal.jar[0m
-[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.scala-sbt#util-interface;1.2.2!util-interface.jar[0m
 [0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.jline#jline-reader;3.15.0!jline-reader.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.jline#jline-terminal-jna;3.15.0!jline-terminal-jna.jar[0m
 [0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.scala-lang#scala-library;2.13.3!scala-library.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.jline#jline-terminal;3.15.0!jline-terminal.jar[0m
 [0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] net.java.dev.jna#jna;5.3.1!jna.jar[0m
-[0m[[0m[0mdebug[0m] [0m[0m:: resolution report :: resolve 74ms :: artifacts dl 4ms[0m
+[0m[[0m[0mdebug[0m] [0m[0m	[NOT REQUIRED] org.scala-sbt#util-interface;1.2.2!util-interface.jar[0m
+[0m[[0m[0mdebug[0m] [0m[0m:: resolution report :: resolve 181ms :: artifacts dl 9ms[0m
 [0m[[0m[0mdebug[0m] [0m[0m	report for org.scala-sbt.temp#temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec;0.26.0-RC1 compile produced in C:\Users\yasht\verity\verity-ast\target\scala-0.26\resolution-cache\reports\org.scala-sbt.temp-temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec-compile.xml[0m
 [0m[[0m[0mdebug[0m] [0m[0m	report for org.scala-sbt.temp#temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec;0.26.0-RC1 runtime produced in C:\Users\yasht\verity\verity-ast\target\scala-0.26\resolution-cache\reports\org.scala-sbt.temp-temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec-runtime.xml[0m
 [0m[[0m[0mdebug[0m] [0m[0m	report for org.scala-sbt.temp#temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec;0.26.0-RC1 test produced in C:\Users\yasht\verity\verity-ast\target\scala-0.26\resolution-cache\reports\org.scala-sbt.temp-temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec-test.xml[0m
 [0m[[0m[0mdebug[0m] [0m[0m	report for org.scala-sbt.temp#temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec;0.26.0-RC1 provided produced in C:\Users\yasht\verity\verity-ast\target\scala-0.26\resolution-cache\reports\org.scala-sbt.temp-temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec-provided.xml[0m
 [0m[[0m[0mdebug[0m] [0m[0m	report for org.scala-sbt.temp#temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec;0.26.0-RC1 optional produced in C:\Users\yasht\verity\verity-ast\target\scala-0.26\resolution-cache\reports\org.scala-sbt.temp-temp-module-f1e2d8d887ad673030ea9ab452d1f687e2516eec-optional.xml[0m
-[0m[[0m[0mdebug[0m] [0m[0m	resolve done (74ms resolve - 4ms download)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	resolve done (181ms resolve - 9ms download)[0m

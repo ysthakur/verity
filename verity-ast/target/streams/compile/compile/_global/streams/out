@@ -1,5 +1,18 @@
-[0m[[0m[31merror[0m] [0m[0m[31m-- [E119] Type Error: C:\Users\yasht\verity\verity-ast\src\main\scala\com\ysthakur\verity\parsing\ast\Export.scala:2:9 [0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m2 |[0m  [33mexport[0m com.ysthakur.verity.parsing.ast.infile._[0m
-[0m[[0m[31merror[0m] [0m[0m  |         [31m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m  |        [33mpackage[0m [35mcom.ysthakur.verity.parsing.ast.infile.expr[0m is not a value[0m
-[0m[[0m[31merror[0m] [0m[0mone error found[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- Error: C:\Users\yasht\verity\verity-ast\src\main\scala\com\ysthakur\verity\parsing\ast\infile\HasModifiers.scala:18:11 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m18 |[0m[33mcase class[0m [35mModifier[0m([36mmodType[0m: [35mModifierType[0m, [33moverride[0m [33mval[0m [36mtextRange[0m: [35mTextRange[0m) [33mextends[0m [35mNode[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |           [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   | class Modifier needs to be abstract, since:[0m
+[0m[[0m[31merror[0m] [0m[0m   | it has 2 unimplemented members.[0m
+[0m[[0m[31merror[0m] [0m[0m   | /** As seen from class Modifier, the missing signatures are as follows.[0m
+[0m[[0m[31merror[0m] [0m[0m   |  *  For convenience, these are usable as stub implementations.[0m
+[0m[[0m[31merror[0m] [0m[0m   |  */[0m
+[0m[[0m[31merror[0m] [0m[0m   |   // Members declared in com.ysthakur.verity.parsing.HasText[0m
+[0m[[0m[31merror[0m] [0m[0m   |   def text: => CharSequence = ???[0m
+[0m[[0m[31merror[0m] [0m[0m   |   [0m
+[0m[[0m[31merror[0m] [0m[0m   |   // Members declared in com.ysthakur.verity.parsing.ast.infile.Node[0m
+[0m[[0m[31merror[0m] [0m[0m   |   def text: => String = ???[0m
+[0m[[0m[31merror[0m] [0m[0m[31m-- [E037] Declaration Error: C:\Users\yasht\verity\verity-ast\src\main\scala\com\ysthakur\verity\parsing\ast\infile\HasModifiers.scala:23:15 [0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m23 |[0m  [33moverride[0m [33mdef[0m text: String = [33mthis[0m.toString.toLowerCase[0m
+[0m[[0m[31merror[0m] [0m[0m   |               [31m^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m   |               [33mmethod[0m [35mtext[0m overrides nothing[0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m

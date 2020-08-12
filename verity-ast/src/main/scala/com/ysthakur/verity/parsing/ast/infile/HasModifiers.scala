@@ -1,7 +1,7 @@
 package com.ysthakur.verity.parsing.ast.infile
 
 import com.ysthakur.verity.parsing.TextRange
-import com.ysthakur.verity.parsing.ast.Node
+import com.ysthakur.verity.parsing.ast.{INode, Node}
 
 import scala.collection.mutable.ListBuffer
 
@@ -15,19 +15,10 @@ case class ModifierList(modifiers: ListBuffer[Modifier], override val textRange:
   override def text: String = modifiers.mkString(" ")
 }
 
-enum Modifier(override val textRange: TextRange) extends Node {
-  case PUBLIC(tr: TextRange) extends Modifier(tr)
-  case PRIVATE(tr: TextRange) extends Modifier(tr)
-  case PROTECTED(tr: TextRange) extends Modifier(tr)
-  case DEFAULT(tr: TextRange) extends Modifier(tr)
-  case STATIC(tr: TextRange) extends Modifier(tr)
-  case ABSTRACT(tr: TextRange) extends Modifier(tr)
-  case FINAL(tr: TextRange) extends Modifier(tr)
-  case NATIVE(tr: TextRange) extends Modifier(tr)
-  case TRANSIENT(tr: TextRange) extends Modifier(tr)
-  case VOLATILE(tr: TextRange) extends Modifier(tr)
-  case SYNCHRONIZED(tr: TextRange) extends Modifier(tr)
-  case CONST(tr: TextRange) extends Modifier(tr)
+case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Node {
+  override def text: String = modType.toString.toLowerCase
+}
 
-  override def text: String = this.toString.toLowerCase
+enum ModifierType extends INode {
+  case PUBLIC, PRIVATE, PROTECTED, DEFAULT, STATIC, ABSTRACT, FINAL, NATIVE, TRANSIENT, VOLATILE, SYNCHRONIZED, CONST
 }
