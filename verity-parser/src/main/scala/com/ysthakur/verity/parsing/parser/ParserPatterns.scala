@@ -21,7 +21,7 @@ private object ParserPatterns {
   val opCtor = (op: Node) => Op(op.text, op.textRange)
 
   val EOL: Pattern = SEMICOLON
-  val numLiteral = FunctionPattern((toks, pos) => {/*println(s"num toks: $toks");*/TokenTypePattern(NUM_LITERAL).apply(toks, pos, null)}) |>> {
+  val numLiteral = NUM_LITERAL |>> {
     case token: Token[?] => NumLiteral(token.text, token.textRange)
   }
   val booleanLiteral = TRUE | FALSE |>> {
@@ -31,6 +31,7 @@ private object ParserPatterns {
   val literal = numLiteral | booleanLiteral | 
       (THIS |>> { case token: Tok => ThisRef(token.textRange)}) 
     | (SUPER |>> { case token: Tok => SuperRef(token.textRange)})
+
   val modifier: Pattern = (input: List[Tok], pos: Position, trace: Trace) => {
     if (input.isEmpty) Matched.empty(input, TextRange.empty(pos))
     else input.head match {
@@ -52,7 +53,6 @@ private object ParserPatterns {
   val unreservedId = FunctionPattern((input: List[Tok], pos: Position) => {
     if (input.nonEmpty) input.head match {
       case token @ Token(tt: ValidIdentifierTokenType) =>
-        //println(s"Found token $token")
         if (!token.isInstanceOf[ReservedWord])
           Matched(() => ValidIdNode(token.text, token.textRange), input.tail, token.textRange)
         else 
@@ -81,30 +81,9 @@ private object ParserPatterns {
       }
     }
 
-  lazy val dotSelect = expr - DOT - identifier |>> {
-    case expr - dot - validId => DotChainedExpr(expr.asInstanceOf, validId.asInstanceOf)
-  }
+  lazy val atom = literal | unreservedId | parenExpr
 
-  // lazy val dotExpr = expr - DOT - unreservedId /*|>> {
-  //   case (expr: Expr) - dot - (id: ValidIdNode) => DotChainedExpr(expr, id)
-  // }*/
-  // lazy val indexExpr = expr - LSQUARE - expr - RSQUARE |>> {
-  //   case obj - lsq - ind - rsq => ArraySelect(obj, ind)
-  // }
-   
-  lazy val unaryPost = unreservedId - (PLUSX2 | MINUSX2) |>> {
-    case (expr: Expr) - op => UnaryPostExpr(expr, opCtor(op))
-  }
-  lazy val unaryPre = (PLUSX2 | MINUSX2 | PLUS | MINUS | EXCL_MARK | TILDE) - unreservedId |>> {
-    case op - (id: ValidIdNode) => UnaryPreExpr(opCtor(op), id)
-  }
-
-  lazy val actualTopExpr = unreservedId | parenExpr
-
-  lazy val arrayAccess = actualTopExpr - LSQUARE - expr - RSQUARE |>> {
-    case (arr: Expr) - l - (index: Expr) - r => ArraySelect(arr, index, arr.textRange to r.textRange)
-  }
-  lazy val dotExpr = actualTopExpr - (DOT - unreservedId).* |>> {
+  lazy val dotExpr = atom - (DOT - unreservedId).* |>> {
     case (obj: Expr) - NodeList(nodes, tr) => 
       nodes.foldLeft(obj: Expr){(p, n) => n match {
         case dot - (name: ValidIdNode) => DotChainedExpr(p, name): Expr
@@ -112,29 +91,54 @@ private object ParserPatterns {
     }
   }
 
-  lazy val topExpr = literal | unreservedId | parenExpr
-   /*| dotExpr | indexExpr*/
+  lazy val arrayAccess = dotExpr - (LSQUARE - expr - RSQUARE).* |>> {
+    case (arr: Expr) - NodeList(nodes, tr) => nodes.foldLeft(arr: Expr) { (p, n) =>
+      val l - (index: Expr) - (r: Tok) = n
+      ArraySelect(p, index, p.textRange to r.textRange): Expr
+    }
+  }
+
+  lazy val topExpr = 
+    (PLUS | MINUS | EXCL_MARK | TILDE).* - (PLUSX2 | MINUSX2).* - 
+      atom - (DOT - unreservedId | LSQUARE - expr - RSQUARE).* -
+      (PLUSX2 | MINUSX2).? |>> {
+    case NodeList(preOps, potr) - NodeList(preIncDec, pridtr) - 
+      (obj: Expr) - NodeList(nodes, ntr) - NodeList(postIncDec, poidtr) => nodes.foldLeft(obj: Expr) { (p, n) =>
+      n match {
+        case l - (index: Expr) - (r: Tok) => ArraySelect(p, index, p.textRange to r.textRange): Expr
+        case dot - (name: ValidIdNode) => DotChainedExpr(p, name): Expr
+      }
+    }
+    case x => println(x);throw new Error("foo")
+  }
+
+  // ConsNode(
+  //   ConsNode(
+  //     ConsNode(
+  //       ConsNode(
+  //         NodeList(List()),
+  //         NodeList(List())
+  //       ),
+  //       NumLiteral(9,TextRange(Position(10,0,358),Position(10,1,359)))
+  //     ),
+  //     NodeList(List())
+  //   ),
+  //   NodeList(List()))
+
+  lazy val unaryPost = unreservedId - (PLUSX2 | MINUSX2) |>> {
+    case (expr: Expr) - op => UnaryPostExpr(expr, opCtor(op))
+  }
+  lazy val preIncDec = (PLUSX2 | MINUSX2) - unreservedId |>> {
+    case op - (id: ValidIdNode) => UnaryPreExpr(opCtor(op), id)
+  } 
+  lazy val unaryPre = (PLUS | MINUS | EXCL_MARK | TILDE).* - topExpr |>> {
+    case NodeList(ops, tr) - (expr: Expr) => ops.foldRight(expr: Expr) { (o, p) =>
+      UnaryPreExpr(opCtor(o), p): Expr
+    }
+  }
   
   lazy val mulDivMod = binExpr(topExpr, STAR | FWDSLASH | MODULO)
-    // ConsPattern(topExpr, RepeatPattern((STAR | FWDSLASH | MODULO) - topExpr, name="muldivmod"), "muldivcons1") |>> {
-    //   case (e1: Expr) - NodeList(nodes) =>
-    //     nodes.foldLeft(e1){(e, p) =>
-    //     p match {
-    //       case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
-    //     }
-    //   }
-    // }
-  
   lazy val addSub = binExpr(mulDivMod, (PLUS | MINUS))
-    // ConsPattern(mulDivMod, RepeatPattern((PLUS | MINUS) - mulDivMod, name="addsub"), "addsubcons1") |>> {
-    //   case (e1: Expr) - NodeList(nodes) =>
-    //     nodes.foldLeft(e1){(e, p) =>
-    //       p match {
-    //         case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2)
-    //       }
-    //   }
-    // }
-  
   lazy val bitExpr = binExpr(addSub, (LTX2 | GTX2 | GTX3))
   lazy val relationalExpr = binExpr(bitExpr, (LT | LTEQ | GT | GTEQ | IS))
   lazy val eqExpr = binExpr(relationalExpr, (EQX2 - NOTEQ))
@@ -143,6 +147,7 @@ private object ParserPatterns {
   lazy val bitOr = binExpr(bitXor, OR)
   lazy val logicAnd = binExpr(bitOr, ANDX2)
   lazy val logicOr = binExpr(logicAnd, ORX2)
+
   lazy val assignment = unreservedId - (PLUS | MINUS | STAR | FWDSLASH | MODULO).? - EQ - expr |>> {
       case variable - NodeList(Seq(op), tr) - eq - expr - eol => ???
     }
@@ -155,6 +160,7 @@ private object ParserPatterns {
             case op - (e2: Expr) => BinaryExpr(e, opCtor(op), e2): Expr
           }
       }
+      case x => println("foo\n" + operator + "\n" + x);x
     }
 
   lazy val methodCall = {
@@ -175,7 +181,7 @@ private object ParserPatterns {
       nodes.foldLeft(obj: Expr){(p, n) => ApplyCall(p, n.asInstanceOf[ArgList], obj.textRange to tr): Expr}
   }
 
-  lazy val expr: Pattern = unaryPost | unaryPre | logicOr | assignment
+  lazy val expr: Pattern = logicOr | assignment
 
   lazy val exprList = expr - ((COMMA - expr)*)
 

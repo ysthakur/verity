@@ -45,7 +45,6 @@ object NeedsMore extends MatchResult {
   * @param matched What was matched
   */
 case class PartialMatch(matched: Match) extends MatchResult {
-  def unapply(): (Int, Int) = (matched.start, matched.end)
   override def >(other: MatchResult): Boolean = 
     other == NoMatch || 
     other == NeedsMore ||

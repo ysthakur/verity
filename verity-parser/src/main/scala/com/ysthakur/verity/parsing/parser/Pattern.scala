@@ -177,45 +177,29 @@ class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, _p2: => T2, val name: St
   lazy val p2 = _p2
   
   override inline def apply(input: List[Tok], start: Position, trace: Trace): ParseResult = {
-    /*p2 match {
-      case pattern: TokenTypePattern =>
-        val firstPart = input.takeWhile(_.tokenType != pattern.tokenType)
-        if (firstPart.size == input.size) return Failed(headOrEmpty(input), List(), start)
-        else {
-          val token = input(firstPart.size)
-          p1.tryMatch(input, start, trace) match {
-            case Matched(create, rest, range) => 
-              if (rest.nonEmpty) {
-                if (rest.head == token) {
-                  Matched(() => ConsNode(create(), token), rest.tail, TextRange(start, token.textRange.end))
-                } else Failed(rest.head, List(token.tokenType.toString), range.end)
-              } else {
-                Failed(rest.head, List(token.tokenType.toString), range.end)
-              }
-            case f => f
-          }
-        }
-      case _ =>*/
-        println("--------------------")
-        println(s"incons name=$name, input=${input.map(_.text)}")
-        p1.tryMatch(input, start, trace) match {
-          case Matched(create, rest, range) =>
-            println("~~~~~~~~~~~~~~~")
-            //println(s"Matched pattern 1, now matching $rest")
-            p2.tryMatch(rest, range.end, ListBuffer()) match {
-            case Matched(create2, rest2, range2) =>
-              //println(s"\nMatched conspattern!!!, \n\t input=$input \n rest2=$rest")
-              println(s"Matched, name=$name, rest2=${rest2.map(_.text)}")
-              Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))
-            case failed =>
-              println(s"Didn't match conspattern, name=$name failed=$failed")
-              failed
-          }
-          case failed =>
-            println(s"Didn't match cons 2, name=$name failed=$failed")
-            failed
-        }
-    //}
+    println("--------------------")
+    println(s"incons name=$name, input=${input.map(_.text)}")
+    if (!name.isEmpty) System.out.println("----------------------------\n")
+    p1.tryMatch(input, start, trace) match {
+      case Matched(create, rest, range) =>
+        println("~~~~~~~~~~~~~~~")
+        //println(s"Matched pattern 1, now matching $rest")
+        p2.tryMatch(rest, range.end, ListBuffer()) match {
+        case Matched(create2, rest2, range2) =>
+          //println(s"\nMatched conspattern!!!, \n\t input=$input \n rest2=$rest")
+          println(s"Matched, name=$name, rest2=${rest2.map(_.text)}")
+        if (!name.isEmpty) System.out.println(s"$name matched! input=$input")
+          Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))
+        case failed =>
+          println(s"Didn't match conspattern, name=$name failed=$failed")
+          if (!name.isEmpty) System.out.println(s"$name failed1=$failed, rest=$input")
+          failed
+      }
+      case failed =>
+        println(s"Didn't match cons 2, name=$name failed=$failed")
+        if (!name.isEmpty) System.out.println(s"$name failed2=$failed, input=$input")
+        failed
+    }
   }
 }
 
@@ -235,10 +219,8 @@ case class MaybePattern(pattern: Pattern) extends Pattern {
 //  override val isEager: Boolean = false
 //  override val isFixed: Boolean = false
   override def apply(input: List[Tok], start: Position, trace: Trace): ParseResult =
-    // println(s"\nTrying to match $input")
     val x = pattern.tryMatch(input, start, trace)
-    // println(s"matched $x")
-    x.orElse(Matched(() => EmptyNode(start), input, TextRange.empty(start), true))
+    x.orElse(Matched(() => OptionNode(None), input, TextRange.empty(start), true))
 }
 
 /**
