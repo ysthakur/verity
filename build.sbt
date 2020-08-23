@@ -1,5 +1,5 @@
 val projectName = "verity"
-val scala_version = "0.25.0-RC2"
+val scala_version = "0.26.0-RC1"
 val jmmVersion = "0.1.0"
 
 name := projectName
@@ -24,7 +24,15 @@ lazy val root = project
 lazy val `verity-ast` =
   (project in file("verity-ast")).settings(
     name := "verity-ast",
+<<<<<<< HEAD
+    scalacOptions ++= commonScalacOptions,
+    libraryDependencies ++= Seq(
+      "org.ow2.asm" % "asm" % "8.0.1", 
+      "org.ow2.asm" % "asm-util" % "8.0.1"
+    )
+=======
     scalacOptions ++= commonScalacOptions
+>>>>>>> master
   )
 
 lazy val `verity-parser` =
@@ -36,8 +44,10 @@ lazy val `verity-parser` =
 lazy val `verity-codegen` =
   (project in file("verity-codegen")).settings(
       name := "verity-codegen",
-    libraryDependencies ++= Seq("org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1")
+    libraryDependencies ++= Seq(
+      "org.ow2.asm" % "asm" % "8.0.1", 
+      "org.ow2.asm" % "asm-util" % "8.0.1"
+    )
   )
 
 lazy val libDeps = Seq(

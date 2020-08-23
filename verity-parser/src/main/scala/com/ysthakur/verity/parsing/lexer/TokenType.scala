@@ -1,6 +1,6 @@
 package com.ysthakur.verity.parsing.lexer
 
-import com.ysthakur.verity.parsing.ast.infile.Modifier
+import com.ysthakur.verity.parsing.ast.infile.ModifierType
 
 /**
  *
@@ -15,7 +15,7 @@ sealed trait FixedTextTokenType(val text: String) extends TokenType {
 }
 sealed trait IgnoredTokenType extends TokenType
 sealed trait ModifierTokenType extends FixedTextTokenType {
-  def toModifier: Modifier = Modifier.valueOf(this.text)
+  def toModifier: ModifierType = ModifierType.valueOf(this.text)
 }
 
 enum SymbolTokenType(symbol: String)

@@ -4,7 +4,7 @@ import com.ysthakur.verity.{CompilationError, Lazy}
 import com.ysthakur.verity.parsing.ast.infile._
 import com.ysthakur.verity.parsing.ast._
 import com.ysthakur.verity.parsing.{Position, TextRange}
-import com.ysthakur.verity.parsing.lexer.{EmptyToken, Tok, Token}
+import com.ysthakur.verity.parsing.lexer.{InvariantToken, Tok, Token}
 
 import scala.collection.mutable.ListBuffer
 import scala.Option
@@ -73,9 +73,15 @@ trait Pattern {
   //def doesExtend(superPattern: PatternClass): Boolean = this.superPattern == superPattern
   def subOf(other: Pattern): Boolean = other == this.superPattern
   //def ==(other: Pattern): Boolean = ???
+<<<<<<< HEAD:verity-parser/src/main/scala/com/ysthakur/verity/parsing/parser/Pattern.scala
+  def headOrEmpty(it: Iterable[Tok]): Tok = if (it.isEmpty) InvariantToken(null, TextRange.empty(Position(-1, -1, -1))) else it.head
+
+  def println(s: Any): Unit = {} //System.out.println(""+Pattern.indent+"  ".repeat(Pattern.indent) + s)
+=======
   def headOrEmpty(it: Iterable[Tok]): Tok = if (it.isEmpty) EmptyToken else it.head
 
   def println(s: Any) = System.out.println(""+Pattern.indent+"  ".repeat(Pattern.indent) + s)
+>>>>>>> master:verity-parser/src/main/scala/com/ysthakur/javamm/parsing/parser/Pattern.scala
 }
 
 def (patternName: String) := (pattern: => Pattern): Unit = {
@@ -152,22 +158,22 @@ case class PatternRef(override val name: String) extends INamedPattern {
   }
 }
 
-def textRangeToEnd(start: Position, it: Iterable[Token[_]]): TextRange = TextRange(start, it.last.range.end)
+def textRangeToEnd(start: Position, it: Iterable[Token[_]]): TextRange = TextRange(start, it.last.textRange.end)
 
 object - {
-  def unapply[A <: Node, B <: Node](arg: ConsNode[A, B]): Option[(A|EmptyNode.type, B|EmptyNode.type)] = {
+  def unapply[A <: Node, B <: Node](arg: ConsNode[A, B]): Option[(A, B)] = {
     Some(arg.n1, arg.n2)
   }
 }
 
-object || {
-  def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node, Node)] = {
-    arg match {
-      case LeftNode(left) => Some((left, EmptyNode))
-      case RightNode(right) => Some((EmptyNode, right))
-    }
-  }
-}
+// object || {
+//   def unapply[A <: Node, B <: Node](arg: OrNode[A, B]): Option[(Node, Node)] = {
+//     arg match {
+//       case LeftNode(left) => Some((left, EmptyNode))
+//       case RightNode(right) => Some((EmptyNode, right))
+//     }
+//   }
+// }
 
 class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, _p2: => T2, val name: String = "") extends Pattern {
   
@@ -177,45 +183,29 @@ class ConsPattern[T1 <: Pattern, T2 <: Pattern](p1: T1, _p2: => T2, val name: St
   lazy val p2 = _p2
   
   override inline def apply(input: List[Tok], start: Position, trace: Trace): ParseResult = {
-    /*p2 match {
-      case pattern: TokenTypePattern =>
-        val firstPart = input.takeWhile(_.tokenType != pattern.tokenType)
-        if (firstPart.size == input.size) return Failed(headOrEmpty(input), List(), start)
-        else {
-          val token = input(firstPart.size)
-          p1.tryMatch(input, start, trace) match {
-            case Matched(create, rest, range) => 
-              if (rest.nonEmpty) {
-                if (rest.head == token) {
-                  Matched(() => ConsNode(create(), token), rest.tail, TextRange(start, token.range.end))
-                } else Failed(rest.head, List(token.tokenType.toString), range.end)
-              } else {
-                Failed(rest.head, List(token.tokenType.toString), range.end)
-              }
-            case f => f
-          }
-        }
-      case _ =>*/
-        println("--------------------")
-        println(s"incons name=$name, input=${input.map(_.text)}")
-        p1.tryMatch(input, start, trace) match {
-          case Matched(create, rest, range) =>
-            println("~~~~~~~~~~~~~~~")
-            //println(s"Matched pattern 1, now matching $rest")
-            p2.tryMatch(rest, range.end, ListBuffer()) match {
-            case Matched(create2, rest2, range2) =>
-              //println(s"\nMatched conspattern!!!, \n\t input=$input \n rest2=$rest")
-              println(s"Matched, name=$name, rest2=${rest2.map(_.text)}")
-              Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))
-            case failed =>
-              println(s"Didn't match conspattern, name=$name failed=$failed")
-              failed
-          }
-          case failed =>
-            println(s"Didn't match cons 2, name=$name failed=$failed")
-            failed
-        }
-    //}
+    println("--------------------")
+    println(s"incons name=$name, input=${input.map(_.text)}")
+    if (!name.isEmpty) System.out.println("----------------------------\n")
+    p1.tryMatch(input, start, trace) match {
+      case Matched(create, rest, range) =>
+        println("~~~~~~~~~~~~~~~")
+        //println(s"Matched pattern 1, now matching $rest")
+        p2.tryMatch(rest, range.end, ListBuffer()) match {
+        case Matched(create2, rest2, range2) =>
+          //println(s"\nMatched conspattern!!!, \n\t input=$input \n rest2=$rest")
+          println(s"Matched, name=$name, rest2=${rest2.map(_.text)}")
+        if (!name.isEmpty) System.out.println(s"$name matched! input=$input")
+          Matched(() => ConsNode(create(), create2()), rest2, TextRange(start, range2.end))
+        case failed =>
+          println(s"Didn't match conspattern, name=$name failed=$failed")
+          if (!name.isEmpty) System.out.println(s"$name failed1=$failed, rest=$input")
+          failed
+      }
+      case failed =>
+        println(s"Didn't match cons 2, name=$name failed=$failed")
+        if (!name.isEmpty) System.out.println(s"$name failed2=$failed, input=$input")
+        failed
+    }
   }
 }
 
@@ -235,10 +225,8 @@ case class MaybePattern(pattern: Pattern) extends Pattern {
 //  override val isEager: Boolean = false
 //  override val isFixed: Boolean = false
   override def apply(input: List[Tok], start: Position, trace: Trace): ParseResult =
-    // println(s"\nTrying to match $input")
     val x = pattern.tryMatch(input, start, trace)
-    // println(s"matched $x")
-    x.orElse(Matched(() => EmptyNode, input, TextRange.empty(start), true))
+    x.orElse(Matched(() => OptionNode(None), input, TextRange.empty(start), true))
 }
 
 /**
@@ -331,7 +319,10 @@ case class RepeatPattern(
   private def makeNodeList(results: List[ParseResult], end: Position, rest: List[Tok]) = {
     println(s"name=$name, results are ${results.map{x=>x.asInstanceOf[Matched[?, ?]].create()}}")
     Matched(
-      () => NodeList(results.map(r => r.asInstanceOf[Matched[?, ?]].create())),
+      () => {
+        val nodes = results.map(r => r.asInstanceOf[Matched[?, ?]].create())
+        NodeList(nodes, if (nodes.isEmpty) TextRange.empty(end) else (nodes.head.textRange.start to end))
+        },
       rest,
       TextRange(results match {
         case Matched(_, _, range) :: _ => range.start

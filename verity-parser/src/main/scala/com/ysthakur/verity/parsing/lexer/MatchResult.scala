@@ -3,6 +3,19 @@ package com.ysthakur.verity.parsing.lexer
 import scala.math.Ordered.orderingToOrdered
 import scala.math.Ordering.Implicits.infixOrderingOps
 
+
+/**
+  * Merely wraps around a piece of input that was matched exactly.
+  *
+  * @param matched
+  * @tparam Input
+  */
+case class Match(
+    matched: Iterable[Char],
+    start: Int,
+    end: Int
+)
+
 /**
   * Represents the result of a match
   */
@@ -32,7 +45,6 @@ object NeedsMore extends MatchResult {
   * @param matched What was matched
   */
 case class PartialMatch(matched: Match) extends MatchResult {
-  def unapply(): (Int, Int) = (matched.start, matched.end)
   override def >(other: MatchResult): Boolean = 
     other == NoMatch || 
     other == NeedsMore ||

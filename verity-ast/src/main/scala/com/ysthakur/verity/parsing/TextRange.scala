@@ -3,6 +3,7 @@ package com.ysthakur.verity.parsing
 case class TextRange(start: Position, end: Position) {
   def isEmpty: Boolean = start == end
   def length: Int = end.offset - start.offset
+  def to(other: TextRange) = this.start to other.end
 }
 
 object TextRange {
