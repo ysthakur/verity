@@ -24,11 +24,15 @@ lazy val root = project
 lazy val `verity-ast` =
   (project in file("verity-ast")).settings(
     name := "verity-ast",
+<<<<<<< HEAD
     scalacOptions ++= commonScalacOptions,
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
       "org.ow2.asm" % "asm-util" % "8.0.1"
     )
+=======
+    scalacOptions ++= commonScalacOptions
+>>>>>>> master
   )
 
 lazy val `verity-parser` =

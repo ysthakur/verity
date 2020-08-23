@@ -1,6 +1,9 @@
 package com.ysthakur.verity.parsing.ast.infile
+<<<<<<< HEAD:verity-ast/src/main/scala/com/ysthakur/verity/parsing/ast/infile/JTypeParam.scala
 
 import com.ysthakur.verity.parsing.TextRange
+=======
+>>>>>>> master:javamm-ast/src/main/scala/com/ysthakur/javamm/parsing/ast/infile/JTypeParam.scala
 
 import scala.collection.mutable.ListBuffer
 

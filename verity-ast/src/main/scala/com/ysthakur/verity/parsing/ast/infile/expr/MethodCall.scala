@@ -1,5 +1,6 @@
 package com.ysthakur.verity.parsing.ast.infile.expr
 
+<<<<<<< HEAD
 import com.ysthakur.verity.parsing._
 import com.ysthakur.verity.parsing.ast.infile._
 import com.ysthakur.verity.parsing.TextRange
@@ -14,4 +15,8 @@ case class ApplyCall(obj: Expr, args: ArgList, override val textRange: TextRange
 
 case class ArgList(args: List[Expr], textRange: TextRange) extends Node {
   def text = ???
+=======
+abstract class MethodCall() extends Expr {
+
+>>>>>>> master
 }

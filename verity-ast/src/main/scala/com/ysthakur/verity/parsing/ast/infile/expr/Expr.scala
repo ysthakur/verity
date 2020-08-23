@@ -9,10 +9,19 @@ trait Expr extends Node {
   def exprType_=(typeRepr: TypeRepr) = _exprType = typeRepr
 }
 
+<<<<<<< HEAD
 case class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr {
   def text = s"(${expr.text})"
 }
 
 case class ArraySelect(arr: Expr, index: Expr, override val textRange: TextRange) extends Expr {
+=======
+case class ParenExpr(expr: Expr, tr: TextRange) extends Expr {
+  def text = s"(${expr.text})"
+}
+
+case class ArraySelect(arr: Expr, index: Expr) extends Expr {
+  def this(arr: Node, index: Node) = this(arr.as[Expr], index.as[Expr])
+>>>>>>> master
   override def text: String = s"${arr.text}[${index.text}]"
 }

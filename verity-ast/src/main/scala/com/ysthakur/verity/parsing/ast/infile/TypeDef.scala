@@ -1,7 +1,11 @@
 package com.ysthakur.verity.parsing.ast.infile
 
+<<<<<<< HEAD:verity-ast/src/main/scala/com/ysthakur/verity/parsing/ast/infile/TypeDef.scala
 import com.ysthakur.verity.parsing.TextRange
 import com.ysthakur.verity.parsing.ast.{ParentNode, INode}
+=======
+import com.ysthakur.verity.parsing.ast.ParentNode
+>>>>>>> master:javamm-ast/src/main/scala/com/ysthakur/javamm/parsing/ast/infile/TypeDef.scala
 
 import scala.collection.mutable.ListBuffer
 
