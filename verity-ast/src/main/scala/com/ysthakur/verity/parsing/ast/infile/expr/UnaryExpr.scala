@@ -2,12 +2,7 @@ package com.ysthakur.verity.parsing.ast.infile.expr
 
 import com.ysthakur.verity.parsing._
 
-<<<<<<< HEAD:verity-ast/src/main/scala/com/ysthakur/verity/parsing/ast/infile/expr/UnaryExpr.scala
 sealed trait UnaryExpr[+E <: Expr](expr: E) extends Expr
-=======
-sealed trait UnaryExpr[+E <: Expr](expr: E) extends Expr {
-}
->>>>>>> master:javamm-ast/src/main/scala/com/ysthakur/javamm/parsing/ast/infile/expr/UnaryExpr.scala
 
 case class UnaryPreExpr[O <: Op, +E <: Expr](op: Op, expr: E) extends UnaryExpr[E](expr) {
 //  def startOffset: Int = op.startOffset

@@ -1,9 +1,6 @@
 package com.ysthakur.verity.parsing.ast.infile
 
-<<<<<<< HEAD:verity-ast/src/main/scala/com/ysthakur/verity/parsing/ast/infile/LocalVar.scala
 import com.ysthakur.verity.parsing.TextRange
-=======
->>>>>>> master:javamm-ast/src/main/scala/com/ysthakur/javamm/parsing/ast/infile/LocalVar.scala
 import com.ysthakur.verity.parsing.ast.infile.expr.Expr
 
 class LocalVar(override val name: String,

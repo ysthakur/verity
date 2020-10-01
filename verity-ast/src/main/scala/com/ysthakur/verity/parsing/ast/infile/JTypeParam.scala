@@ -5,6 +5,8 @@ import com.ysthakur.verity.parsing.TextRange
 =======
 >>>>>>> master:javamm-ast/src/main/scala/com/ysthakur/javamm/parsing/ast/infile/JTypeParam.scala
 
+import com.ysthakur.verity.parsing.TextRange
+
 import scala.collection.mutable.ListBuffer
 
 case class JTypeParam(name: String, bounds: ListBuffer[TypeParamBound], override val textRange: TextRange) extends CTParam {

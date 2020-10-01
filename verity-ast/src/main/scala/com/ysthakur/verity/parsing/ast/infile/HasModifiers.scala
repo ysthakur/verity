@@ -1,6 +1,7 @@
 package com.ysthakur.verity.parsing.ast.infile
 
-import com.ysthakur.verity.parsing.ast.Node
+import com.ysthakur.verity.parsing.TextRange
+import com.ysthakur.verity.parsing.ast.{INode, Node}
 
 import scala.collection.mutable.ListBuffer
 
@@ -10,14 +11,14 @@ trait HasModifiers extends Node {
 }
 
 //TODO decide if this should be replaced with a plain ListBuffer[Modifier]
-case class ModifierList(modifiers: ListBuffer[Modifier]) extends Node {
+case class ModifierList(modifiers: ListBuffer[Modifier], override val textRange: TextRange) extends Node {
   override def text: String = modifiers.mkString(" ")
 }
 
-enum Modifier extends Node {
-  case PUBLIC, PRIVATE,  PROTECTED,  DEFAULT,
-  STATIC, ABSTRACT, FINAL, NATIVE, TRANSIENT,
-  VOLATILE, SYNCHRONIZED, CONST
+case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Node {
+  override def text: String = modType.toString.toLowerCase
+}
 
-  override def text: String = this.toString.toLowerCase
+enum ModifierType extends INode {
+  case PUBLIC, PRIVATE, PROTECTED, DEFAULT, STATIC, ABSTRACT, FINAL, NATIVE, TRANSIENT, VOLATILE, SYNCHRONIZED, CONST
 }
