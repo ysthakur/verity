@@ -1,4 +1,9 @@
 package com.ysthakur.verity.parsing.ast.infile.expr
+<<<<<<< HEAD:verity-ast/src/main/scala/com/ysthakur/verity/parsing/ast/infile/expr/BinaryExpr.scala
+
+import com.ysthakur.verity.parsing.TextRange
+=======
+>>>>>>> master:javamm-ast/src/main/scala/com/ysthakur/javamm/parsing/ast/infile/expr/BinaryExpr.scala
 
 import com.ysthakur.verity.parsing.TextRange
 

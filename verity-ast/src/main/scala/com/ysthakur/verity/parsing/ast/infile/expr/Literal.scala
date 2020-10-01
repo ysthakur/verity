@@ -12,7 +12,6 @@ enum BoolLiteral(override val text: String, override val textRange: TextRange) e
 
 case class NumLiteral(override val text: String, override val textRange: TextRange) extends Literal
 
-
 case class ThisRef(textRange: TextRange) extends Expr {
   override def text: String = "this"
 }
