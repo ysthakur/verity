@@ -73,15 +73,9 @@ trait Pattern {
   //def doesExtend(superPattern: PatternClass): Boolean = this.superPattern == superPattern
   def subOf(other: Pattern): Boolean = other == this.superPattern
   //def ==(other: Pattern): Boolean = ???
-<<<<<<< HEAD:verity-parser/src/main/scala/com/ysthakur/verity/parsing/parser/Pattern.scala
   def headOrEmpty(it: Iterable[Tok]): Tok = if (it.isEmpty) InvariantToken(null, TextRange.empty(Position(-1, -1, -1))) else it.head
 
   def println(s: Any): Unit = {} //System.out.println(""+Pattern.indent+"  ".repeat(Pattern.indent) + s)
-=======
-  def headOrEmpty(it: Iterable[Tok]): Tok = if (it.isEmpty) EmptyToken else it.head
-
-  def println(s: Any) = System.out.println(""+Pattern.indent+"  ".repeat(Pattern.indent) + s)
->>>>>>> master:verity-parser/src/main/scala/com/ysthakur/javamm/parsing/parser/Pattern.scala
 }
 
 def (patternName: String) := (pattern: => Pattern): Unit = {
