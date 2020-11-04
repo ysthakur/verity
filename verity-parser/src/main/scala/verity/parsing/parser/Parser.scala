@@ -1,0 +1,21 @@
+package verity.parsing.parser
+
+import verity.CompilationError
+import verity.parsing.ast.Node
+// import verity.parsing.lexer._
+
+import scala.collection.mutable.ListBuffer
+
+object Parser {
+  // @throws[CompilationError]
+  def parse(reader: Reader): Node = {
+    val testExpr = ParserPatterns.expr
+    println("In Parser.parse")
+    testExpr.tryMatch(reader) match {
+      case Failed(got, exp, pos) => ??? // throw ParseError(exp, got, pos)
+      case Matched(create, rest, _) =>
+        if (rest.isEmpty) create() 
+        else throw CompilationError(msg=s"Matched ${create().text} \nbut could not match $rest")
+    }
+  }
+}
