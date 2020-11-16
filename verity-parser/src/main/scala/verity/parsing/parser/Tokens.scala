@@ -47,7 +47,9 @@ enum SymbolToken(symbol: String) extends Pattern {
   case MODULO extends SymbolToken("%")
   case AT extends SymbolToken("@")
   
-  def apply(reader: Reader): ParseResult =
+  type Out = Token
+  
+  def apply(reader: Reader): ParseResult[Out] =
     val start = reader.offset
     reader.nextToken(symbol, TokenType.SYMBOL) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
@@ -72,7 +74,9 @@ enum ModifierToken(text: String) extends Pattern {
   case SYNCHRONIZED extends ModifierToken("synchronized")
   case CONST extends ModifierToken("const")
   
-  def apply(reader: Reader): ParseResult =
+  type Out = Token
+  
+  def apply(reader: Reader): ParseResult[Out] =
     val start = reader.offset
     reader.nextToken(text, TokenType.KEYWORD) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
@@ -132,8 +136,10 @@ enum KeywordToken(text: String) extends Pattern {
   case DOUBLE extends KeywordToken("double")
   case LONG extends KeywordToken("long")
   case VOID extends KeywordToken("void")
+
+  type Out = Token
   
-  def apply(reader: Reader): ParseResult =
+  def apply(reader: Reader): ParseResult[Out] =
     val start = reader.offset
     reader.nextToken(text, TokenType.KEYWORD) match {
       case Some(token) => Matched(() => token, reader, token.textRange)

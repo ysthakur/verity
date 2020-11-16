@@ -76,4 +76,6 @@ object Token {
   val reservedWords = hardKeywords ++ Array(
     "where"
   )
+
+  def empty(start: Int) = Token(TextRange.empty(start), "")
 }

@@ -8,6 +8,9 @@ case class TextRange(start: Int, end: Int) {
 
 object TextRange {
   def empty(offset: Int) = TextRange(offset, offset)
+
+  extension (start: Int)
+    def to(end: Int) = TextRange(start, end)
   // def empty(posInt): TextRange = TextRange(pos, pos)
   //def toEnd(startInt)(toks: Iterable[Token[_]]): TextRange = TextRange(start, toks.last.pos)
 }

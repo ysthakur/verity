@@ -17,6 +17,13 @@ object BoolLiteral {
 
 case class NumLiteral(override val text: String, override val textRange: TextRange) extends Literal
 
+enum NumType {
+  case INT
+  case LONG
+  case FLOAT
+  case DOUBLE
+}
+
 case class ThisRef(textRange: TextRange) extends Expr {
   override def text: String = "this"
 }

@@ -1,9 +1,9 @@
 val projectName = "verity"
-val scala_version = "0.27.0-RC1"
-val jmmVersion = "0.1.0"
+val scala_version = "3.0.0-M1"
+val verityVersion = "0.1.0"
 
 name := projectName
-version in ThisBuild := jmmVersion
+version in ThisBuild := verityVersion
 organization in ThisBuild := "com.ysthakur"
 scalaVersion in ThisBuild := scala_version
 mainClass in (Compile, run) := Some("Main")

@@ -45,37 +45,40 @@ class Reader(file: File, encoding: String) extends Iterator[Char]:
 
   // def isEmpty: Boolean = !hasNext && !hasTokens
 
-  def nextToken(): Option[Token] =
-    Option.when(tokenInd < tokens.size){
-      tokenInd += 1
-      tokens(tokenInd - 1)
-    }
+  // def nextToken(): Option[Token] =
+  //   Option.when(tokenInd < tokens.size){
+  //     tokenInd += 1
+  //     tokens(tokenInd - 1)
+  //   }
 
-  def nextToken(expectedType: TokenType, matchesType: TokenType => Boolean)(confirm: => Boolean): Res = {
-    nextToken() match {
-      case r@Some(Token(_, _, tokenType)) => 
-        if (matchesType(tokenType)) r else None
-      case None =>
-        var startInd = charInd
-        var startOffset = offset
-        lazy val tok = Token(
-            TextRange(startOffset, offset),
-            chars.substring(startInd, charInd),
-            expectedType
-          )
-        try {
-          if (confirm) Some(tok)
-          else {
-            //roll it back
-            charInd = startInd
-            offset = startOffset
-            None
-          }
-        } catch {
-          case _: EOFException | _: ArrayIndexOutOfBoundsException => 
-            throw new UnfinishedTokenException(tok)
+  def nextToken(expectedType: TokenType, matches: Token => Boolean)(confirm: => Boolean): Res = {
+    if (tokenInd < tokens.size) {
+      val tok = tokens(tokenInd)
+      if (matches(tok)) {
+        tokenInd += 1
+        Some(tok)
+      } else None
+    } else {
+      var startInd = charInd
+      var startOffset = offset
+      lazy val tok = Token(
+          TextRange(startOffset, offset),
+          chars.substring(startInd, charInd),
+          expectedType
+        )
+      try {
+        if (confirm) Some(tok)
+        else {
+          //roll it back
+          charInd = startInd
+          offset = startOffset
+          None
         }
-        // tokens += res
+      } catch {
+        case _: EOFException | _: ArrayIndexOutOfBoundsException => 
+          throw new UnfinishedTokenException(tok)
+      }
+      // tokens += res
     }
   }
 
@@ -85,9 +88,9 @@ class Reader(file: File, encoding: String) extends Iterator[Char]:
   def nextToken(
       expected: String, 
       expectedType: TokenType, 
-      matchesType: TokenType => Boolean = _ => true
+      matchesTok: Token => Boolean = _ => true
     ): Option[Token] =
-    nextToken(expectedType, matchesType){ expected.forall(c => hasNext && c == nextChar()) }
+    nextToken(expectedType, matchesTok){ expected.forall(c => hasNext && c == nextChar()) }
 
   /**
    * Find the next alphanumeric identifier. However, if it is a hard
@@ -139,7 +142,27 @@ class Reader(file: File, encoding: String) extends Iterator[Char]:
       }
     }
 
-  def nextNumLiteral(): Option[Token] = ???
+  //TODO!!!!
+  def nextNumLiteral(): Option[Token] = {
+    nextToken(TokenType.NUM_LITERAL, _ == TokenType.NUM_LITERAL) {
+      if (hasNext) {
+        var c = nextChar()
+        if (c.isDigit || c == '+' || c == '-') {
+          if (!c.isDigit && (!hasNext || !nextChar().isDigit)) false
+          else {
+            while (hasNext && (c.isDigit || c == '_')) c = nextChar()
+            if (c == '.') {
+              while (hasNext && (c.isDigit || c == '_')) c = nextChar()
+            }
+            c match {
+              case 'L' | 'l' => {}
+            }
+            true
+          }
+        } else false
+      } else false
+    }
+  }
 
   /**
    * Skip comments (including documentation comments) and whitespace
