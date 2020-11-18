@@ -7,7 +7,7 @@ import verity.parsing.ast.infile.Node
  * @param textRange - Text range, start and end offset
  * @param text - The text this token holds
  */
-case class Token(textRange: TextRange, text: String, tokenType: TokenType = TokenType.MISC) extends Node {
+case class Token(textRange: TextRange, text: String, tokenType: TokenType = TokenType.MISC) {
 
 }
 

@@ -16,7 +16,7 @@ case class ModifierList(modifiers: ListBuffer[Modifier], override val textRange:
 }
 
 case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Node {
-  override def text: String = modType.toString.toLowerCase
+  override def text: String = modType.toString.toLowerCase.nn
 }
 
 enum ModifierType extends INode {

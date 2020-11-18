@@ -51,9 +51,15 @@ enum SymbolToken(symbol: String) extends Pattern {
   
   def apply(reader: Reader): ParseResult[Out] =
     val start = reader.offset
-    reader.nextToken(symbol, TokenType.SYMBOL) match {
-      case Some(token) => Matched(() => token, reader, token.textRange)
-      case None => Failed(headOrEmpty(reader), List(symbol), start)
+    try {
+        reader.nextToken(symbol, TokenType.SYMBOL) match {
+        case Some(token) => Matched(() => token, reader, token.textRange)
+        case None => Failed(headOrEmpty(reader), List(symbol), start)
+      }
+    } catch {
+      case e: IndexOutOfBoundsException => 
+        println("Oops, it was me " + this.symbol)
+        throw new Error("Oops, it was me " + this.symbol, e)
     }
 }
 

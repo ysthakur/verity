@@ -1,5 +1,5 @@
 val projectName = "verity"
-val scala_version = "3.0.0-M1"
+val scala_version = "0.27.0-RC1"
 val verityVersion = "0.1.0"
 
 name := projectName
@@ -43,7 +43,10 @@ lazy val `verity-parser` =project
   .in(file("verity-parser"))
   .settings(
     name := "verity-parser",
-    scalacOptions ++= commonScalacOptions
+    scalacOptions ++= commonScalacOptions,
+    libraryDependencies ++= Seq(
+      "org.scalatest" % "scalatest_0.27" % "3.2.2" % Test
+    )
   ).dependsOn(`verity-ast`)
 
 lazy val `verity-codegen` =project
@@ -63,7 +66,8 @@ lazy val libDeps = Seq(
 )
 
 lazy val commonScalacOptions = Seq(
-  "-language:implicitConversions"/*,
-  "-explain",
-  "-Yexplicit-nulls"*/
+  "-language:implicitConversions",
+//  "-explain",
+  "-Yexplicit-nulls",
+    "-Ycheck-init"
 )

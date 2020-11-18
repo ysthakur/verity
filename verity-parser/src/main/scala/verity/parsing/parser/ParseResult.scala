@@ -9,6 +9,7 @@ import verity.parsing.ast.ConsNode
 sealed trait ParseResult[+N] {
   // def and[O >: N](other: => ParseResult[O]): ParseResult[O]
   def or[O](other: => ParseResult[O]): ParseResult[N | O]
+  def map[R](f: N => R): ParseResult[R]
   // def pattern: Option[Pattern]
 }
 
@@ -23,6 +24,7 @@ case class Matched[+N](
   //   case _ => this
   // }
   override def or[O](other: => ParseResult[O]): ParseResult[N] = this
+  override def map[R](f: N => R): Matched[R] = this.copy(create=() => f(create()))
 }
 
 object Matched {
@@ -34,8 +36,8 @@ object Matched {
   //     rest: Reader,
   //     range: TextRange
   // ): Matched[N] = new Matched(() => create, rest, range)
-  def unapply[N](matched: Matched[N]): (() => N, Reader, TextRange) =
-    (matched.create, matched.rest, matched.range)
+//  def unapply[N](matched: Matched[N]): (() => N, Reader, TextRange) =
+//    (matched.create, matched.rest, matched.range)
 }
 
 case class Failed(
@@ -46,9 +48,10 @@ case class Failed(
 ) extends ParseResult[Nothing] {
   // override def and[O](other: => ParseResult[O]): ParseResult[O] = this
   override def or[O](other: => ParseResult[O]): ParseResult[O] = other
+  override def map[R](f: Nothing => R): Failed = this
 }
 
-object Failed {
-  def unapply(arg: Failed): Some[(Token, Iterable[String], Int)] =
-    Some((arg.got, arg.expected, arg.pos))
-}
+//object Failed {
+//  def unapply(arg: Failed): (Token, Iterable[String], Int) =
+//    (arg.got, arg.expected, arg.pos)
+//}

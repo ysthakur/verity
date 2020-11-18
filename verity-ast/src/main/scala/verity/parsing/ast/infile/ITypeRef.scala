@@ -5,7 +5,7 @@ import verity.parsing.ast.Reference
 trait ITypeRef extends Node {
 
 }
-
-case class TypeRef() extends Reference[TypeDef] {
-  override def resolve: Option[TypeDef] = ???
-}
+//TODO remove this
+//case class TypeRef() extends Reference[TypeDef] {
+//  override def resolve: Option[TypeDef] = ???
+//}

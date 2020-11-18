@@ -7,7 +7,7 @@ import scala.collection.mutable.ListBuffer
 
 case class Method(
     val modifiers: ModifierList,
-    returnType: TypeRef | Null,
+    returnType: TypeRef,
     name: String,
     ctparams: CTParamList,
     params: ParamList,

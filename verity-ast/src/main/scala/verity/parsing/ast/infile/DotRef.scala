@@ -1,9 +1,11 @@
-package verity.parsing.ast.infile.expr
+package verity.parsing.ast.infile
 
-import verity.parsing._
-import verity.parsing.ast.infile.ValidIdNode
+import verity.parsing.TextRange
 
-case class DotRef(iterable: Iterable[ValidIdNode], override val textRange: TextRange) extends Expr {
+case class DotRef(
+                   iterable: Iterable[ValidId],
+                   override val textRange: TextRange
+) extends Node {
 //  val startOffset: Int = iterable.head.startOffset
 //  val endOffset: Int = iterable.last.endOffset
   override def text: String =

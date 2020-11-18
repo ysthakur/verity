@@ -14,7 +14,7 @@ object Parser {
     testExpr.tryMatch(reader) match {
       case Failed(got, exp, pos) => ??? // throw ParseError(exp, got, pos)
       case Matched(create, rest, _) =>
-        if (rest.isEmpty) create() 
+        if (rest.isEmpty) create()
         else throw CompilationError(msg=s"Matched ${create().text} \nbut could not match $rest")
     }
   }

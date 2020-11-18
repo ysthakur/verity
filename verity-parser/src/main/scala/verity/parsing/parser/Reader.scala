@@ -11,7 +11,9 @@ type ConfirmToken = () => Boolean
 // type Res = Option[Either[Token, Token]]
 type Res = Option[Token]
 
-class Reader(file: File, encoding: String) extends Iterator[Char]:
+class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char]:
+
+  
 
   /**
    * Tokens that have already been read
@@ -254,6 +256,11 @@ class Reader(file: File, encoding: String) extends Iterator[Char]:
   def nextChar(throwErr: () => Throwable = () => EOFException()): Char = {
     if (!hasNext || charInd == chars.size) throwErr()
     val res = chars(charInd)
+    val stream = new java.io.ByteArrayOutputStream()
+    Console.withOut(stream) {
+      //all printlns in this block will be redirected
+      println("Reading " + res)
+    }
     charInd += 1
     offset += 1
     if (charInd == chars.size) {
