@@ -43,7 +43,8 @@ object Matched {
 case class Failed(
     got: Token,
     expected: Iterable[String],
-    pos: Int
+    pos: Int,
+    canBacktrack: Boolean
     // override val pattern: Option[Pattern] = None
 ) extends ParseResult[Nothing] {
   // override def and[O](other: => ParseResult[O]): ParseResult[O] = this

@@ -49,12 +49,12 @@ enum SymbolToken(symbol: String) extends Pattern {
   
   type Out = Token
   
-  def apply(reader: Reader): ParseResult[Out] =
+  def apply(reader: Reader, backtrack: Boolean): ParseResult[Out] =
     val start = reader.offset
     try {
-        reader.nextToken(symbol, TokenType.SYMBOL) match {
+        reader.nextSymbol(symbol, !backtrack) match {
         case Some(token) => Matched(() => token, reader, token.textRange)
-        case None => Failed(headOrEmpty(reader), List(symbol), start)
+        case None => Failed(headOrEmpty(reader), List(symbol), start, backtrack)
       }
     } catch {
       case e: IndexOutOfBoundsException => 
@@ -82,11 +82,11 @@ enum ModifierToken(text: String) extends Pattern {
   
   type Out = Token
   
-  def apply(reader: Reader): ParseResult[Out] =
+  def apply(reader: Reader, backtrack: Boolean): ParseResult[Out] =
     val start = reader.offset
-    reader.nextToken(text, TokenType.KEYWORD) match {
+    reader.nextAlphaNum(text, TokenType.KEYWORD, !backtrack) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
-      case None => Failed(headOrEmpty(reader), List(text), start)
+      case None => Failed(headOrEmpty(reader), List(text), start, backtrack)
     }
 }
 
@@ -145,10 +145,10 @@ enum KeywordToken(text: String) extends Pattern {
 
   type Out = Token
   
-  def apply(reader: Reader): ParseResult[Out] =
+  def apply(reader: Reader, backtrack: Boolean): ParseResult[Out] =
     val start = reader.offset
-    reader.nextToken(text, TokenType.KEYWORD) match {
+    reader.nextAlphaNum(text) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
-      case None => Failed(headOrEmpty(reader), List(text), start)
+      case None => Failed(headOrEmpty(reader), List(text), start, backtrack)
     }
 }

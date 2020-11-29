@@ -15,15 +15,16 @@ private object ParserPatterns {
 
   val EOL = SEMICOLON
 
-  val numLiteral: P[NumLiteral] = Pattern.fromOption(reader => reader.nextNumLiteral())
+  val numLiteral: P[NumLiteral] = Pattern.fromOption((reader, backtrack) => reader.nextNumLiteral(!backtrack))
     |> { case Token(tr, text, _) => NumLiteral(text, tr) }
 
-  val booleanLiteral = TRUE | FALSE |> { case token: Token => BoolLiteral(token) }
+  val booleanLiteral = TRUE | FALSE |> { case token: Token => println("bool!" + token);BoolLiteral(token) }
 
-  val literal = numLiteral
-    | booleanLiteral 
+  val literal = booleanLiteral 
+  /*
+    | numLiteral
     | (KeywordToken.THIS |> { token => ThisRef(token.textRange)}) 
-    | (KeywordToken.SUPER |> { token => SuperRef(token.textRange)})
+    | (KeywordToken.SUPER |> { token => SuperRef(token.textRange)})*/
 
   // val modifier: Pattern = (reader: Reader) => {
   //   if (reader.isEmpty) Matched.empty(reader, TextRange.empty(pos))
@@ -38,18 +39,18 @@ private object ParserPatterns {
   val unaryPostOp = PLUSX2 | MINUSX2 //|> opCtor
   //TODO redo this
   val identifier: P[ValidId] = Pattern.fromOption(
-    reader => reader.nextAlphaNum(),
+    (reader, backtrack) => reader.nextAlphaNum(!backtrack),
     List("identifier")
   ) |> {
     case Token(tr, name, _) => ValidId(name, tr)
   }
 
-  val unreservedId: P[ValidId] = Pattern.fromOption(
-    reader => reader.nextAlphaNum(),
-    List("Unreserved identifier")
-  ) |> {
-    case Token(tr, name, _) => ValidId(name, tr)
-  }
+  // val unreservedId: P[ValidId] = Pattern.fromOption(
+  //   (reader, backtrack) => reader.nextAlphaNum(!backtrack),
+  //   List("Unreserved identifier")
+  // ) |> {
+  //   case Token(tr, name, _) => ValidId(name, tr)
+  // }
 
   /*val unreservedId = FunctionPattern((reader: Reader) => {
     val start = reader.offset
@@ -65,7 +66,7 @@ private object ParserPatterns {
   })*/
 
   val parenExpr = "(" - ByNameP(expr) - ")" |> { expr => ParenExpr(expr, expr.textRange) }
-  val atom = parenExpr | literal | (unreservedId |> VarRef)
+  val atom = literal //| parenExpr  | (unreservedId |> VarRef)
 
   
 //
@@ -81,9 +82,12 @@ private object ParserPatterns {
 //  }
 
   val topExpr: P[Expr] = 
-    ((PLUS | MINUS | EXCL_MARK | TILDE).* - (PLUSX2 | MINUSX2).? - 
-      ByNameP(atom) - (DOT - identifier | LSQUARE - ByNameP(expr) - RSQUARE).* -
-      (PLUSX2 | MINUSX2).?) |> {
+    (ConsPattern(
+      ConsPattern((PLUS | MINUS | EXCL_MARK | TILDE).*, (PLUSX2 | MINUSX2).?, false, "t1"),
+      ByNameP(atom),
+      false,
+      "t2"
+    ) - (DOT - identifier | LSQUARE - ByNameP(expr) - RSQUARE).* - (PLUSX2 | MINUSX2).?) |> {
     case preOps - preIncDec - firstAtom - nodes - postIncDec => 
       nodes.foldLeft(firstAtom: Expr) { (p, n) =>
         n match {
@@ -108,7 +112,7 @@ private object ParserPatterns {
   } */
   
   val mulDivMod = binExpr(topExpr, STAR | FWDSLASH | MODULO)
-  val addSub = binExpr(mulDivMod, (PLUS | MINUS))
+  val addSub = binExpr(booleanLiteral, (PLUS | MINUS), "addsub")
   val bitExpr = binExpr(addSub, (LTX2 | GTX2 | GTX3))
   val relationalExpr = binExpr(bitExpr, (LT | LTEQ | GT | GTEQ | INSTANCEOF))
   val eqExpr = binExpr(relationalExpr, EQX2 | NOTEQ)
@@ -116,7 +120,7 @@ private object ParserPatterns {
   val bitXor = binExpr(bitAnd, CARET)
   val bitOr = binExpr(bitXor, OR)
   val logicAnd = binExpr(bitOr, ANDX2)
-  val logicOr = binExpr(logicAnd, ORX2)
+  val logicOr = binExpr(logicAnd, ORX2, "logicor")
 
   //TODO don't use identifier, also allow indexing and field access
   lazy val assignment = (identifier - (PLUS | MINUS | STAR | FWDSLASH | MODULO).? - "=").*\ - logicOr |> {
@@ -129,10 +133,11 @@ private object ParserPatterns {
 
   def binExpr[T <: Expr](
     prev: => P[T], 
-    operator: P[_ <: Token]
+    operator: P[_ <: Token],
+    name: String = ""
   ): P[Expr] = {
     val byNamePrev = ByNameP(prev)
-    byNamePrev - (operator - byNamePrev).* |> {
+    ConsPattern(byNamePrev, (operator -! byNamePrev).*, false, name=name) |> {
       case e1 - nodes =>
         nodes.foldLeft(e1: Expr){ (e, p) =>
           p match { case op - (e2: Expr) => BinaryExpr(e, op.text, e2) }
@@ -140,8 +145,7 @@ private object ParserPatterns {
       }
   }
 
-  val expr: P[Expr] = logicOr | assignment
-
+  val expr: P[Expr] = addSub//booleanLiteral |> { x => x: Expr } //assignment
   //TODO
   lazy val wildcard = QUESTION - (EXTENDS - typeRef).? - (SUPER - typeRef).? |> {
     case q - ext - sup => Wildcard(if (ext != null) ext.n2 else null, if (sup != null) sup.n2 else null)
@@ -152,7 +156,7 @@ private object ParserPatterns {
     case name - args => TypeRef(name, args ?: Nil)
   }
 
-  val varDeclFirstPart = typeRef - unreservedId
+  val varDeclFirstPart = typeRef - identifier
 
   val localVarDecl = varDeclFirstPart - EOL
 
@@ -176,11 +180,11 @@ private object ParserPatterns {
   }
 
   extension (s: String)
-    def -(next: Pattern): P[next.Out] = reader => {
+    def -(next: Pattern): P[next.Out] = (reader, backtrack) => {
       val start = reader.offset
-      reader.nextToken(s, TokenType.MISC, _.text == s) match {
-        case None => Failed(Token.empty(start), List(s), start)
-        case _ => next.tryMatch(reader)
+      reader.nextToken(s, TokenType.MISC, _.text == s, !backtrack) match {
+        case None => Failed(Token.empty(start), List(s), start, backtrack)
+        case _ => next.tryMatch(reader, backtrack)
       }
     }
 
