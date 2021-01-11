@@ -41,9 +41,7 @@ private object ParserPatterns {
   val identifier: P[ValidId] = Pattern.fromOption(
     (reader, backtrack) => reader.nextAlphaNum(!backtrack),
     List("identifier")
-  ) |> {
-    case Token(tr, name, _) => ValidId(name, tr)
-  }
+  ) |> { case Token(tr, name, _) => ValidId(name, tr) }
 
   // val unreservedId: P[ValidId] = Pattern.fromOption(
   //   (reader, backtrack) => reader.nextAlphaNum(!backtrack),

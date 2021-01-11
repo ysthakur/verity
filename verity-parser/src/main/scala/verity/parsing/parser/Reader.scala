@@ -1,5 +1,6 @@
 package verity.parsing.parser
 
+import collection.mutable
 import collection.mutable.ArrayBuffer
 
 import java.io.{File, FileInputStream, InputStreamReader, BufferedReader, EOFException}
@@ -8,49 +9,46 @@ import verity.parsing.TextRange
 import verity.parsing.{Token, TokenType}
 
 type ConfirmToken = () => Boolean
-// type Res = Option[Either[Token, Token]]
 type Res = Option[Token]
 
 final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char] {
   /**
-   * Tokens that have already been read
+   * A list of offsets corresponding to chars. The char at `charInd` in `chars` has an offset given by
+   * `offsets(charInd)`
    */
-  private val tokens = ArrayBuffer[Token]()
+  private var offsets = ArrayBuffer[Int](0)
 
   var chars = new StringBuilder()
 
-  override def toString = s"charInd:$charInd, offset:$offset, Chars:$chars, tokens:$tokens, comments:$comments"
+  override def toString = s"charInd:$charInd, offset:$offset, Chars:$chars, tokens:tokens, comments:$comments"
 
   /**
    * Single line commments, multiline comments, doc comments
    */
   private val comments = ArrayBuffer[Token]()
 
-  var charInd, tokenInd = 0
-  private var arrInd = -1
-  // private var sliceInd = -1
-  // private var row, col = -1
+  var charInd = 0
 
   private var _offset = 0
 
 //  def charInd = _charInd
 //  private def charInd_=(newInd: Int) = _charInd = newInd
   def offset = _offset
-
   private def offset_=(offset: Int) = _offset = offset
 
   private val reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding))
 
   val fileEnd = file.length()
 
-  private[this] val firstChar = reader.read()
-  if (firstChar != -1) chars += firstChar.toChar
-
-  private var _hasNext: Boolean = firstChar != -1
+  private var _hasNext: Boolean = false
+  
+  {
+    val firstChar = reader.read()
+    _hasNext = firstChar != -1
+    if (_hasNext) chars += firstChar.toChar
+  }
 
   override def hasNext = _hasNext
-
-  // def isEmpty: Boolean = !hasNext && !hasTokens
 
   /**
    *
@@ -62,53 +60,43 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
    */
   def nextToken(
     expectedType: TokenType, 
-    matches: Token => Boolean, 
     cut: Boolean, 
     after: => Boolean = true
   )(confirm: => Boolean): Res = {
-    if (tokenInd < tokens.size) {
-      val tok = tokens(tokenInd)
-      if (matches(tok)) {
-        tokenInd += 1
-        Some(tok)
-      } else None
-    } else {
-      var startInd = charInd
-      var startOffset = offset
-      lazy val tok = Token(
-        TextRange(startOffset, offset),
-        chars.substring(startInd, charInd),
-        expectedType
-      )
-      try {
-        val confirmed = confirm
-        val endInd = charInd
-        val endOffset = offset
-        if (confirmed && after) {
-          val res = Some(Token(
-            TextRange(startOffset, offset),
-            chars.substring(startInd, endInd),
-            expectedType
-          ))
-          if (cut) {
-            chars = new StringBuilder(chars.substring(0, startInd)).append(chars.substring(endInd))
-            charInd = startInd
-            offset = startOffset
-          } else {
-            charInd = endInd
-            offset = endOffset
-          }
-          res
-        } else { //roll it back
+    var startInd = charInd
+    var startOffset = offset
+    lazy val tok = Token(
+      TextRange(startOffset, offset),
+      chars.substring(startInd, charInd),
+      expectedType
+    )
+    try {
+      val confirmed = confirm
+      val endInd = charInd
+      val endOffset = offset
+      if (confirmed && after) {
+        val res = Some(Token(
+          TextRange(startOffset, offset),
+          chars.substring(startInd, endInd),
+          expectedType
+        ))
+        if (cut) {
+          cutMiddle(startInd, endInd)
           charInd = startInd
           offset = startOffset
-          None
+        } else {
+          charInd = endInd
+          offset = endOffset
         }
-      } catch {
-        case _: EOFException | _: ArrayIndexOutOfBoundsException =>
-          throw new UnfinishedTokenException(tok)
+        res
+      } else { //roll it back
+        charInd = startInd
+        offset = startOffset
+        None
       }
-      // tokens += res
+    } catch {
+      case _: EOFException | _: ArrayIndexOutOfBoundsException =>
+        throw new UnfinishedTokenException(tok)
     }
   }
 
@@ -118,11 +106,10 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   def nextToken(
                  expected: String,
                  expectedType: TokenType,
-                 matchesTok: Token => Boolean,
                  cut: Boolean
                ): Option[Token] = {
     println(s"Trying to match $expected, chars=$chars, charInd=$charInd")
-    val res = nextToken(expectedType, matchesTok, cut) {
+    val res = nextToken(expectedType, cut) {
       expected.forall(c => hasNext && c == nextChar())
     }
     if (res != None) println("Matched!")
@@ -136,7 +123,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
    */
   def nextAlphaNum(cut: Boolean): Option[Token] = {
     println("Trying to match alphanumreader="+this)
-    val res = nextToken(TokenType.ALPHANUM, _.tokenType == TokenType.ALPHANUM, cut, !(hasNext && nextChar().isUnicodeIdentifierPart)) {
+    val res = nextToken(TokenType.ALPHANUM, cut, !(hasNext && nextChar().isUnicodeIdentifierPart)) {
       if (hasNext) {
         val startInd = charInd
         var c = nextChar()
@@ -161,7 +148,6 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
     println(s"Trying to match alphanum text=$text,reader=$this")
     val res = nextToken(
       TokenType.ALPHANUM,
-      _.tokenType == TokenType.ALPHANUM,
       cut,
       !(hasNext && nextChar().isUnicodeIdentifierPart)
     ) { text.forall(hasNext && _ == nextChar()) }
@@ -176,7 +162,6 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   def nextSymbol(cut: Boolean): Option[Token] = {
     nextToken(
       TokenType.SYMBOL,
-      _.tokenType == TokenType.SYMBOL, //todo maybe also check the text?
       cut
     ) {
       var len = 0
@@ -188,7 +173,6 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   def nextSymbol(symbol: String, cut: Boolean = false): Option[Token] = {
     nextToken(
       TokenType.SYMBOL,
-      _.text == symbol,
       cut
     ) {
       var len = 0
@@ -201,7 +185,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
    * Find the next string literal.
    */
   def nextString(cut: Boolean): Option[Token] =
-    nextToken(TokenType.STRING, _.tokenType == TokenType.STRING, cut) {
+    nextToken(TokenType.STRING, cut) {
       hasNext && nextChar() == '"' && hasNext && {
         var prevC = '"'
         var nextC = nextChar()
@@ -226,7 +210,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
 
   //TODO!!!!
   def nextNumLiteral(cut: Boolean): Option[Token] = {
-    nextToken(TokenType.NUM_LITERAL, _.tokenType == TokenType.NUM_LITERAL, cut) {
+    nextToken(TokenType.NUM_LITERAL, cut) {
       if (hasNext) {
         var c = nextChar()
         if (c.isDigit || c == '+' || c == '-') {
@@ -251,7 +235,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
    */
   @annotation.tailrec
   def skipCommentsAndWS(): Unit = {
-    if (!hasTokens && hasNext) {
+    if (/*!hasTokens && */hasNext) {
       var c = nextChar()
       while (hasNext && (c == ' ' || c == '\t')) c = nextChar()
 
@@ -324,6 +308,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
    */
   def keepUntil(newEnd: Int): Unit = {
     chars = chars.slice(0, newEnd)
+    offsets = offsets.takeInPlace(newEnd)
     charInd = newEnd
   }
 
@@ -334,10 +319,22 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
    */
   def keepAfter(newStart: Int): Unit = {
     chars = chars.slice(newStart, chars.size)
+    offsets = offsets.dropInPlace(newStart)
     charInd = 0
   }
 
-  def hasTokens: Boolean = tokenInd < tokens.size
+  /**
+   * Make a cut in the middle of `chars`. Discard everything between
+   * `newStart` and `newEnd`
+   * @param newStart
+   * @param newEnd
+   */
+  def cutMiddle(newStart: Int, newEnd: Int): Unit = {
+    chars = chars.slice(0, newStart).append(chars.slice(newEnd, chars.size))
+    offsets.remove(newStart, newEnd - newStart)
+    offsets.trimToSize()
+    charInd -= newEnd - newStart
+  }
 
   def syntaxError(msg: String) = throw new Error(s"Syntax error: $msg")
 
@@ -347,7 +344,20 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
     chars(charInd)
   }
 
+  def peekChar: Option[Char] =
+    Option.when(charInd < chars.size)(chars(charInd))
+    
+  def nextOrEmpty = peekChar.fold(Token.empty(-1))(c => Token(TextRange.empty(-1), "" + c))
+  
   override def next() = nextChar()
+
+  /**
+   * Get the offset at the given index in `chars`
+   * @param charInd
+   */
+  def getOffsetAt(charInd: Int) = {
+    offsets(charInd)
+  }
 
   /**
    * Get the next character, and read one if we're at the end of the StringBuilder
@@ -355,43 +365,21 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   def nextChar(throwErr: () => Throwable = () => EOFException()): Char = {
     if (!hasNext || charInd == chars.size) throwErr()
     val res = chars(charInd)
-    val stream = new java.io.ByteArrayOutputStream()
-    Console.withOut(stream) {
+//    val stream = new java.io.ByteArrayOutputStream()
+//    Console.withOut(stream) {
       //all printlns in this block will be redirected
       println("Reading " + res)
-    }
+//    }
     charInd += 1
     offset += 1
     if (charInd == chars.size) {
       val next = reader.read()
       if (next == -1) _hasNext = false
-      else chars += next.toChar
+      else {
+        chars += next.toChar
+        offsets += offset
+      }
     }
     res
-    // char match {
-    // case -1 => throwErr()
-    // case '\r' => 
-    //   row += 1
-    //   col = 0
-    // case '\n' =>
-    //   if (charInd == 0 || chars(charInd - 1) != '\r') {
-    //     row += 1
-    //     col = 0
-    //   }
-    // }
   }
-
-  /**
-   * Read a character and store it in the buffer
-   *
-   */
-  // private def readChar() = {
-  //   val char = reader.read()
-  //   if (char == -1) {
-  //     _hasNext = false
-  //   } else {
-  //     chars += char.toChar
-  //   }
-  // }
-
 }

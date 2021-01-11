@@ -53,11 +53,11 @@ trait Pattern { self =>
       res
     } catch {
       case e if !e.isInstanceOf[CompilationError] => 
-        throw new CompilationError(s"Exception on reader ${headOrEmpty(reader)}", e)
+        throw new CompilationError(s"Exception on reader ${reader.nextOrEmpty}", e)
     }
 
   //def ==(other: Pattern): Boolean = ???
-  def headOrEmpty(reader: Reader): Token = Token.empty(0)
+//  def nextOrEmpty(reader: Reader): Token = Token.empty(0)
 //    if (reader.hasNext) 
 //      Token(TextRange(reader.offset, reader.offset + 1), "" + reader.chars(reader.charInd)) 
 //    else Token.empty(0)
@@ -89,13 +89,13 @@ object Pattern {
         val start = reader.offset
         optPattern(reader, backtrack) match {
         case Some(token) => Matched(() => token, reader, token.textRange)
-        case None => Failed(headOrEmpty(reader), expected, start, backtrack)
+        case None => Failed(reader.nextOrEmpty, expected, start, backtrack)
       }
     }
     // reader.nextToken().getOrElse(Token(TextRange.empty(reader.offset), "", TokenType.MISC))
 
-  def headOrEmpty(reader: Reader): Token = Token.empty(-1)
-
+//  def nextOrEmpty(reader: Reader): Token = Token.empty(-1)
+//    reader.peekChar.fold(Token.empty(-1))(c => Token(TextRange.empty(-1), "" + c))
 }
 
 trait INamedPattern extends Pattern {

@@ -54,7 +54,7 @@ enum SymbolToken(symbol: String) extends Pattern {
     try {
         reader.nextSymbol(symbol, !backtrack) match {
         case Some(token) => Matched(() => token, reader, token.textRange)
-        case None => Failed(headOrEmpty(reader), List(symbol), start, backtrack)
+        case None => Failed(reader.nextOrEmpty, List(symbol), start, backtrack)
       }
     } catch {
       case e: IndexOutOfBoundsException => 
@@ -86,7 +86,7 @@ enum ModifierToken(text: String) extends Pattern {
     val start = reader.offset
     reader.nextAlphaNum(text, TokenType.KEYWORD, !backtrack) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
-      case None => Failed(headOrEmpty(reader), List(text), start, backtrack)
+      case None => Failed(reader.nextOrEmpty, List(text), start, backtrack)
     }
 }
 
@@ -149,6 +149,6 @@ enum KeywordToken(text: String) extends Pattern {
     val start = reader.offset
     reader.nextAlphaNum(text) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
-      case None => Failed(headOrEmpty(reader), List(text), start, backtrack)
+      case None => Failed(reader.nextOrEmpty, List(text), start, backtrack)
     }
 }
