@@ -1,7 +1,7 @@
 package verity.parsing.parser
 
 import verity.CompilationError
-import verity.parsing.ast.Node
+import verity.parsing.ast.infile.Node
 // import verity.parsing.lexer._
 
 import scala.collection.mutable.ListBuffer

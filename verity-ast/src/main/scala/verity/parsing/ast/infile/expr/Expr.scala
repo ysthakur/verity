@@ -1,6 +1,6 @@
 package verity.parsing.ast.infile.expr
 
-import verity.parsing.{Token, HasText, TextRange}
+import verity.parsing.{Token, HasText, TokenType, TextRange}
 import verity.parsing.ast.infile.{Node, TypeRepr, ValidId}
 
 trait Expr extends Node {
@@ -14,6 +14,35 @@ trait Expr extends Node {
  */
 trait Assignable extends Expr {
   
+}
+
+sealed trait Literal extends Expr
+
+enum BoolLiteral(override val text: String, override val textRange: TextRange) extends Literal {
+  case TrueLiteral(tr: TextRange) extends BoolLiteral("true", tr)
+  case FalseLiteral(tr: TextRange) extends BoolLiteral("false", tr)
+}
+object BoolLiteral {
+  def apply(token: Token) =
+    if (token.text.charAt(0) == 't') TrueLiteral(token.textRange)
+    else FalseLiteral(token.textRange)
+}
+
+case class NumLiteral(override val text: String, override val textRange: TextRange) extends Literal
+
+enum NumType {
+  case INT
+  case LONG
+  case FLOAT
+  case DOUBLE
+}
+
+case class ThisRef(textRange: TextRange) extends Expr {
+  override def text: String = "this"
+}
+
+case class SuperRef(textRange: TextRange) extends Expr {
+  override def text: String = "super"
 }
 
 case class VarRef(varName: ValidId) extends Expr {
@@ -77,4 +106,16 @@ case class Op(
              ) extends Node {
   def isBinary: Boolean = ???
   override def text: String = symbol //symbol.text
+}
+
+trait MethodCall() extends Expr {
+
+}
+
+case class ApplyCall(obj: Expr, valArgs: ArgList, override val textRange: TextRange) extends MethodCall() {
+  def text = obj.text + valArgs.text
+}
+
+case class ArgList(args: List[Expr], textRange: TextRange) extends Node {
+  def text = ???
 }

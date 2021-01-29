@@ -1,7 +1,7 @@
 package verity.parsing.ast
 
 import verity.parsing.TextRange
-import verity.parsing.ast.infile.ValidId
+import verity.parsing.ast.infile.{ValidId, Field, Method}
 
 class TemplateDef(
     val templateType: TemplateDefType,

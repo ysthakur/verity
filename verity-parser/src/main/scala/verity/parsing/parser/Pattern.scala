@@ -38,7 +38,7 @@ trait Pattern { self =>
   def -(s: String): Pattern.Aux[Out] =
     (reader, backtrack) => tryMatch(reader, backtrack) match {
       case m: Matched[?] => 
-        reader.nextToken(s, TokenType.MISC, _.text == s, !backtrack) match {
+        reader.nextToken(s, TokenType.MISC, !backtrack) match {
           case None => Failed(Token.empty(m.range.start), List(s), m.range.start, backtrack)
           case _ => m
         }

@@ -1,7 +1,8 @@
 package verity.parsing.ast.infile
 
 import verity.parsing.TextRange
-import verity.parsing.ast.{INode, Node}
+import verity.parsing.ast.INode
+import verity.parsing.ast.infile.Node
 
 import scala.collection.mutable.ListBuffer
 

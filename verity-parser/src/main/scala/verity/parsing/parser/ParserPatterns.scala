@@ -2,14 +2,14 @@ package verity.parsing.parser
 
 import verity.parsing.{TextRange, Token, TokenType}
 import verity.parsing.ast._
-import verity.parsing.ast.infile.DotRef
+import verity.parsing.ast.infile._
 import verity.parsing.ast.infile.expr._
 import verity.parsing.parser.SymbolToken._
 import verity.parsing.parser.KeywordToken._
 
 private object ParserPatterns {
 
-  val opCtor = (op: Node) => Op(op.text, op.textRange)
+  //val opCtor = (op: Node) => Op(op.text, op.textRange)
 
   type P[N] = Pattern.Aux[N]
 
@@ -180,7 +180,7 @@ private object ParserPatterns {
   extension (s: String)
     def -(next: Pattern): P[next.Out] = (reader, backtrack) => {
       val start = reader.offset
-      reader.nextToken(s, TokenType.MISC, _.text == s, !backtrack) match {
+      reader.nextToken(s, TokenType.MISC, !backtrack) match {
         case None => Failed(Token.empty(start), List(s), start, backtrack)
         case _ => next.tryMatch(reader, backtrack)
       }
