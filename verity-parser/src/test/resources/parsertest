@@ -13,5 +13,4 @@ import b.lkas.dfkasldf.*;
 //x ^ ((6 - (8 * 39)) > (45 + (((this) / 45) * 99))) || true && false | 3
 
 //x ^ 6 - 8[5 + 944* 0].foo[dkdkdk].dkdkd[444][7] * 39 > 45 + (this) / 45 * 99 || true && false | 3
-
 //(!++x[0]++) + (9)
