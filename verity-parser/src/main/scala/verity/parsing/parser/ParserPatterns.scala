@@ -63,7 +63,7 @@ private object ParserPatterns {
     else Failed(null, List("Valid identifier"), start)
   })*/
 
-  val parenExpr = "(" - ByNameP(expr) - ")" |> { expr => ParenExpr(expr, expr.textRange) }
+  val parenExpr = "(" - ByNameP(() => expr) - ")" |> { expr => ParenExpr(expr, expr.textRange) }
   val atom = literal //| parenExpr  | (unreservedId |> VarRef)
 
   
@@ -82,10 +82,10 @@ private object ParserPatterns {
   val topExpr: P[Expr] = 
     (ConsPattern(
       ConsPattern((PLUS | MINUS | EXCL_MARK | TILDE).*, (PLUSX2 | MINUSX2).?, false, "t1"),
-      ByNameP(atom),
+      ByNameP(() => atom),
       false,
       "t2"
-    ) - (DOT - identifier | LSQUARE - ByNameP(expr) - RSQUARE).* - (PLUSX2 | MINUSX2).?) |> {
+    ) - (DOT - identifier | LSQUARE - ByNameP(() => expr) - RSQUARE).* - (PLUSX2 | MINUSX2).?) |> {
     case preOps - preIncDec - firstAtom - nodes - postIncDec => 
       nodes.foldLeft(firstAtom: Expr) { (p, n) =>
         n match {
@@ -134,7 +134,7 @@ private object ParserPatterns {
     operator: P[_ <: Token],
     name: String = ""
   ): P[Expr] = {
-    val byNamePrev = ByNameP(prev)
+    val byNamePrev = ByNameP(() => prev)
     ConsPattern(byNamePrev, (operator -! byNamePrev).*, false, name=name) |> {
       case e1 - nodes =>
         nodes.foldLeft(e1: Expr){ (e, p) =>
@@ -150,7 +150,7 @@ private object ParserPatterns {
   }
   lazy val typeArg = typeRef | wildcard
   lazy val typeArgs = typeArg - ("," - typeArg).* |> { case firstType - nextTypes => firstType :: nextTypes }
-  val typeRef: P[TypeRef] = identifier - ("<" - ByNameP(typeArgs) - ">").? |> { 
+  val typeRef: P[TypeRef] = identifier - ("<" - ByNameP(() => typeArgs) - ">").? |> { 
     case name - args => TypeRef(name, args ?: Nil)
   }
 

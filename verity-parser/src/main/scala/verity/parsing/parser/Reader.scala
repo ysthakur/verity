@@ -344,11 +344,12 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
     chars(charInd)
   }
 
-  def peekChar: Option[Char] =
+  def peekChar(): Option[Char] =
     Option.when(charInd < chars.size)(chars(charInd))
     
-  def nextOrEmpty = peekChar.fold(Token.empty(-1))(c => Token(TextRange.empty(-1), "" + c))
-  
+  // def nextOrEmpty = peekChar().fold(Token.empty(-1))(c => Token(TextRange.empty(-1), c.toString))
+  def nextOrEmpty = peekChar().fold(Token(TextRange.empty(-1), ""))(c => Token(TextRange.empty(-1), c.toString))
+
   override def next() = nextChar()
 
   /**

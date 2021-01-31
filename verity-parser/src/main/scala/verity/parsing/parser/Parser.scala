@@ -7,7 +7,7 @@ import verity.parsing.ast.infile.Node
 import scala.collection.mutable.ListBuffer
 
 object Parser {
-  // @throws[CompilationError]
+  @throws[CompilationError]
   def parse(reader: Reader): Node = {
     val testExpr = ParserPatterns.expr
     println("In Parser.parse")

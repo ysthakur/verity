@@ -297,9 +297,9 @@ case class RepeatPatternRev[P <: Pattern](
   }
 }
 
-class ByNameP[R](pattern: => Pattern.Aux[R]) extends Pattern {
+class ByNameP[R](getPattern: () => Pattern.Aux[R]) extends Pattern {
   type Out = R
-  override def apply(reader: Reader, backtrack: Boolean) = pattern.apply(reader, backtrack)
+  override def apply(reader: Reader, backtrack: Boolean) = getPattern()(reader, backtrack)
 }
 
 case class FunctionPattern[N](matchFun: Reader => ParseResult[N]) extends Pattern {
