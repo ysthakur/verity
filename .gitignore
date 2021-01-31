@@ -1,6 +1,10 @@
 .dotty-ide.json
 .dotty-ide-artifact
-target
 .bsp
 .vscode
 .idea
+target
+verity-parser/target
+verity-ast/target
+verity-codegen/target
+null
