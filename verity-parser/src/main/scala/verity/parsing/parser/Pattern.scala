@@ -13,6 +13,8 @@ trait Pattern { self =>
   
   type Out
 
+  val expected: List[String] = Nil
+
   def apply(reader: Reader, backtrack: Boolean): ParseResult[this.Out]
 
   /**
@@ -38,7 +40,7 @@ trait Pattern { self =>
   def -(s: String): Pattern.Aux[Out] =
     (reader, backtrack) => tryMatch(reader, backtrack) match {
       case m: Matched[?] => 
-        reader.nextToken(s, TokenType.MISC, !backtrack) match {
+        reader.nextExactText(s, TokenType.MISC, !backtrack) match {
           case None => Failed(Token.empty(m.range.start), List(s), m.range.start, backtrack)
           case _ => m
         }
@@ -195,6 +197,8 @@ case class OrPattern(p1: Pattern, p2: Pattern, shouldFlatten: Boolean = true) ex
 //  override def isEager: Boolean = p1.isEager || p2.isEager
   // lazy val p2 = _p2
 
+  override val expected = p1.expected ::: p2.expected
+
   override def apply(reader: Reader, backtrack: Boolean): ParseResult[Out] =
     p1.tryMatch(reader, true) match {
       case f: Failed => 
@@ -233,6 +237,7 @@ case class RepeatPattern[P <: Pattern](
     @annotation.tailrec
     def recMatch(reader: Reader, start: Int, end: Int, count: Int, prev: List[() => pattern.Out]): ParseResult[Out] = {
       // println(s"reader=${reader.map(_.text)}")
+      println(s"In recMatch, reader=$reader")
       if (reader.isEmpty) return makeNodeList(prev, start, end, reader)
       pattern.tryMatch(reader, backtrack) match {
         case m@Matched(create, rest, range) =>
@@ -266,6 +271,8 @@ case class RepeatPatternRev[P <: Pattern](
 ) extends Pattern {
 
   type Out = List[pattern.Out]
+
+  override val expected = pattern.expected
 
   override final def apply(reader: Reader, backtrack: Boolean) = {
     // println("--------------------")

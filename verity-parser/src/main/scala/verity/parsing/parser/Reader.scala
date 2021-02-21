@@ -13,28 +13,27 @@ type Res = Option[Token]
 
 final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char] {
   /**
-   * A list of offsets corresponding to chars. The char at `charInd` in `chars` has an offset given by
-   * `offsets(charInd)`
+   * A list of offsets corresponding to chars. The char at `index` in `chars` has an offset given by
+   * `offsets(index)`
    */
   private var offsets = ArrayBuffer[Int](0)
 
   var chars = new StringBuilder()
 
-  override def toString = s"charInd:$charInd, offset:$offset, Chars:$chars, tokens:tokens, comments:$comments"
+  override def toString = s"index:$index, offset:$offset, Chars:$chars, tokens:tokens, comments:$comments"
 
   /**
    * Single line commments, multiline comments, doc comments
    */
   private val comments = ArrayBuffer[Token]()
 
-  var charInd = 0
+  private var index = 0
 
   private var _offset = 0
 
-//  def charInd = _charInd
 //  private def charInd_=(newInd: Int) = _charInd = newInd
-  def offset = _offset
-  private def offset_=(offset: Int) = _offset = offset
+  def offset = offsets(index)
+  // private def offset_=(offset: Int) = _offset = offset
 
   private val reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding))
 
@@ -48,6 +47,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
     if (_hasNext) chars += firstChar.toChar
   }
 
+  private def hasNext_=(h: Boolean) = _hasNext = h
   override def hasNext = _hasNext
 
   /**
@@ -63,16 +63,16 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
     cut: Boolean, 
     after: => Boolean = true
   )(confirm: => Boolean): Res = {
-    var startInd = charInd
-    var startOffset = offset
+    var startInd = index
+    var startOffset = offsets(startInd)
     lazy val tok = Token(
       TextRange(startOffset, offset),
-      chars.substring(startInd, charInd),
+      chars.substring(startInd, index),
       expectedType
     )
     try {
       val confirmed = confirm
-      val endInd = charInd
+      val endInd = index
       val endOffset = offset
       if (confirmed && after) {
         val res = Some(Token(
@@ -81,17 +81,16 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
           expectedType
         ))
         if (cut) {
+          //TODO check this!
+          if (index == chars.size && hasNext) nextChar()
           cutMiddle(startInd, endInd)
-          charInd = startInd
-          offset = startOffset
+          index = startInd
         } else {
-          charInd = endInd
-          offset = endOffset
+          index = endInd
         }
         res
       } else { //roll it back
-        charInd = startInd
-        offset = startOffset
+        index = startInd
         None
       }
     } catch {
@@ -103,12 +102,12 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   /**
    * Match a certain string as is (for symbolic operators, parens, etc.)
    */
-  def nextToken(
+  def nextExactText(
                  expected: String,
                  expectedType: TokenType,
                  cut: Boolean
                ): Option[Token] = {
-    println(s"Trying to match $expected, chars=$chars, charInd=$charInd")
+    println(s"Trying to match $expected, chars=$chars, index=$index")
     val res = nextToken(expectedType, cut) {
       expected.forall(c => hasNext && c == nextChar())
     }
@@ -125,13 +124,13 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
     println("Trying to match alphanumreader="+this)
     val res = nextToken(TokenType.ALPHANUM, cut, !(hasNext && nextChar().isUnicodeIdentifierPart)) {
       if (hasNext) {
-        val startInd = charInd
+        val startInd = index
         var c = nextChar()
         if (c.isUnicodeIdentifierStart) {
           while (hasNext && c.isUnicodeIdentifierPart) c = nextChar()
-          val diff = charInd - startInd
+          val diff = index - startInd
           //It shouldn't be a single underscore or a hard keyword 
-          !((startInd + 1 == charInd && chars(startInd) == '_')
+          !((startInd + 1 == index && chars(startInd) == '_')
             || Token.hardKeywords.exists {
               keyword => keyword.length == diff && (0 until diff).forall(i => chars(i + startInd) == keyword(i))
             })
@@ -237,15 +236,15 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   def skipCommentsAndWS(): Unit = {
     if (/*!hasTokens && */hasNext) {
       var c = nextChar()
+      //Just skip spaces and tabs right now
       while (hasNext && (c == ' ' || c == '\t')) c = nextChar()
 
       val startOffset = offset
-      val startInd = charInd
+      val startInd = index
 
       if (c != ' ' && c != '\t') {
         if (c != '/' || !hasNext) {
-          //Definitely not a comment
-          //Back up because this character will be needed later
+          //Definitely not a comment. Back up because this character will be needed later
           prevChar()
         } else { //Possible comment
           nextChar() match {
@@ -254,7 +253,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
               val singleLineCommentError = () => new UnfinishedTokenException(
                 Token(
                   TextRange(startOffset, offset),
-                  chars.substring(startInd, charInd),
+                  chars.substring(startInd, index),
                   TokenType.SINGLE_LINE_COMMENT
                 ))
               while (hasNext && c != '\n' && c != '\r') c = nextChar(singleLineCommentError)
@@ -263,7 +262,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
               //Keep track of this comment
               comments += Token(
                 TextRange(startOffset, offset),
-                chars.substring(startInd, charInd),
+                chars.substring(startInd, index),
                 TokenType.SINGLE_LINE_COMMENT
               )
               //Keep skipping comments and whitespace
@@ -273,7 +272,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
               val multilineCommentError = () => new UnfinishedTokenException(
                 Token(
                   TextRange(startOffset, offset),
-                  chars.substring(startInd, charInd),
+                  chars.substring(startInd, index),
                   TokenType.MULTILINE_COMMENT
                 ))
               var prevC = '*'
@@ -286,9 +285,9 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
               //Keep track of this comment
               comments += Token(
                 TextRange(startOffset, offset),
-                chars.substring(startInd, charInd),
+                chars.substring(startInd, index),
                 //Differentiate between /** and /* comments
-                if (charInd - startInd > 4 && chars(startInd + 2) == '*') TokenType.DOC_COMMENT
+                if (index - startInd > 4 && chars(startInd + 2) == '*') TokenType.DOC_COMMENT
                 else TokenType.MULTILINE_COMMENT
               )
               //Keep skipping comments and whitespace
@@ -309,7 +308,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   def keepUntil(newEnd: Int): Unit = {
     chars = chars.slice(0, newEnd)
     offsets = offsets.takeInPlace(newEnd)
-    charInd = newEnd
+    index = newEnd
   }
 
   /**
@@ -320,7 +319,7 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
   def keepAfter(newStart: Int): Unit = {
     chars = chars.slice(newStart, chars.size)
     offsets = offsets.dropInPlace(newStart)
-    charInd = 0
+    index = 0
   }
 
   /**
@@ -333,19 +332,18 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
     chars = chars.slice(0, newStart).append(chars.slice(newEnd, chars.size))
     offsets.remove(newStart, newEnd - newStart)
     offsets.trimToSize()
-    charInd -= newEnd - newStart
+    index -= newEnd - newStart
   }
 
   def syntaxError(msg: String) = throw new Error(s"Syntax error: $msg")
 
   def prevChar(): Unit = {
-    charInd -= 1
-    offset -= 1
-    chars(charInd)
+    index -= 1
+    chars(index)
   }
 
   def peekChar(): Option[Char] =
-    Option.when(charInd < chars.size)(chars(charInd))
+    Option.when(index < chars.size)(chars(index))
     
   // def nextOrEmpty = peekChar().fold(Token.empty(-1))(c => Token(TextRange.empty(-1), c.toString))
   def nextOrEmpty = peekChar().fold(Token(TextRange.empty(-1), ""))(c => Token(TextRange.empty(-1), c.toString))
@@ -354,31 +352,31 @@ final class Reader(file: File, encoding: String = "UTF-8") extends Iterator[Char
 
   /**
    * Get the offset at the given index in `chars`
-   * @param charInd
+   * @param index
    */
-  def getOffsetAt(charInd: Int) = {
-    offsets(charInd)
+  def getOffsetAt(index: Int) = {
+    offsets(index)
   }
 
   /**
    * Get the next character, and read one if we're at the end of the StringBuilder
    */
   def nextChar(throwErr: () => Throwable = () => EOFException()): Char = {
-    if (!hasNext || charInd == chars.size) throwErr()
-    val res = chars(charInd)
+    if (!hasNext || index == chars.size) throwErr()
+    val res = chars(index)
 //    val stream = new java.io.ByteArrayOutputStream()
 //    Console.withOut(stream) {
       //all printlns in this block will be redirected
-      println("Reading " + res)
+    println("Reading " + res)
 //    }
-    charInd += 1
-    offset += 1
-    if (charInd == chars.size) {
+    index += 1
+    _offset += 1
+    if (index == chars.size) {
       val next = reader.read()
-      if (next == -1) _hasNext = false
+      if (next == -1) hasNext = false
       else {
         chars += next.toChar
-        offsets += offset
+        offsets += _offset
       }
     }
     res

@@ -63,7 +63,9 @@ private object ParserPatterns {
     else Failed(null, List("Valid identifier"), start)
   })*/
 
-  val parenExpr = "(" - ByNameP(() => expr) - ")" |> { expr => ParenExpr(expr, expr.textRange) }
+  val lazyExpr = ByNameP(() => expr)
+
+  val parenExpr = "(" - lazyExpr - ")" |> { expr => ParenExpr(expr, expr.textRange) }
   val atom = literal //| parenExpr  | (unreservedId |> VarRef)
 
   
@@ -135,7 +137,7 @@ private object ParserPatterns {
     name: String = ""
   ): P[Expr] = {
     val byNamePrev = ByNameP(() => prev)
-    ConsPattern(byNamePrev, (operator -! byNamePrev).*, false, name=name) |> {
+    ConsPattern(byNamePrev, (operator - byNamePrev).*, cut=false, name=name, skipWS=true) |> {
       case e1 - nodes =>
         nodes.foldLeft(e1: Expr){ (e, p) =>
           p match { case op - (e2: Expr) => BinaryExpr(e, op.text, e2) }
@@ -180,7 +182,7 @@ private object ParserPatterns {
   extension (s: String)
     def -(next: Pattern): P[next.Out] = (reader, backtrack) => {
       val start = reader.offset
-      reader.nextToken(s, TokenType.MISC, !backtrack) match {
+      reader.nextExactText(s, TokenType.MISC, !backtrack) match {
         case None => Failed(Token.empty(start), List(s), start, backtrack)
         case _ => next.tryMatch(reader, backtrack)
       }

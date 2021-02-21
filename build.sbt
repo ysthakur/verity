@@ -8,6 +8,8 @@ organization in ThisBuild := "com.ysthakur"
 scalaVersion in ThisBuild := scala_version
 mainClass in (Compile, run) := Some("Main")
 
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 lazy val root = project
   .in(file("."))
   .settings(
@@ -45,7 +47,8 @@ lazy val `verity-parser` =project
     name := "verity-parser",
     scalacOptions ++= commonScalacOptions,
     libraryDependencies ++= Seq(
-      "org.scalatest" % "scalatest_0.27" % "3.2.2" % Test
+      // "org.scalatest" % "scalatest" % "3.2.2" % Test
+      "org.scalatest" %% "scalatest" % "3.2.3"
     )
   ).dependsOn(`verity-ast`)
 

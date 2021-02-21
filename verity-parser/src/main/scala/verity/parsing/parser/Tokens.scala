@@ -49,6 +49,8 @@ enum SymbolToken(symbol: String) extends Pattern {
   
   type Out = Token
   
+  override val expected = List(symbol)
+
   def apply(reader: Reader, backtrack: Boolean): ParseResult[Out] =
     val start = reader.offset
     try {
@@ -81,12 +83,14 @@ enum ModifierToken(text: String) extends Pattern {
   case CONST extends ModifierToken("const")
   
   type Out = Token
+
+  override val expected = List(text)
   
   def apply(reader: Reader, backtrack: Boolean): ParseResult[Out] =
     val start = reader.offset
     reader.nextAlphaNum(text, TokenType.KEYWORD, !backtrack) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
-      case None => Failed(reader.nextOrEmpty, List(text), start, backtrack)
+      case None => Failed(reader.nextOrEmpty, expected, start, backtrack)
     }
 }
 
@@ -144,11 +148,13 @@ enum KeywordToken(text: String) extends Pattern {
   case VOID extends KeywordToken("void")
 
   type Out = Token
+
+  override val expected = List(text)
   
   def apply(reader: Reader, backtrack: Boolean): ParseResult[Out] =
     val start = reader.offset
     reader.nextAlphaNum(text) match {
       case Some(token) => Matched(() => token, reader, token.textRange)
-      case None => Failed(reader.nextOrEmpty, List(text), start, backtrack)
+      case None => Failed(reader.nextOrEmpty, expected, start, backtrack)
     }
 }
