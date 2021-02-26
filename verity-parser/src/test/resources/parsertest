@@ -1,4 +1,7 @@
-92L ^ 6 - 8 * 39 > 45 + (this) / 45 * 99 || true && false | 3
+foo.bar(1,2,3) //.foo()
+
+
+//92L ^ 6 - 8 * 39 > 45 + (this) / 45 * 99 || true && false | 3
 //( 92 ^ ( ( 6 - ( 8 * 39 ) ) > ( 45 + ( ( (this) / 45 ) * 99 ) ) ) ) || ( true && ( false | 3 ) )
 
 //true * false / true
