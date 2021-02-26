@@ -1,7 +1,7 @@
 package verity.parsing.ast.infile
 
 import verity.parsing.TextRange
-import verity.parsing.ast.infile.expr.{Assignable, Expr}
+import verity.parsing.ast.infile.{Assignable, Expr}
 
 case class ValidId(name: String, override val textRange: TextRange) extends Expr with Assignable {
   // def unapply(): (CharSequence, Int, Int) = ???

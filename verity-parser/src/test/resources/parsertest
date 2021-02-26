@@ -1,4 +1,7 @@
-true + false + true
+92L ^ 6 - 8 * 39 > 45 + (this) / 45 * 99 || true && false | 3
+//( 92 ^ ( ( 6 - ( 8 * 39 ) ) > ( 45 + ( ( (this) / 45 ) * 99 ) ) ) ) || ( true && ( false | 3 ) )
+
+//true * false / true
 
 /*package com.ysthakur;
 
@@ -9,6 +12,8 @@ import b.lkas.dfkasldf.*;
 */
 
 //x ^ 6 - 8[5 + 944* 0] * 39 > 45 + (this) / 45 * 99 || true && false | 3
+
+//x ^ 6 - 8 * 39 > 45 + (this) / 45 * 99 || true && false | 3
 
 //x ^ ((6 - (8 * 39)) > (45 + (((this) / 45) * 99))) || true && false | 3
 

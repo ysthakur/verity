@@ -1,6 +1,6 @@
 val projectName = "verity"
-val scala3version = "3.0.0-M3"
-val scala2version = "2.13.4"
+val scala3version = "3.0.0-RC1"
+val scala2version = "2.13.5"
 val verityVersion = "0.1.0"
 
 name := projectName
@@ -16,7 +16,7 @@ lazy val root = project
   .settings(
     name := "verity",
     scalaVersion := scala3version,
-    scalacOptions ++= commonScalacOptions,
+    scalacOptions ++= commonScala3Options,
     libraryDependencies ++= libDeps)
   .disablePlugins()
   .aggregate(
@@ -30,7 +30,7 @@ lazy val `verity-common` = project
   .settings(
     name := "verity-common",
     scalaVersion := scala3version,
-    scalacOptions ++= commonScalacOptions
+    scalacOptions ++= commonScala3Options
   )
 
 lazy val `verity-ast` = project
@@ -38,7 +38,7 @@ lazy val `verity-ast` = project
   .settings(
     name := "verity-ast",
     scalaVersion := scala3version,
-    scalacOptions ++= commonScalacOptions,
+    scalacOptions ++= commonScala3Options,
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
       "org.ow2.asm" % "asm-util" % "8.0.1"
@@ -50,10 +50,10 @@ lazy val `verity-parser` =project
   .settings(
     name := "verity-parser",
     scalaVersion := scala2version,
-    scalacOptions ++= commonScalacOptions,
+    scalacOptions ++= commonScala2Options,
     libraryDependencies ++= Seq(
-      // "org.scalatest" % "scalatest" % "3.2.2" % Test
-      "org.scalatest" %% "scalatest" % "3.2.3"
+      "org.scalatest" %% "scalatest" % "3.2.3" % Test,
+      "com.lihaoyi" %% "fastparse" % "2.2.2"
     )
   ).dependsOn(`verity-ast`)
 
@@ -74,9 +74,13 @@ lazy val libDeps = Seq(
   "com.novocode" % "junit-interface" % "0.11" % "test"
 )
 
-lazy val commonScalacOptions = Seq(
-  "-language:implicitConversions",
-//  "-explain",
+val commonScala2Options = Seq(
+  // "-language:implicitConversions"
+  "-Ytasty-reader"
+)
+
+val commonScala3Options = Seq(
   "-Yexplicit-nulls",
-    "-Ycheck-init"
+//  "-explain",
+  "-Ycheck-init"
 )

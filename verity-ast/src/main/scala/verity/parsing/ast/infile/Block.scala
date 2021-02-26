@@ -1,6 +1,6 @@
 package verity.parsing.ast.infile
 
-import verity.parsing.ast.infile.expr.Expr
+import verity.parsing.ast.infile.Expr
 import verity.parsing.TextRange
 
 import scala.collection.mutable.ListBuffer

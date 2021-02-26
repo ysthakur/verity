@@ -1,6 +1,6 @@
 package verity.parsing.ast.infile
 
-import verity.parsing.ast.infile.expr.Expr
+import verity.parsing.ast.infile.Expr
 
 /**
   * A variable declaration (local variable or field)
