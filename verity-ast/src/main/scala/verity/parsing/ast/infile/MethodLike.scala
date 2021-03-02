@@ -2,7 +2,7 @@ package verity.parsing.ast.infile
 
 import verity.parsing.ast.infile.Expr
 
-trait IMethodLike extends HasModifiers {
+trait MethodLike extends HasModifiers {
   def returnType: TypeRef
   def name: String
   def ctparams: CTParamList

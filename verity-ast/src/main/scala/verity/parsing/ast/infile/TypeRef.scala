@@ -2,12 +2,28 @@ package verity.parsing.ast.infile
 
 import verity.parsing._
 
-type Type = TypeRef | Wildcard
+trait Type extends Node
 
-case class TypeRef(name: ValidId, args: List[TypeArg]) extends Node {
+case class TypeRef(name: ValidId, args: Seq[Type]) extends Type {
   def text = ???
 
   override def textRange: TextRange = ???
 }
 
-case class Wildcard(upper: Option[TypeRef], lower: Option[TypeRef])
+class TypeRange(var upperBound: Type, var lowerBound: Type) extends Type {
+  def text = ???
+
+  override def textRange: TextRange = ???
+}
+
+case class Wildcard(upper: Option[TypeRef], lower: Option[TypeRef]) extends Type {
+  def text = ???
+
+  override def textRange: TextRange = ???
+}
+
+case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type {
+  def text = ???
+
+  override def textRange: TextRange = ???
+}

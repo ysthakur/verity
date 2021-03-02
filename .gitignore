@@ -1,8 +1,10 @@
+.bloop
+.bsp
 .dotty-ide.json
 .dotty-ide-artifact
-.bsp
-.vscode
 .idea
+.metals
+.vscode
 target
 verity-parser/target
 verity-ast/target

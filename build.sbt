@@ -68,6 +68,18 @@ lazy val `verity-codegen` =project
     )
   )
 
+lazy val `verity-core` = project
+  .in(file("verity-core"))
+  .settings(
+    name := "verity-core",
+    scalaVersion := scala3version,
+    scalacOptions ++= commonScala3Options,
+    libraryDependencies ++= Seq(
+      "org.ow2.asm" % "asm" % "8.0.1", 
+      "org.ow2.asm" % "asm-util" % "8.0.1"
+    )
+  ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`)
+
 lazy val libDeps = Seq(
   //"org.scala-lang" % "scala-reflect" % scala_version,
   //"org.scalatest"  %% "scalatest"    % "3.1.1" % "test",
