@@ -1,6 +1,6 @@
-package verity.parsing.ast.infile
+package verity.ast.infile
 
-import verity.parsing.ast.infile.Expr
+import verity.ast.infile.Expr
 
 trait MethodLike extends HasModifiers {
   def returnType: TypeRef

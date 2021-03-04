@@ -1,4 +1,4 @@
-package verity.parsing.ast
+package verity.ast
 
 trait Reference[+T <: INode] {
   def resolve: Option[T]

@@ -1,7 +1,7 @@
-package verity.parsing.ast.infile
+package verity.ast.infile
 
 import verity.parsing._
-import verity.parsing.ast.infile._
+import verity.ast.infile._
 
 trait Expr extends Node {
   private var _exprType: Option[TypeRepr] = None

@@ -1,7 +1,7 @@
-package verity.parsing.ast.infile
+package verity.ast.infile
 
 import verity.parsing.{HasText, TextRange}
-import verity.parsing.ast.INode
+import verity.ast.INode
 
 trait Node extends INode with HasText {
   override def flatten: Node = this

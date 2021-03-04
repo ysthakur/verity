@@ -1,7 +1,7 @@
-package verity.parsing.ast
+package verity.ast
 
 import verity.parsing.HasText
-import verity.parsing.ast.infile.{DotRef, Field, Import, Method, TypeDef}
+import verity.ast.infile.{DotRef, Field, Import, Method, TypeDef}
 
 import scala.collection.mutable.ListBuffer
 

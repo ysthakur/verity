@@ -1,4 +1,4 @@
-package verity.parsing.ast.infile
+package verity.ast.infile
 
 import scala.collection.mutable.ListBuffer
 

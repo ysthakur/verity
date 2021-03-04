@@ -1,6 +1,6 @@
-package verity.parsing.ast.infile
+package verity.ast.infile
 
-import verity.parsing.ast.Reference
+import verity.ast.Reference
 
 trait ITypeRef extends Node {
 

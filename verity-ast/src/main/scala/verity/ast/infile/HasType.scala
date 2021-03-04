@@ -1,4 +1,4 @@
-package verity.parsing.ast.infile
+package verity.ast.infile
 
 trait HasType {
   def myType: ITypeRef

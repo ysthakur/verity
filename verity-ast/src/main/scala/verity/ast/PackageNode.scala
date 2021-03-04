@@ -1,4 +1,4 @@
-package verity.parsing.ast
+package verity.ast
 
 case class PackageNode() extends ParentNode {
   override type Child = FileNode | PackageNode

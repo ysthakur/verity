@@ -1,4 +1,4 @@
-package verity.parsing.ast
+package verity.ast
 
 trait INode {
   def as[T]: T = asInstanceOf[T]

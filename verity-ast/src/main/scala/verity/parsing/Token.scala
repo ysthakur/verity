@@ -1,6 +1,6 @@
 package verity.parsing
 
-import verity.parsing.ast.infile.Node
+import verity.ast.infile.Node
 
 /**
  *
