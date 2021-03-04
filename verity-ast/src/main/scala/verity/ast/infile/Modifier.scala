@@ -1,7 +1,7 @@
 package verity.ast.infile
 
 import verity.parsing.TextRange
-import verity.ast.INode
+import verity.ast.Tree
 import verity.ast.infile.Node
 
 import scala.collection.mutable.ListBuffer
@@ -15,7 +15,7 @@ case class Modifier(modType: ModifierType, override val textRange: TextRange) ex
   override def text: String = modType.toString.toLowerCase.nn
 }
 
-enum ModifierType extends INode {
+enum ModifierType extends Tree {
   case
     PUBLIC,
     PRIVATE,

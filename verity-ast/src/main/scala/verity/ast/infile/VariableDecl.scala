@@ -5,7 +5,7 @@ import verity.ast.infile.Expr
 /**
   * A variable declaration (local variable or field)
   */
-trait IVariableDecl extends Node with HasType {
+trait VariableDecl extends Node with HasType {
   def name: String
   /**
     * What it gets initialized to, unless it's just declared

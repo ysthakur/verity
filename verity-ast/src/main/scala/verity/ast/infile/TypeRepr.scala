@@ -1,7 +1,7 @@
 package verity.ast.infile
 
-import verity.ast.INode
+import verity.ast.Tree
 
-trait TypeRepr extends INode {
+trait TypeRepr extends Tree {
 
 }

@@ -1,5 +1,5 @@
 package verity.ast
 
-trait Reference[+T <: INode] {
+trait Reference[+T <: Tree] {
   def resolve: Option[T]
 }

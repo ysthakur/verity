@@ -1,7 +1,7 @@
 package verity.ast.infile
 
 import verity.parsing.TextRange
-import verity.ast.{ParentNode, INode}
+import verity.ast.{ParentNode, Tree}
 
 import scala.collection.mutable.ListBuffer
 
@@ -20,7 +20,7 @@ trait TypeDef(
     // s"${modifiers.text} ${metaclass.text} $name { ${children.map(_.text).mkString(" ")}}"
 }
 
-enum TypeDefType(val text: String) extends INode {
+enum TypeDefType(val text: String) extends Tree {
   case CLASS extends TypeDefType("class")
   case INTERFACE extends TypeDefType("interface")
   case ENUM extends TypeDefType("enum")

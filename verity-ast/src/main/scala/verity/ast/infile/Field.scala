@@ -7,12 +7,11 @@ import scala.collection.mutable.ListBuffer
 
 class Field(
     override val name: String,
-    typeRef: Option[TypeRef] = None,
-    var myType: ITypeRef,
     override val modifiers: ListBuffer[Modifier],
+    var myType: Type,
     var initExpr: Option[Expr] = None,
     override val textRange: TextRange
-) extends IVariableDecl
+) extends VariableDecl
     with HasModifiers
     with HasType {
   override def text: String = ???

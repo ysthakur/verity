@@ -5,4 +5,4 @@ case class PackageNode() extends ParentNode {
   override lazy val children: Iterable[Child] = ???
 }
 
-abstract class Directory extends INode
+abstract class Directory extends Tree
