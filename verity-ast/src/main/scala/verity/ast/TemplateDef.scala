@@ -1,23 +1,21 @@
 package verity.ast
 
 import verity.parsing.TextRange
-import verity.ast.infile.{ValidId, Field, Method}
+import verity.ast.infile.{Name, NamedTree, Field, Method}
 
 class TemplateDef(
     val templateType: TemplateDefType,
-    val name: ValidId,
+    val name: Name,
     val fields: List[Field],
-    val methods: List[Method],
-    val textRange: TextRange
-) {}
+    val methods: List[Method]
+) extends Tree
 
 class EnumDef(
-    name: ValidId,
+    name: Name,
     val constants: List[EnumConstant],
     fields: List[Field],
-    methods: List[Method],
-    textRange: TextRange
-) extends TemplateDef(TemplateDefType.ENUM, name, fields, methods, textRange) {}
+    methods: List[Method]
+) extends TemplateDef(TemplateDefType.ENUM, name, fields, methods) {}
 
 class EnumConstant
 

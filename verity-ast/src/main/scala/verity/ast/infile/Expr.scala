@@ -49,7 +49,7 @@ case class SuperRef(override val textRange: TextRange) extends Expr {
   override def text: String = "super"
 }
 
-case class VarRef(varName: ValidId) extends Expr {
+case class VarRef(varName: Name) extends Expr {
   override def text = varName.text
   override def textRange = varName.textRange
 }
@@ -58,37 +58,27 @@ case class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr
   def text = s"(${expr.text})"
 }
 
-case class DotChainedExpr(expr: Expr, propertyName: ValidId) extends Expr {
+case class DotChainedExpr(expr: Expr, propertyName: Name) extends Expr {
   override def text: String = s"${expr.text}.${propertyName.text}"
   override lazy val textRange = expr.textRange to propertyName.textRange
 }
 
-case class ArraySelect(arr: Expr, index: Expr, override val textRange: TextRange) extends Expr {
+case class ArraySelect(arr: Expr, index: Expr, val bracketsTextRange: TextRange) extends Expr {
   override def text: String = s"${arr.text}[${index.text}]"
 }
 
 case class BinaryExpr(left: Expr, op: String, right: Expr) extends Expr {
   override def text: String = s"(${left.text} $op ${right.text})"
-  //  val startOffset = left.startOffset
-  //  val endOffset = right.endOffset
-  //def unapply(): (CharSequence, Int, Int) = ???
-  override lazy val textRange = left.textRange to right.textRange
   override def toString = s"( $left $op $right )"
 }
 
 
 case class UnaryPreExpr[O <: Op, +E <: Expr](op: Op, expr: E) extends Expr {
-  //  def startOffset: Int = op.startOffset
-  //  def endOffset: Int = expr.endOffset
   override def text: String = s"(${op.text} ${expr.text})"
-  override lazy val textRange = op.textRange to expr.textRange
 }
 
 case class UnaryPostExpr[E <: Expr, O <: Op](expr: E, op: O) extends Expr {
-  //  def startOffset: Int = expr.startOffset
-  //  def endOffset: Int = op.endOffset
   override def text: String = s"(${expr.text}${op.text})"
-  override lazy val textRange = expr.textRange to op.textRange
 }
 
 case class AssignmentExpr(lhs: Assignable, rhs: Expr, extraOp: Token | Null) extends Expr {
@@ -117,11 +107,20 @@ case class ToBeGiven(typ: Type) extends Expr {
 
 case class MethodCall(
   obj: Option[Expr],
-  name: ValidId,
+  name: Name,
   valArgs: Seq[Expr],
   givenArgs: Seq[Expr],
   typeArgs: Seq[Type],
   override val textRange: TextRange) extends Expr {
   //TODO figure out how to print types
   def text: String = obj.fold("")(_.text + ".") + typeArgs.map(_.toString).mkString("<", ",", ">") + valArgs.map(_.text).mkString("(", ",", ")")
+}
+
+case class ArgList(args: List[Argument], override val textRange: TextRange) extends HasText {
+  def text = args.view.map(_.text).mkString("(", ",", ")")
+}
+
+case class Argument(expr: Expr) extends HasText {
+  def text = expr.text
+  def textRange = expr.textRange
 }

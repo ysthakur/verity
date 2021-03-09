@@ -1,12 +1,10 @@
 package verity.ast.infile
 
-import verity.ast.infile.Expr
-
 /**
   * A variable declaration (local variable or field)
   */
-trait VariableDecl extends Node with HasType {
-  def name: String
+trait VariableDecl extends Node, HasType, NamedTree {
+  def name: Name
   /**
     * What it gets initialized to, unless it's just declared
     * @return

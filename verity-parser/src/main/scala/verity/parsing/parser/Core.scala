@@ -8,14 +8,14 @@ import verity.ast._, infile._
 import fastparse._, JavaWhitespace._
 
 private object Core {
-  def identifier[_: P]: P[ValidId] =
+  def identifier[_: P]: P[Name] =
     P(
         Index ~ CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(
             _.isUnicodeIdentifierPart
         ).! ~ Index
     ).map {
       case (start, first, rest, end) =>
-        ValidId(first + rest, TextRange(start, end))
+        Name(first + rest, TextRange(start, end))
     }
 
   def typeRef[_: P]: P[TypeRef] = P(identifier ~ "<" ~ typeArgList ~ ">").map {

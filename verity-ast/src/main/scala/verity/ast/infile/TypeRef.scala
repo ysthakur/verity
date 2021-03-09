@@ -4,7 +4,7 @@ import verity.parsing._
 
 trait Type extends Node
 
-case class TypeRef(name: ValidId, args: Seq[Type]) extends Type {
+case class TypeRef(name: Name, args: Seq[Type]) extends Type {
   def text = ???
 
   override def textRange: TextRange = ???
