@@ -19,7 +19,8 @@ case class Method(
     returnType: TypeRef,
     name: Name,
     params: ParamList,
-    private var _body: Option[Block]
+    private var _body: Option[Block],
+    isCtor: Boolean
 ) extends MethodLike, HasModifiers {
   def text: String = ???
   override def body: Option[Block] = _body

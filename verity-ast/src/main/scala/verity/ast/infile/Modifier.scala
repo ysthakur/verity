@@ -25,8 +25,8 @@ enum ModifierType extends Tree {
     ABSTRACT,
     FINAL,
     NATIVE,
-    TRANSIENT, 
-    VOLATILE, 
-    SYNCHRONIZED, 
+    TRANSIENT,
+    VOLATILE,
+    SYNCHRONIZED,
     CONST
 }

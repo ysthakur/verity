@@ -1,7 +1,7 @@
 package verity.ast.infile
 
+import verity.ast._, infile._
 import verity.parsing._
-import verity.ast.infile._
 
 trait Expr extends Node {
   private var _exprType: Option[TypeRepr] = None
@@ -92,11 +92,7 @@ case class AssignmentExpr(lhs: Assignable, rhs: Expr, extraOp: Token | Null) ext
  * @param startOffset
  * @param endOffset
  */
-case class Op(
-               //symbol: Token[SymbolTokenType]
-               symbol: String, //TODO rectify this!!!
-               override val textRange: TextRange
-             ) extends Node {
+case class Op(symbol: String, override val textRange: TextRange) extends Tree, HasText {
   def isBinary: Boolean = ???
   override def text: String = symbol //symbol.text
 }

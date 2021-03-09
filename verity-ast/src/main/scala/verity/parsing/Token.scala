@@ -1,27 +1,11 @@
 package verity.parsing
 
-import verity.ast.infile.Node
-
 /**
  *
- * @param textRange - Text range, start and end offset
  * @param text - The text this token holds
+ * @param textRange - Text range, start and end offset
  */
-case class Token(textRange: TextRange, text: String, tokenType: TokenType = TokenType.MISC) {
-
-}
-
-enum TokenType {
-  case DOC_COMMENT
-  case MULTILINE_COMMENT
-  case SINGLE_LINE_COMMENT
-  case STRING
-  case NUM_LITERAL
-  case SYMBOL
-  case KEYWORD
-  case ALPHANUM
-  case MISC
-}
+case class Token(text: String, textRange: TextRange) extends HasText
 
 object Token {
   val hardKeywords = Array(
@@ -77,5 +61,5 @@ object Token {
     "where"
   )
 
-  def empty(start: Int) = Token(TextRange.empty(start), "")
+  def empty(start: Int) = Token("", TextRange.empty(start))
 }

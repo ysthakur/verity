@@ -1,8 +1,8 @@
 package verity.ast
 
-case class PackageNode() extends ParentNode {
-  override type Child = FileNode | PackageNode
-  override lazy val children: Iterable[Child] = ???
-}
+import collection.mutable.ListBuffer
 
-abstract class Directory extends Tree
+class PackageNode(private[verity] var _subPkgs: ListBuffer[PackageNode], private[verity] var _files: ListBuffer[FileNode]) {
+  def subPkgs: Iterable[PackageNode] = _subPkgs
+  def files: Iterable[FileNode] = _files
+}

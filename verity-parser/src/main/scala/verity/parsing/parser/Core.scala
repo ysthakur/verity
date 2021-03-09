@@ -31,7 +31,7 @@ private object Core {
   implicit class StringOps(str: String) {
     @inline
     def t[_: P] = P(Index ~ str ~ Index).map {
-      case (start, end) => new Token(TextRange(start, end), str)
+      case (start, end) => new Token(str, TextRange(start, end))
     }
   }
 
@@ -50,4 +50,26 @@ private object Core {
       case (firstArgs, Some(lastArg)) => firstArgs :+ lastArg
       case (firstArgs, _)             => firstArgs
     }
+
+  def modifier[_: P] = P(
+      Index ~ StringIn(
+          "final",
+          "public",
+          "protected",
+          "private",
+          "synchronized",
+          "transient",
+          "volatile",
+          "native",
+          "const",
+          "default",
+          "static",
+          "abstract"
+      ).! ~ Index
+  ).map {
+    case (start, modifier, end) => Modifier(ModifierType.valueOf(modifier), TextRange(start, end))
+  }
+  def modifiers[_: P] = P(modifier.rep)
+
+  def annotation[_: P]: P[Annotation] = ???
 }
