@@ -10,13 +10,6 @@ trait Expr extends Node {
   override def toString = text
 }
 
-/**
- * Can be on the left hand side of an assignment expression
- */
-trait Assignable extends Expr {
-  
-}
-
 sealed trait Literal extends Expr
 
 enum BoolLiteral(override val text: String, override val textRange: TextRange) extends Literal {
@@ -69,7 +62,6 @@ case class ArraySelect(arr: Expr, index: Expr, val bracketsTextRange: TextRange)
 
 case class BinaryExpr(left: Expr, op: String, right: Expr) extends Expr {
   override def text: String = s"(${left.text} $op ${right.text})"
-  override def toString = s"( $left $op $right )"
 }
 
 
@@ -81,7 +73,7 @@ case class UnaryPostExpr[E <: Expr, O <: Op](expr: E, op: O) extends Expr {
   override def text: String = s"(${expr.text}${op.text})"
 }
 
-case class AssignmentExpr(lhs: Assignable, rhs: Expr, extraOp: Token | Null) extends Expr {
+case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Token | Null) extends Expr {
   def text = lhs.text + (if (extraOp == null) "" else extraOp.text) + "=" + rhs.text
   override def textRange = TextRange(lhs.textRange.start, rhs.textRange.end)
 }

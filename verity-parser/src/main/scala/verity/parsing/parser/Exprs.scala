@@ -34,11 +34,11 @@ private object Exprs {
   def methodArgList[_: P] = argList(expr: P[Expr])
 
   def methodNameAndArgs[_: P] = P(
-      "<" ~/ typeArgList ~ ">" ~ identifier ~ "(" ~ methodArgList ~ ")" ~ "(" ~ "given" ~ methodArgList ~ ")" ~ Index
+      ("<" ~/ typeArgList ~ ">").? ~ identifier ~ "(" ~ methodArgList ~ ")" ~ Index
   ).map {
-    case (typeArgs, name, valArgs, givenArgs, end) =>
+    case (typeArgs, name, valArgs, /*givenArgs,*/ end) =>
       (obj: Option[Expr], start: Int) =>
-        MethodCall(obj, name, valArgs, givenArgs, typeArgs, TextRange(start, end))
+        MethodCall(obj, name, valArgs, Nil/*givenArgs*/, typeArgs.getOrElse(Nil), TextRange(start, end))
   }
 
   def noDotMethodCall[_: P]: P[MethodCall] = P(Index ~ methodNameAndArgs).map {

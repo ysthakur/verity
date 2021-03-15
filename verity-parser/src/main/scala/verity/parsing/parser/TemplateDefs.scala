@@ -6,6 +6,7 @@ import verity.parsing._
 import verity.ast._, infile._
 import Core._
 import Exprs._
+import Methods._
 
 import fastparse._, JavaWhitespace._
 
@@ -18,23 +19,23 @@ private object TemplateDefs {
     case (mods, typ, name, initExpr) => new Field(name, ListBuffer(mods: _*), typ, initExpr)
   }
 
-  /**
-    * A method that is not a constructor
-    */
-  def normalMethod[_: P] = P()
-  /**
-    * A constructor
-    */
-  def ctor[_: P] = P()
-
-  /**
-    * A normal method or a constructor
-    */
-  def method[_: P] = P(modifiers ~ identifier ~ identifier.? ~ )
-
-  def templateDefMember[_: P] = P(field | method)
+  //TODO field or method
+  def templateDefMember[_: P] = P(normMethod)
 
   def classOrInterfaceBody[_: P] = P(Index ~ "{" ~ templateDefMember.rep ~ "}" ~ Index)
-  def classOrInterface[_: P] = P(Index ~ StringIn("class", "interface") ~ Index ~ identifier ~ classOrInterfaceBody)
+  
+  //TODO add modifiers and annotations
+  def classOrInterface[_: P] = P(modifiers ~ Index ~ StringIn("class", "interface").! ~ Index ~ identifier ~ classOrInterfaceBody).map {
+    case (modifiers, metaclassStart, metaclass, metaclassEnd, name, (braceStart, members, braceEnd)) =>
+      ClassDef(
+        ListBuffer(), 
+        ListBuffer(modifiers: _*),
+        TemplateDefType.CLASS(TextRange(-1, -1)),
+        name,
+        ListBuffer(),
+        ListBuffer(members.asInstanceOf[Seq[Method]].filter(_.isInstanceOf[Method]): _*).asInstanceOf[ListBuffer[Method]],
+        TextRange(-1, -1)
+      )
+  }
 
 }

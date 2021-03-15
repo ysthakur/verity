@@ -6,6 +6,7 @@ import verity.parsing._
 import verity.ast._, infile._
 import Core._
 import Exprs._
+import TemplateDefs._
 
 import fastparse._, JavaWhitespace._
 
@@ -15,9 +16,9 @@ object Parser {
   def parseFile(input: FileInputStream) = {
     import Parsed._
     parse(input, file(_)) match {
-      case foo => println(foo)
+      case foo => foo
     }
   }
 
-  def file[_: P] = P(expr)
+  def file[_: P] = P(classOrInterface)
 }

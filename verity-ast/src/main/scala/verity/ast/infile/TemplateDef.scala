@@ -32,8 +32,9 @@ case class ClassDef(
 ) extends TemplateDef {
   def ctors: Iterable[Method] = methods.filter(_.isCtor)
 
-  override def text: String = ???
-    // s"${modifiers.text} ${metaclass.text} $name { ${children.map(_.text).mkString(" ")}}"
+  //todo also add fields
+  override def text: String =
+    s"${modifiers.mkString(" ")} ${defType.text} $name { ${methods.mkString(" ")}}"
 }
 
 case class InterfaceDef(

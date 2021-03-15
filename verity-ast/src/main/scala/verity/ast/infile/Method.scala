@@ -22,7 +22,7 @@ case class Method(
     private var _body: Option[Block],
     isCtor: Boolean
 ) extends MethodLike, HasModifiers {
-  def text: String = ???
+  def text: String = s"${modifiers.mkString(" ")} $returnType $name $params ${body.fold(";")(_.text)}"
   override def body: Option[Block] = _body
   def body_=(newBody: Option[Block]): Unit = _body = newBody
 }
@@ -43,4 +43,5 @@ case class Parameter(
 
 case class ParamList(params: List[Parameter], val textRange: TextRange) extends Tree, HasText {
   override def text: String = params.map(_.text).mkString("(", ",", ")")
+  override def toString = text
 }

@@ -10,16 +10,21 @@ import java.util.regex.Pattern
 import verity.parsing.parser._
 
 class ParserTest extends AnyFlatSpec {
-  def parse() = {
+  def test() = {
+    
+    import fastparse._
     val file = new File(
-        raw"C:\Users\yasht\verity\verity-parser\src\test\resources\parsertest"
+        raw"C:\Users\yasht\verity\verity-parser\src\test\resources\exprtest"
     )
     val fis = new FileInputStream(file)
-    val ast = Parser.parseFile(fis)
-    ast
+    parse(fis, Exprs.expr(_)) match {
+      case Parsed.Success(matched, _) => matched
+    }
   }
 
-  val parsed = parse()
-  // println(parsed.text)
-  // assert(parsed.text == "true - false + true")
+  val matched = test().text
+  println(matched)
+  matched should "equal ( ( 92 ^ ( ( 6 - ( 8 * 39 ) ) > ( 45 + ( ( (this) / 45 ) * 99 ) ) ) ) || ( true && ( false | 3 ) ) )" in {
+    assert(matched.replaceAll("\\s", "") == "( ( 92 ^ ( ( 6 - ( 8 * 39 ) ) > ( 45 + ( ( (this) / 45 ) * 99 ) ) ) ) || ( true && ( false | 3 ) ) )".replaceAll("\\s", ""))
+  }
 }

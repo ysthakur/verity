@@ -10,16 +10,17 @@ import fastparse._, JavaWhitespace._
 private object Core {
   def identifier[_: P]: P[Name] =
     P(
-        Index ~ CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(
-            _.isUnicodeIdentifierPart
-        ).! ~ Index
+        Index ~ CharPred(_.isUnicodeIdentifierStart).!
+          ~ CharsWhile(_.isUnicodeIdentifierPart).!
+          ~ Index
     ).map {
       case (start, first, rest, end) =>
         Name(first + rest, TextRange(start, end))
     }
+    
 
-  def typeRef[_: P]: P[TypeRef] = P(identifier ~ "<" ~ typeArgList ~ ">").map {
-    case (name, args) => TypeRef(name, args)
+  def typeRef[_: P]: P[TypeRef] = P(identifier ~ ("<" ~ typeArgList ~ ">").?).map {
+    case (name, args) => TypeRef(name, args.getOrElse(List.empty))
   }
   def wildCard[_: P]: P[Wildcard] =
     P("?" ~ ("extends" ~ typeRef).? ~ ("super" ~ typeRef).?).map {
@@ -67,7 +68,7 @@ private object Core {
           "abstract"
       ).! ~ Index
   ).map {
-    case (start, modifier, end) => Modifier(ModifierType.valueOf(modifier), TextRange(start, end))
+    case (start, modifier, end) => Modifier(ModifierType.valueOf(modifier.toUpperCase), TextRange(start, end))
   }
   def modifiers[_: P] = P(modifier.rep)
 
