@@ -14,7 +14,7 @@ import collection.mutable._
 private object Methods {
   def param[_ : P] = P(typeRef ~ identifier).map { 
     case (typ, name) => Parameter(
-      List.empty[Annotation], //TODO Add annotations!
+      List.empty, //TODO Add annotations!
       typ,
       name,
       false,
@@ -27,17 +27,17 @@ private object Methods {
     case (start, params, end) => ParamList(params.toList, TextRange(start, end))
   }
 
-  def exprStmt[_ : P] = P(expr ~ ";" ~ Index ~ ";".rep).map {
+  def exprStmt[_ : P] = P(expr ~ ";" ~ Index).map {
     case (expr, end) => new ExprStmt(expr, end)
   }
   //TODO add control flow, etc. (BEFORE exprStmt)
   def stmt[_ : P]: P[Statement] = P(exprStmt)
 
-  def methodBody[_ : P]: P[Block] = P(Index ~ "{" ~ stmt.rep ~ "}" ~ Index).map {
+  def methodBody[_ : P]: P[Block] = P(Index ~ "{" ~ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
     case (start, stmts, end) => Block(ListBuffer(stmts: _*), TextRange(start, end))
   }
 
-  
+  //TODO add type parameters
   def normMethod[_ : P]: P[Method] =
     P(modifiers ~ typeRef ~ identifier ~ paramList ~ (methodBody | ";" ~ Index)).map {
       case (modifiers, returnType, name, params, body) =>

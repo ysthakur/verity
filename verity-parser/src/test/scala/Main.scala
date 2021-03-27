@@ -7,5 +7,5 @@ import verity.parsing.parser._
 
 object ParserTestMain {
   def main(args: Array[String]): Unit =
-    new ParserTest()
+    new ParseExprTest()
 }

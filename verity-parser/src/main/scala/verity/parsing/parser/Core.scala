@@ -11,7 +11,7 @@ private object Core {
   def identifier[_: P]: P[Name] =
     P(
         Index ~ CharPred(_.isUnicodeIdentifierStart).!
-          ~ CharsWhile(_.isUnicodeIdentifierPart).!
+          ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!
           ~ Index
     ).map {
       case (start, first, rest, end) =>

@@ -3,11 +3,10 @@ package verity.ast.infile
 import verity.ast._, infile._
 import verity.parsing._
 
-trait Expr extends Node {
+trait Expr extends Tree, HasText {
   private var _exprType: Option[TypeRepr] = None
   def exprType = _exprType
   def exprType_=(typeRepr: TypeRepr) = _exprType = Some(typeRepr)
-  override def toString = text
 }
 
 sealed trait Literal extends Expr
@@ -58,19 +57,23 @@ case class DotChainedExpr(expr: Expr, propertyName: Name) extends Expr {
 
 case class ArraySelect(arr: Expr, index: Expr, val bracketsTextRange: TextRange) extends Expr {
   override def text: String = s"${arr.text}[${index.text}]"
+  override def textRange = TextRange(arr.textRange.start, bracketsTextRange.end)
 }
 
 case class BinaryExpr(left: Expr, op: String, right: Expr) extends Expr {
   override def text: String = s"(${left.text} $op ${right.text})"
+  override def textRange = TextRange(left.textRange.start, right.textRange.end)
 }
 
 
-case class UnaryPreExpr[O <: Op, +E <: Expr](op: Op, expr: E) extends Expr {
+case class UnaryPreExpr(op: Op, expr: Expr) extends Expr {
   override def text: String = s"(${op.text} ${expr.text})"
+  override def textRange = TextRange(op.textRange.start, expr.textRange.end)
 }
 
-case class UnaryPostExpr[E <: Expr, O <: Op](expr: E, op: O) extends Expr {
+case class UnaryPostExpr(expr: Expr, op: Op) extends Expr {
   override def text: String = s"(${expr.text}${op.text})"
+  override def textRange = TextRange(expr.textRange.start, op.textRange.end)
 }
 
 case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Token | Null) extends Expr {
@@ -90,18 +93,22 @@ case class Op(symbol: String, override val textRange: TextRange) extends Tree, H
 }
 
 case class ToBeGiven(typ: Type) extends Expr {
-  def text: String = ???
+  override def text = ???
+  override def textRange = ???
 }
 
 case class MethodCall(
   obj: Option[Expr],
   name: Name,
-  valArgs: Seq[Expr],
-  givenArgs: Seq[Expr],
-  typeArgs: Seq[Type],
-  override val textRange: TextRange) extends Expr {
+  valArgs: ArgList,
+  //givenArgs: Seq[Expr], //TODO do givenArgs!!
+  typeArgs: Seq[Type]) extends Expr {
   //TODO figure out how to print types
-  def text: String = obj.fold("")(_.text + ".") + typeArgs.map(_.toString).mkString("<", ",", ">") + valArgs.map(_.text).mkString("(", ",", ")")
+  def text: String = obj.fold("")(_.text + ".") 
+    + (if (typeArgs.isEmpty) "" else typeArgs.map(_.text).mkString("<", ",", ">"))
+    + name.text
+    + valArgs.text
+  override def textRange: TextRange = ???
 }
 
 case class ArgList(args: List[Argument], override val textRange: TextRange) extends HasText {
@@ -111,4 +118,9 @@ case class ArgList(args: List[Argument], override val textRange: TextRange) exte
 case class Argument(expr: Expr) extends HasText {
   def text = expr.text
   def textRange = expr.textRange
+}
+
+case class FieldAccess(obj: Expr, fieldName: Name) extends Expr, HasText {
+  override def textRange = TextRange(obj.textRange.start, fieldName.textRange.end)
+  def text = s"${obj.text}.${fieldName.text}"
 }

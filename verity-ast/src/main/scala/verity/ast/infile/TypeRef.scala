@@ -1,11 +1,12 @@
 package verity.ast.infile
 
+import verity.ast.Tree
 import verity.parsing._
 
-trait Type extends Node
+trait Type extends Tree, HasText
 
 case class TypeRef(name: Name, args: Seq[Type]) extends Type {
-  def text = if (args.isEmpty) name.text else s"$name<${args.mkString(",")}>"
+  def text = if (args.isEmpty) name.text else s"${name.text}<${args.mkString(",")}>"
 
   override def textRange: TextRange = ???
 }

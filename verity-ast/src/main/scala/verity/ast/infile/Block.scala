@@ -5,6 +5,6 @@ import verity.parsing.TextRange
 
 import scala.collection.mutable.ListBuffer
 
-case class Block(stmts: ListBuffer[Statement], override val textRange: TextRange) extends Node with Expr {
+case class Block(stmts: ListBuffer[Statement], override val textRange: TextRange) extends Expr {
   def text = stmts.map(_.text).mkString("{", "", "}")
 }

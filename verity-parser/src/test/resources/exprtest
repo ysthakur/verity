@@ -1,11 +1,11 @@
-//foo.bar() //.foo()
-
 //Expression to be tested
-92L ^ 6 - 8 * 39 > 45 + (this) / 45 * 99 || true && false | 3
+x.foo(3 + "blah", foobar) ^ 6 - xyzzy[5 + 944][baz][7] * 45 + (this) / 45 * 99 || true && false
+
+
+
+//92L ^ 6 - 8 * 39 > 45 + (this) / 45 * 99 || true && false | 3
 
 //( 92 ^ ( ( 6 - ( 8 * 39 ) ) > ( 45 + ( ( (this) / 45 ) * 99 ) ) ) ) || ( true && ( false | 3 ) )
-
-//true * false / true
 
 /*package com.ysthakur;
 

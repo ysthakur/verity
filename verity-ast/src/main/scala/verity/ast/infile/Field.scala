@@ -14,4 +14,5 @@ class Field(
     with HasModifiers
     with HasType {
   override def text: String = ???
+  override def textRange = ???
 }

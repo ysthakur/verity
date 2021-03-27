@@ -18,4 +18,5 @@ class LocalVar(
     if (initExpr != None) sb.append('=').append(initExpr.get.text).append(';')
     sb.toString
   }
+  override def textRange = ???
 }

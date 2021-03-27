@@ -1,17 +1,16 @@
 package verity.ast.infile
 
-import verity.parsing.TextRange
 import verity.ast.Tree
-import verity.ast.infile.Node
+import verity.parsing._
 
 import scala.collection.mutable.ListBuffer
 
-trait HasModifiers extends Node {
+trait HasModifiers extends Tree {
   def modifiers: Iterable[Modifier]
   def modifiersText: String = modifiers.mkString(" ")
 }
 
-case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Node {
+case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasText {
   override def text: String = modType.toString.toLowerCase.nn
 }
 

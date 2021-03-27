@@ -1,7 +1,7 @@
 package verity.ast.infile
 
-import verity.ast.Reference
+import verity.ast._
 
-trait ITypeRef extends Node {
+trait ITypeRef extends Tree {
 
 }

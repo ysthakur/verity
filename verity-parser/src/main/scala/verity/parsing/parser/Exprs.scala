@@ -19,44 +19,46 @@ private object Exprs {
     case (start, num, l, end) => new IntegerLiteral(num, TextRange(start, end), l == "L")
   }
   def numLiteral[_: P] = P(intLiteral)
-  def thisRef[_: P] = P(Index ~ "this" ~ Index).map {
-    case (start, end) => ThisRef(TextRange(start, end))
-  }
-  def superRef[_: P] = P(Index ~ "super" ~ Index).map {
-    case (start, end) => SuperRef(TextRange(start, end))
-  }
+  def thisRef[_: P] = P(Index ~ "this" ~ Index).map { case (start, end) => ThisRef(TextRange(start, end)) }
+  def superRef[_: P] = P(Index ~ "super" ~ Index).map { case (start, end) => SuperRef(TextRange(start, end)) }
   def literal[_: P] = P(numLiteral | boolLiteral | thisRef | superRef)
   def varRef[_: P] = P(identifier).map(VarRef.apply)
   def parenExpr[_: P] = P(Index ~ "(" ~ expr ~/ ")" ~ Index).map {
     case (start, expr, end) => ParenExpr(expr, TextRange(start, end))
   }
+  def varRefOrMethodCall[_: P]: P[Expr] = P(identifier ~ ("(" ~ Index ~ methodArgList ~ ")" ~ Index).?).map {
+    case (name, Some((argStart, args, argsEnd))) => MethodCall(None, name, args, Nil)
+    case (name, _) => VarRef(name)
+  }
 
-  def methodArgList[_: P] = argList(expr: P[Expr])
+  def methodArg[_: P] = P(expr).map(Argument.apply)
+  def methodArgList[_: P] = P("(" ~ Index ~ (methodArg ~ ("," ~ methodArg).rep).? ~ ")" ~ Index).map {
+    case (start, None, end) => ArgList(Nil, TextRange(start, end))
+    case (start, Some((firstArg, args)), end) =>
+      ArgList(firstArg :: args.toList, TextRange(start, end))
+  }
 
-  def methodNameAndArgs[_: P] = P(
-      ("<" ~/ typeArgList ~ ">").? ~ identifier ~ "(" ~ methodArgList ~ ")" ~ Index
+  def selectable[_: P]: P[Expr] = P(parenExpr | literal | varRefOrMethodCall)
+
+  def fieldAccessOrMethodCall[_: P]: P[Expr => Expr] = P("." ~ identifier ~ methodArgList.?).map {
+    case (name, Some(args)) =>
+      (obj: Expr) => MethodCall(Some(obj), name, args, Nil)
+    case (name, _) => (obj: Expr) => FieldAccess(obj, name)
+  }
+  def typeParamsFirstMethodCall[_: P]: P[Expr => Expr] = P(
+    "." ~ "<" ~/ Index ~ typeArgList ~ ">" ~ Index ~ identifier ~ methodArgList
   ).map {
-    case (typeArgs, name, valArgs, /*givenArgs,*/ end) =>
-      (obj: Option[Expr], start: Int) =>
-        MethodCall(obj, name, valArgs, Nil/*givenArgs*/, typeArgs.getOrElse(Nil), TextRange(start, end))
+    case (typeArgStart, typeArgs, typeArgEnd, name, valArgs/*, givenArgs*/) =>
+      (obj: Expr) =>
+        MethodCall(Some(obj), name, valArgs, /*givenArgs,*/ typeArgs)
+  }
+  def arrayAccess[_: P]: P[Expr => Expr] = P("[" ~ Index ~ expr ~ "]" ~ Index).map {
+    case (start, index, end) => (arr: Expr) => ArraySelect(arr, index, TextRange(start, end))
   }
 
-  def noDotMethodCall[_: P]: P[MethodCall] = P(Index ~ methodNameAndArgs).map {
-    case (start, methodCallCtor) => methodCallCtor(None, start)
+  def topExpr[_: P]: P[Expr] = P(selectable ~ (fieldAccessOrMethodCall | typeParamsFirstMethodCall | arrayAccess).rep).map {
+    case (expr, ctors) => ctors.foldLeft(expr)((e, f) => f(e))
   }
-
-  def selectable[_: P]: P[Expr] = P(parenExpr | literal | noDotMethodCall | varRef)
-
-  def dotMethodCall[_: P]: P[Expr] = P(selectable ~ ("." ~ methodNameAndArgs).rep).map {
-    case (obj, methodCalls) =>
-      methodCalls.foldLeft(obj: Expr) { (obj, methodCallCtor) =>
-        methodCallCtor(Some(obj), obj.textRange.start)
-      }
-  }
-
-  def methodCall[_: P] = P(dotMethodCall)
-
-  def topExpr[_: P]: P[Expr] = P(dotMethodCall)
 
   def mulDivMod[_: P] = P(topExpr ~ (CharIn("*/").! ~/ topExpr).rep).map(foldBinExpr)
   // def mulDivMod[_: P] = binExpr(CharIn("*/%").!, topExpr)

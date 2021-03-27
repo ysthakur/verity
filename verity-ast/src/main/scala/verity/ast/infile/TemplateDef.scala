@@ -1,18 +1,24 @@
 package verity.ast.infile
 
-import verity.parsing.TextRange
 import verity.ast.{ParentNode, Tree}
-import verity.parsing.Token
+import verity.parsing._
 
 import scala.collection.mutable.ListBuffer
 
 //Base trait for classes, interfaces, enums, and annotations
-sealed trait TemplateDef extends Node, HasModifiers, TypeRepr, HasAnnotations, NamedTree {
+sealed trait TemplateDef extends Tree, HasText, HasModifiers, TypeRepr, HasAnnotations, NamedTree {
   def modifiers: ListBuffer[Modifier]
   def defType: TemplateDefType
   def fields: Iterable[Field]
   def methods: Iterable[Method]
   def bodyRange: TextRange
+
+  override def textRange = TextRange(
+    if (annotations.nonEmpty) annotations.head.textRange.start
+    else if (modifiers.nonEmpty) modifiers.head.textRange.start
+    else defType.textRange.start,
+    bodyRange.end
+  )
 }
 
 enum TemplateDefType(val text: String, val textRange: TextRange) extends Tree {
@@ -32,9 +38,9 @@ case class ClassDef(
 ) extends TemplateDef {
   def ctors: Iterable[Method] = methods.filter(_.isCtor)
 
-  //todo also add fields
+  //todo also add fields (no need to preserve order)
   override def text: String =
-    s"${modifiers.mkString(" ")} ${defType.text} $name { ${methods.mkString(" ")}}"
+    s"${modifiers.map(_.text).mkString(" ")} ${defType.text} $name { ${methods.map(_.text).mkString(" ")}}"
 }
 
 case class InterfaceDef(
@@ -46,6 +52,6 @@ case class InterfaceDef(
     methods: ListBuffer[Method],
     bodyRange: TextRange
 ) extends TemplateDef {
-  override def text: String = ???
-    // s"${modifiers.text} ${metaclass.text} $name { ${children.map(_.text).mkString(" ")}}"
+  override def text: String =
+    s"${modifiers.map(_.text).mkString(" ")} ${defType.text} $name { ${methods.mkString(" ")}}"
 }

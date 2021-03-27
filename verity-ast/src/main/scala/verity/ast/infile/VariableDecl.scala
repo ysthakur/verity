@@ -1,9 +1,12 @@
 package verity.ast.infile
 
+import verity.ast.Tree
+import verity.parsing.HasText
+
 /**
   * A variable declaration (local variable or field)
   */
-trait VariableDecl extends Node, HasType, NamedTree {
+trait VariableDecl extends Tree, HasText, HasType, NamedTree {
   def name: Name
   /**
     * What it gets initialized to, unless it's just declared

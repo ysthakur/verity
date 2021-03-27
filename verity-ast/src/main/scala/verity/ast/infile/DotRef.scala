@@ -1,13 +1,11 @@
 package verity.ast.infile
 
-import verity.parsing.TextRange
+import verity.ast.Tree
+import verity.parsing.{TextRange, HasText}
 
 case class DotRef(
                    path: Iterable[Name]
-) extends Node {
-//  val startOffset: Int = iterable.head.startOffset
-//  val endOffset: Int = iterable.last.endOffset
-  override def text: String =
-    path.map(_.text).mkString(".")
-  //def this(pattern: PatternWithMatch[RepeatPattern[Node], Match[Node]]) = this(null)
+) extends Tree, HasText {
+  override def textRange = TextRange(path.head.textRange.start, path.last.textRange.end)
+  override def text = path.map(_.text).mkString(".")
 }
