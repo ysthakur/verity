@@ -8,7 +8,7 @@ trait Type extends Tree, HasText
 case class TypeRef(name: Name, args: Seq[Type]) extends Type {
   def text = if (args.isEmpty) name.text else s"${name.text}<${args.mkString(",")}>"
 
-  override def textRange: TextRange = ???
+  override def textRange: TextRange = if (args.isEmpty) name.textRange else TextRange(name.textRange.start, args.last.textRange.end)
 }
 
 class TypeRange(var upperBound: Type, var lowerBound: Type) extends Type {

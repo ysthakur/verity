@@ -19,9 +19,12 @@ private object Exprs {
     case (start, num, l, end) => new IntegerLiteral(num, TextRange(start, end), l == "L")
   }
   def numLiteral[_: P] = P(intLiteral)
+  def stringLiteral[_: P] = P("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
+    case (start, text, end) => StringLiteral("\"" + text + "\"", TextRange(start, end))
+  }
   def thisRef[_: P] = P(Index ~ "this" ~ Index).map { case (start, end) => ThisRef(TextRange(start, end)) }
   def superRef[_: P] = P(Index ~ "super" ~ Index).map { case (start, end) => SuperRef(TextRange(start, end)) }
-  def literal[_: P] = P(numLiteral | boolLiteral | thisRef | superRef)
+  def literal[_: P] = P(numLiteral | boolLiteral | stringLiteral | thisRef | superRef)
   def varRef[_: P] = P(identifier).map(VarRef.apply)
   def parenExpr[_: P] = P(Index ~ "(" ~ expr ~/ ")" ~ Index).map {
     case (start, expr, end) => ParenExpr(expr, TextRange(start, end))
@@ -32,7 +35,7 @@ private object Exprs {
   }
 
   def methodArg[_: P] = P(expr).map(Argument.apply)
-  def methodArgList[_: P] = P("(" ~ Index ~ (methodArg ~ ("," ~ methodArg).rep).? ~ ")" ~ Index).map {
+  def methodArgList[_: P] = P("(" ~/ Index ~ (methodArg ~ ("," ~ methodArg).rep).? ~ ")" ~ Index).map {
     case (start, None, end) => ArgList(Nil, TextRange(start, end))
     case (start, Some((firstArg, args)), end) =>
       ArgList(firstArg :: args.toList, TextRange(start, end))
@@ -52,7 +55,7 @@ private object Exprs {
       (obj: Expr) =>
         MethodCall(Some(obj), name, valArgs, /*givenArgs,*/ typeArgs)
   }
-  def arrayAccess[_: P]: P[Expr => Expr] = P("[" ~ Index ~ expr ~ "]" ~ Index).map {
+  def arrayAccess[_: P]: P[Expr => Expr] = P("[" ~/ Index ~ expr ~ "]" ~ Index).map {
     case (start, index, end) => (arr: Expr) => ArraySelect(arr, index, TextRange(start, end))
   }
 

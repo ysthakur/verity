@@ -33,6 +33,8 @@ enum NumType {
   case DOUBLE
 }
 
+case class StringLiteral(override val text: String, override val textRange: TextRange) extends Expr
+
 case class ThisRef(override val textRange: TextRange) extends Expr {
   override def text: String = "this"
 }
