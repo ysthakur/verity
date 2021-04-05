@@ -66,7 +66,7 @@ lazy val `verity-codegen` =project
       "org.ow2.asm" % "asm" % "8.0.1", 
       "org.ow2.asm" % "asm-util" % "8.0.1"
     )
-  )
+  ).dependsOn(`verity-ast`)
 
 lazy val `verity-core` = project
   .in(file("verity-core"))

@@ -1,3 +1,8 @@
+package foo.bar.baz;
+
+import java.util.ArrayList;
+import java.util.*;
+
 class Foo {
   public static void main() {
     System.out.println("Hello world!");

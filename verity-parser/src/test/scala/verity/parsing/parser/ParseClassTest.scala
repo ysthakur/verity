@@ -27,14 +27,17 @@ class ParseClassTest extends AnyFlatSpec {
 
   val Parsed.Success(matched, index) = parse()
   println(matched.text)
+
   matched.text should "be parsed properly" in {
-    assert(matched.text.replaceAll("\\s", "") == 
+    assert(matched.text.replaceAll("\\s|\n", "") == 
     """
+    package foo.bar.baz;
+    import java.util.ArrayList;
+    import java.util.*;
     class Foo {
       public static void main () {
         System.out.println("Hello world!");
       }
-
       private static void foo(int bar);
     }""".stripMargin.replaceAll("\\s|\n", ""))
   }
