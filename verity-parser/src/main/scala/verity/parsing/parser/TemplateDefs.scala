@@ -15,25 +15,27 @@ import collection.mutable.ListBuffer
 //TODO add annotations
 private object TemplateDefs {
 
-  def field[_: P] = P(modifiers ~ typeRef ~ identifier ~ ("=" ~ expr ~ ";").?).map {
-    case (mods, typ, name, initExpr) => new Field(name, ListBuffer(mods: _*), typ, initExpr)
+  def field[_: P] = P(modifiers ~ typeRef ~ identifier ~ ("=" ~/ expr).?  ~ ";").map {
+    case (mods, typ, name, initExpr) => new Field(name, mods.to(ListBuffer), typ, initExpr)
   }
 
   //TODO field or method
-  def templateDefMember[_: P] = P(normMethod)
+  def templateDefMember[_: P] = P(normMethod | field)
 
   def classOrInterfaceBody[_: P] = P(Index ~ "{" ~ templateDefMember.rep ~ "}" ~ Index)
   
   //TODO add modifiers and annotations
-  def classOrInterface[_: P] = P(modifiers ~ Index ~ StringIn("class", "interface").! ~ Index ~ identifier ~ classOrInterfaceBody).map {
+  //todo enums, interfaces, annotation definitions
+  def templateDef[_: P] = P(modifiers ~ Index ~ StringIn("class", "interface").! ~ Index ~ identifier ~ classOrInterfaceBody).map {
     case (modifiers, metaclassStart, metaclass, metaclassEnd, name, (braceStart, members, braceEnd)) =>
+      val (fields, methods) = members.partition(_.isInstanceOf[Field])
       ClassDef(
         ListBuffer(), 
-        ListBuffer(modifiers: _*),
+        modifiers.to(ListBuffer),
         TemplateDefType.CLASS(TextRange(-1, -1)),
         name,
-        ListBuffer(),
-        ListBuffer(members.asInstanceOf[Seq[Method]].filter(_.isInstanceOf[Method]): _*).asInstanceOf[ListBuffer[Method]],
+        fields.to(ListBuffer).asInstanceOf[ListBuffer[Field]],
+        methods.to(ListBuffer).asInstanceOf[ListBuffer[Method]],
         TextRange(-1, -1)
       )
   }

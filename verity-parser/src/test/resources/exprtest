@@ -1,5 +1,5 @@
 //Expression to be tested
-x.foo("bar" + 3) ^ 6 - xyzzy[5 + 944][baz][7] * 45 + (this) / 45 * 99 || true && false
+x.foo("bar" + 3)[4].baz ^ 6 - xyzzy[5 + 944][baz][7] * 45 + (this) / 45 * 99 || true && false
 
 
 

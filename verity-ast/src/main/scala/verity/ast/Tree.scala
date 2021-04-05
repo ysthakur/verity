@@ -1,9 +1,20 @@
 package verity.ast
 
+import verity.parsing.{TextRange, HasText, GetText}
+
 trait Tree {
-  def as[T]: T = asInstanceOf[T]
-  def flatten: Tree = this
+  def synthetic: Boolean = false
 }
+
+object Tree {
+  
+}
+
+trait Synthetic extends Tree, HasText {
+  override def textRange = TextRange(-1, -1)
+  override def synthetic = true
+}
+
 
 trait ParentNode extends Tree {
   type Child <: Tree

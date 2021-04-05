@@ -35,7 +35,7 @@ private object Methods {
   def stmt[_: P]: P[Statement] = P(exprStmt)
 
   def methodBody[_: P]: P[Block] = P(Index ~ "{" ~ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
-    case (start, stmts, end) => Block(ListBuffer(stmts: _*), TextRange(start, end))
+    case (start, stmts, end) => Block(stmts.to(ListBuffer), TextRange(start, end))
   }
 
   //TODO add type parameters
@@ -43,7 +43,7 @@ private object Methods {
     P(modifiers ~ typeRef ~ identifier ~ paramList ~ (methodBody | ";" ~ Index)).map {
       case (modifiers, returnType, name, params, body) =>
         Method(
-            ListBuffer(modifiers: _*),
+            modifiers.to(ListBuffer),
             returnType,
             name,
             params,

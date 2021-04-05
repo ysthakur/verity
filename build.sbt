@@ -88,7 +88,8 @@ lazy val libDeps = Seq(
 
 val commonScala2Options = Seq(
   // "-language:implicitConversions"
-  "-Ytasty-reader"
+  "-Ytasty-reader",
+  "-Xsource:3"
 )
 
 val commonScala3Options = Seq(

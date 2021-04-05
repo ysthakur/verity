@@ -6,6 +6,10 @@ import org.scalatest.Assertions._
 import java.io.{BufferedInputStream, File, FileInputStream, FileWriter}
 import java.util.regex.Pattern
 
+import verity.parsing.GetText
+import GetText._
+import verity.ast._
+
 // import verity.parsing._, ast._, parser._
 // import verity.parsing.parser._
 

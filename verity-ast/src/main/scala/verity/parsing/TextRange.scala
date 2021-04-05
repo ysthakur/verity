@@ -7,6 +7,8 @@ case class TextRange(start: Int, end: Int) {
 }
 
 object TextRange {
+  val synthetic = TextRange(-1, -1)
+  
   def empty(offset: Int) = TextRange(offset, offset)
   // def empty(posInt): TextRange = TextRange(pos, pos)
   //def toEnd(startInt)(toks: Iterable[Token[_]]): TextRange = TextRange(start, toks.last.pos)

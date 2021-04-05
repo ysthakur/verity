@@ -73,4 +73,17 @@ private object Core {
   def modifiers[_: P] = P(modifier.rep)
 
   def annotation[_: P]: P[Annotation] = ???
+
+  def dotRef[_: P]: P[DotRef] = P(identifier ~ ("." ~ identifier).rep).map {
+    case (top, rest) => DotRef(top +: rest)
+  }
+
+  def packageStmt[_: P]: P[PackageStmt] = P(Index ~ "package" ~/ dotRef ~ ";").map {
+    case (pkgTokStart, path) => new PackageStmt(path, pkgTokStart)
+  }
+
+  def importStmt[_: P]: P[ImportStmt] = P(Index ~ "import" ~/ dotRef ~ ("." ~ "*" ~ Index).? ~ ";").map {
+    case (imptTokStart, path, None) => new ImportStmt(path, false, TextRange(imptTokStart, path.textRange.end))
+    case (imptTokStart, path, Some(wildcardInd)) => new ImportStmt(path, true, TextRange(imptTokStart, wildcardInd))
+  }
 }

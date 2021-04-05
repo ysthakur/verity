@@ -4,9 +4,9 @@ import verity.ast._, infile._
 import verity.parsing._
 
 trait Expr extends Tree, HasText {
-  private var _exprType: Option[TypeRepr] = None
+  private var _exprType: Type = ToBeInferred(AnyType, NothingType, List.empty)
   def exprType = _exprType
-  def exprType_=(typeRepr: TypeRepr) = _exprType = Some(typeRepr)
+  private[verity] def exprType_=(typ: Type) = _exprType = typ
 }
 
 sealed trait Literal extends Expr
