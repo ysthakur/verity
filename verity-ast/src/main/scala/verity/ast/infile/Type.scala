@@ -1,7 +1,8 @@
 package verity.ast.infile
 
-import verity.ast._
-import verity.parsing._
+import verity.ast.*
+// import verity.ast.ToJava.given
+import verity.parsing.*
 
 sealed trait Type extends Tree, HasText {
   def strictSubTypeOf(sup: Type): Boolean
@@ -19,12 +20,16 @@ object AnyType extends Type with Synthetic {
   def text = "Type Any"
 }
 
+// given ToJava[AnyType.type] = _ => "Type Any"
+
 object ObjectType extends Type, Synthetic {
   def strictSubTypeOf(sup: Type) = false
   def strictSuperTypeOf(sub: Type) = sub != AnyType
 
   def text = "Type Object"
 }
+
+// given ToJava[ObjectType.type] = _ => "Type Object"
 
 object NothingType extends Type, Synthetic {
   def strictSubTypeOf(sup: Type) = false
@@ -33,7 +38,9 @@ object NothingType extends Type, Synthetic {
   def text = "Type Nothing"
 }
 
-enum Primitive extends Type {
+// given ToJava[NothingType.type] = _ => "Type Nothing"
+
+enum PrimitiveType extends Type {
   case BOOLEAN, BYTE, SHORT, CHAR, INT, FLOAT, LONG, DOUBLE
 
   def strictSubTypeOf(sup: Type): Boolean = ???
@@ -43,6 +50,7 @@ enum Primitive extends Type {
   def textRange = TextRange.synthetic
 }
 
+// given ToJava[PrimitiveType] = primType => s"Type ${primType.toString.toLowerCase}"
 
 case class TypeRef(name: Name, args: Seq[Type]) extends Type {
   def strictSubTypeOf(sup: Type): Boolean = ???
@@ -57,7 +65,10 @@ case class TypeRef(name: Name, args: Seq[Type]) extends Type {
     _resolve = Some(typeDef)
 }
 
-class TypeRange(var upper: Type, var lower: Type) extends Type {
+// given ToJava[TypeRef] = typeRef =>
+//   typeRef.name.toJava + (if (typeRef.args.isEmpty) "" else typeRef.args.view.map(_.toJava).mkString(","))
+
+case class TypeRange(var upper: Type, var lower: Type) extends Type {
   def strictSubTypeOf(sup: Type): Boolean = upper.strictSubTypeOf(sup)
   def strictSuperTypeOf(sub: Type) = lower.strictSuperTypeOf(sub)
 
@@ -83,7 +94,7 @@ case class Wildcard(upper: Option[TypeRef], lower: Option[TypeRef]) extends Type
 }
 
 //TODO arrays
-class ArrayType
+case class ArrayType()
 
 case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type {
   def strictSubTypeOf(sup: Type): Boolean = upper.strictSubTypeOf(sup)

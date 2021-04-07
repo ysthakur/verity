@@ -83,7 +83,7 @@ private object Core {
   }
 
   def importStmt[_: P]: P[ImportStmt] = P(Index ~ "import" ~/ dotRef ~ ("." ~ "*" ~ Index).? ~ ";").map {
-    case (imptTokStart, path, None) => new ImportStmt(path, false, TextRange(imptTokStart, path.textRange.end))
-    case (imptTokStart, path, Some(wildcardInd)) => new ImportStmt(path, true, TextRange(imptTokStart, wildcardInd))
+    case (imptTokStart, path, None) => new ImportStmt(path, TextRange(imptTokStart, path.textRange.end), false)
+    case (imptTokStart, path, Some(wildcardInd)) => new ImportStmt(path, TextRange(imptTokStart, wildcardInd), true)
   }
 }

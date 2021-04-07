@@ -3,7 +3,9 @@ package verity.ast.infile
 import verity.ast._, infile._
 import verity.parsing._
 
-trait Expr extends Tree, HasText {
+import scala.collection.mutable.ListBuffer
+
+sealed trait Expr extends Tree, HasText {
   private var _exprType: Type = ToBeInferred(AnyType, NothingType, List.empty)
   def exprType = _exprType
   private[verity] def exprType_=(typ: Type) = _exprType = typ
@@ -21,10 +23,19 @@ object BoolLiteral {
     else FalseLiteral(token.textRange)
 }
 
-trait NumLiteral(val numType: NumType) extends Literal
+sealed trait NumLiteral(val numType: NumType) extends Literal
 
-class IntegerLiteral(override val text: String, override val textRange: TextRange, isLong: Boolean) extends NumLiteral(if (isLong) NumType.LONG else NumType.INT)
-class FloatLiteral(override val text: String, override val textRange: TextRange, isDouble: Boolean) extends NumLiteral(if (isDouble) NumType.DOUBLE else NumType.FLOAT)
+case class IntegerLiteral(
+  override val text: String,
+  override val textRange: TextRange,
+  isLong: Boolean
+) extends NumLiteral(if (isLong) NumType.LONG else NumType.INT)
+
+case class FloatLiteral(
+  override val text: String, 
+  override val textRange: TextRange, 
+  isDouble: Boolean
+) extends NumLiteral(if (isDouble) NumType.DOUBLE else NumType.FLOAT)
 
 enum NumType {
   case INT
@@ -78,8 +89,8 @@ case class UnaryPostExpr(expr: Expr, op: Op) extends Expr {
   override def textRange = TextRange(expr.textRange.start, op.textRange.end)
 }
 
-case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Token | Null) extends Expr {
-  def text = lhs.text + (if (extraOp == null) "" else extraOp.text) + "=" + rhs.text
+case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Option[Token]) extends Expr {
+  def text = lhs.text + extraOp.fold("")(_.text) + "=" + rhs.text
   override def textRange = TextRange(lhs.textRange.start, rhs.textRange.end)
 }
 
@@ -92,6 +103,10 @@ case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Token | Null) extends E
 case class Op(symbol: String, override val textRange: TextRange) extends Tree, HasText {
   def isBinary: Boolean = ???
   override def text: String = symbol //symbol.text
+}
+
+case class Block(stmts: ListBuffer[Statement], override val textRange: TextRange) extends Expr {
+  def text = stmts.map(_.text).mkString("{", "", "}")
 }
 
 case class ToBeGiven(typ: Type) extends Expr {
@@ -115,6 +130,10 @@ case class MethodCall(
 
 case class ArgList(args: List[Argument], override val textRange: TextRange) extends HasText {
   def text = args.view.map(_.text).mkString("(", ",", ")")
+}
+
+object ArgList {
+  // given ToJava[ArgList] = argList => argList.args.view.map(_.toJava).mkString("(", ",", ")")
 }
 
 case class Argument(expr: Expr) extends HasText {

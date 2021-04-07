@@ -16,13 +16,14 @@ lazy val root = project
   .settings(
     name := "verity",
     scalaVersion := scala3version,
-    scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= libDeps)
+    scalacOptions ++= commonScala3Options)
   .disablePlugins()
   .aggregate(
     `verity-ast`,
     `verity-parser`,
-    `verity-codegen`
+    `verity-codegen`,
+    `verity-core`,
+    `verity-common`
   ).dependsOn(`verity-ast`, `verity-parser`)
 
 lazy val `verity-common` = project
@@ -41,7 +42,8 @@ lazy val `verity-ast` = project
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1"
+      "org.ow2.asm" % "asm-util" % "8.0.1"/*,
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"*/
     )
   ).dependsOn(`verity-common`)
 
@@ -54,7 +56,8 @@ lazy val `verity-parser` =project
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.3" % Test,
       "com.lihaoyi" %% "fastparse" % "2.2.2"
-    )
+    ),
+    scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true)))
   ).dependsOn(`verity-ast`)
 
 lazy val `verity-codegen` =project
@@ -64,7 +67,8 @@ lazy val `verity-codegen` =project
     scalaVersion := scala3version,
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1"
+      "org.ow2.asm" % "asm-util" % "8.0.1",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
     )
   ).dependsOn(`verity-ast`)
 
@@ -76,14 +80,15 @@ lazy val `verity-core` = project
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1"
+      "org.ow2.asm" % "asm-util" % "8.0.1",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
     )
   ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`)
 
-lazy val libDeps = Seq(
+lazy val commonLibs3 = Seq(
   //"org.scala-lang" % "scala-reflect" % scala_version,
-  //"org.scalatest"  %% "scalatest"    % "3.1.1" % "test",
-  "com.novocode" % "junit-interface" % "0.11" % "test"
+  // "com.novocode" % "junit-interface" % "0.11" % "test",
+  
 )
 
 val commonScala2Options = Seq(

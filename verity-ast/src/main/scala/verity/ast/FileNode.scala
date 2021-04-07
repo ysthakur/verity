@@ -7,7 +7,7 @@ import verity.ast.infile._
 
 import scala.collection.mutable.ListBuffer
 
-class FileNode(val packageRef: Option[PackageStmt], val imports: Seq[ImportStmt], val children: Seq[TemplateDef]) {
+case class FileNode(packageRef: Option[PackageStmt], imports: Seq[ImportStmt], children: Seq[TemplateDef]) {
   def text = s"${packageRef.fold("")(_.text)}${imports.view.map(_.text).mkString}${children.view.map(_.text).mkString}"
 }
 
@@ -15,7 +15,7 @@ class FileNode(val packageRef: Option[PackageStmt], val imports: Seq[ImportStmt]
  * @param path The path of the package this file is in
  * @param pkgTokStartOffset The start offset of the "package" token
  */
-class PackageStmt(val path: DotRef, val pkgTokStartOffset: Int) extends Tree, HasText {
+case class PackageStmt(val path: DotRef, val pkgTokStartOffset: Int) extends Tree, HasText {
   override def text: String = s"package ${path.text};"
   override def textRange = TextRange(pkgTokStartOffset, path.textRange.end)
 }
@@ -24,6 +24,6 @@ class PackageStmt(val path: DotRef, val pkgTokStartOffset: Int) extends Tree, Ha
  * @param path The path of the import (excluding the wildcard)
  * @param pkgTokStartOffset The start offset of the "import" token
  */
-class ImportStmt(val path: DotRef, val wildCard: Boolean = false, override val textRange: TextRange) extends Tree, HasText {
+case class ImportStmt(path: DotRef, override val textRange: TextRange, wildCard: Boolean = false) extends Tree, HasText {
   override def text = s"import ${path.text}${if (wildCard) ".*" else ""};"
 }
