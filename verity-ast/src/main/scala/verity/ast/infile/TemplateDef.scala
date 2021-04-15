@@ -6,7 +6,7 @@ import verity.parsing._
 import scala.collection.mutable.ListBuffer
 
 //Base trait for classes, interfaces, enums, and annotations
-sealed trait TemplateDef extends Tree, HasText, HasModifiers, TypeDef, HasAnnotations, NamedTree {
+sealed trait Classlike extends Tree, HasText, HasModifiers, TypeDef, HasAnnotations, NamedTree {
   def modifiers: ListBuffer[Modifier]
   def defType: TemplateDefType
   def fields: Iterable[Field]
@@ -35,7 +35,7 @@ case class ClassDef(
     fields: ListBuffer[Field],
     methods: ListBuffer[Method],
     bodyRange: TextRange
-) extends TemplateDef {
+) extends Classlike {
   def ctors: Iterable[Method] = methods.filter(_.isCtor)
 
   //todo also add fields (no need to preserve order)
@@ -51,7 +51,7 @@ case class InterfaceDef(
     fields: ListBuffer[Field],
     methods: ListBuffer[Method],
     bodyRange: TextRange
-) extends TemplateDef {
+) extends Classlike {
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} ${defType.text} $name { ${methods.mkString(" ")}}"
 }

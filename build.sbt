@@ -40,11 +40,11 @@ lazy val `verity-ast` = project
     name := "verity-ast",
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= (Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1"/*,
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"*/
-    )
+      "org.ow2.asm" % "asm-util" % "8.0.1",
+      // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
+    ) ++ commonLibs3)
   ).dependsOn(`verity-common`)
 
 lazy val `verity-parser` =project
@@ -78,16 +78,18 @@ lazy val `verity-core` = project
     name := "verity-core",
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= (Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
       "org.ow2.asm" % "asm-util" % "8.0.1",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
-    )
+    ) ++ commonLibs3)
   ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`)
 
 lazy val commonLibs3 = Seq(
   //"org.scala-lang" % "scala-reflect" % scala_version,
-  // "com.novocode" % "junit-interface" % "0.11" % "test",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
+  "junit" % "junit" % "4.11" % Test,
+  "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
+  "com.novocode" % "junit-interface" % "0.11" % "test",
   
 )
 

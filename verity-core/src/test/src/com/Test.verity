@@ -1,0 +1,12 @@
+package com;
+
+import java.util.ArrayList;
+import java.util.*;
+
+class Test2 {
+  public static void main() {
+    System.out.println("Hello world!");
+  }
+
+  private static void foo(int bar); //no checking of modifiers yet
+}

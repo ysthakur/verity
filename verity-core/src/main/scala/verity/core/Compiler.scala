@@ -5,38 +5,61 @@ import scala.language.unsafeNulls
 import verity.ast.*
 import verity.parsing.*
 import verity.parsing.parser.Parser
+import verity.checks.initial.InitialChecks
+import verity.core.references.ReferenceResolve
 import verity.util.*
 
 import com.typesafe.scalalogging.Logger
 
 import java.io.{File, FileInputStream, FileFilter}
-
-// def main(args: String*) = {
-//   //TODO properly parse flags and stuff
-//   val srcDir = args.last
-// }
+import java.nio.file.{Path, Files}
+import collection.mutable.ListBuffer
 
 def compile(pkgs: Iterable[File], files: Iterable[File], options: Options) = {
-  val logger = Logger("Syntax errors")
-  val rootPkg = parsePkg("<root>", pkgs, files, logger)
+  given logger: Logger = Logger("Syntax errors")
+  given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
+  
+  parsePkg(pkgs, files, rootPkg)
+  ReferenceResolve.resolveSimpleReferencesInPkg(rootPkg, Nil)
+  OutputJava.outputJavaPkg(rootPkg, options.javaOutputDir)
 }
 
-def parsePkg(name: String, subPkgs: Iterable[File], files: Iterable[File], logger: Logger): PackageNode = {
-  val subPkgNodes = subPkgs.view.map { pkg =>
-    val (pkgs, allFiles) = pkg.listFiles((_.isDirectory): FileFilter).unsafeNN.view.partition(_.isDirectory)
-    parsePkg(pkg.getName.unsafeNN, pkgs.removeNull, allFiles.removeNull.filter(_.getName.endsWith(".verity")), logger)
-  }
-
-  val fileNodes = files.view.map { file =>
-    Parser.parseFile(new FileInputStream(file)) match {
-      case e @ Left((errorMsg, offset)) =>
-        logger.debug(errorMsg.toString) //todo
-        e
-      case s => s
+def parsePkg(
+  pkgs: Iterable[File],
+  files: Iterable[File],
+  parent: Package
+)(using logger: Logger): Unit = {
+  parent.files ++= files
+    .map { file =>
+      Parser.parseFile(file.getName.unsafeNN, new FileInputStream(file)) match {
+        case e @ Left((errorMsg, offset)) =>
+          logger.debug(errorMsg) //todo
+          e
+        case s => s
+      }
     }
-  }.collect {
-    case Right(ast) => ast
-  }
+    .collect {
+      case Right(file) =>
+        InitialChecks.checkFile(file, logger)
+        file
+    }
 
-  new PackageNode(name, subPkgNodes, fileNodes)
+  pkgs.foreach { pkg =>
+    val pkgNode = PkgNode(pkg.getName.unsafeNN, ListBuffer.empty, ListBuffer.empty, parent)
+    parent.subPkgs += pkgNode
+
+    val (subPkgs, allFiles) = pkg
+      .listFiles((file => file.isDirectory || file.getName.endsWith(".verity")): FileFilter)
+      .unsafeNN
+      .view
+      .partition(_.isDirectory)
+    
+    println(s"subPkgs=$subPkgs, allFiles=$allFiles")
+
+    parsePkg(
+      subPkgs.filterNotNull,
+      allFiles.filter(file => file != null && file.getName.endsWith(".verity")).removeNull,
+      pkgNode
+    )
+  }
 }

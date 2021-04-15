@@ -6,15 +6,12 @@ trait Tree {
   def synthetic: Boolean = false
 }
 
-object Tree {
-  
-}
+object Tree {}
 
 trait Synthetic extends Tree, HasText {
   override def textRange = TextRange(-1, -1)
   override def synthetic = true
 }
-
 
 trait ParentNode extends Tree {
   type Child <: Tree

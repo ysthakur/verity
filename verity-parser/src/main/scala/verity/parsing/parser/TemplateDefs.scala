@@ -26,7 +26,7 @@ private object TemplateDefs {
   
   //TODO add modifiers and annotations
   //todo enums, interfaces, annotation definitions
-  def templateDef[_: P] = P(modifiers ~ Index ~ StringIn("class", "interface").! ~ Index ~ identifier ~ classOrInterfaceBody).map {
+  def Classlike[_: P] = P(modifiers ~ Index ~ StringIn("class", "interface").! ~ Index ~ identifier ~ classOrInterfaceBody).map {
     case (modifiers, metaclassStart, metaclass, metaclassEnd, name, (braceStart, members, braceEnd)) =>
       val (fields, methods) = members.partition(_.isInstanceOf[Field])
       ClassDef(

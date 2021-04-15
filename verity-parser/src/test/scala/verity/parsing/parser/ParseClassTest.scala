@@ -16,29 +16,29 @@ import verity.ast._
 import fastparse.Parsed
 
 class ParseClassTest extends AnyFlatSpec {
-  def parse() = {
-    val file = new File(
-        raw"C:\Users\yasht\verity\verity-parser\src\test\resources\classtest"
-    )
-    val fis = new FileInputStream(file)
-    val ast = Parser.parseFile(fis)
-    ast
-  }
+  // def parse() = {
+  //   val file = new File(
+  //       raw"C:\Users\yasht\verity\verity-parser\src\test\resources\classtest"
+  //   )
+  //   val fis = new FileInputStream(file)
+  //   val ast = Parser.parseFile(fis)
+  //   ast
+  // }
 
-  val Parsed.Success(matched, index) = parse()
-  println(matched.text)
+  // val Parsed.Success(matched, index) = parse()
+  // println(matched.text)
 
-  matched.text should "be parsed properly" in {
-    assert(matched.text.replaceAll("\\s|\n", "") == 
-    """
-    package foo.bar.baz;
-    import java.util.ArrayList;
-    import java.util.*;
-    class Foo {
-      public static void main () {
-        System.out.println("Hello world!");
-      }
-      private static void foo(int bar);
-    }""".stripMargin.replaceAll("\\s|\n", ""))
-  }
+  // matched.text should "be parsed properly" in {
+  //   assert(matched.text.replaceAll("\\s|\n", "") == 
+  //   """
+  //   package foo.bar.baz;
+  //   import java.util.ArrayList;
+  //   import java.util.*;
+  //   class Foo {
+  //     public static void main () {
+  //       System.out.println("Hello world!");
+  //     }
+  //     private static void foo(int bar);
+  //   }""".stripMargin.replaceAll("\\s|\n", ""))
+  // }
 }
