@@ -21,10 +21,14 @@ case class Method(
     params: ParamList,
     private var _body: Option[Block],
     isCtor: Boolean
-) extends MethodLike, HasModifiers {
+) extends MethodLike, NamedTree, HasModifiers {
   def text: String = s"${modifiers.map(_.text).mkString(" ")} ${returnType.text} ${name.text} ${params.text} ${body.fold(";")(_.text)}"
   override def body: Option[Block] = _body
   def body_=(newBody: Option[Block]): Unit = _body = newBody
+}
+
+case class MethodGroup(name: Name, methods: Iterable[Method]) extends NamedTree {
+  def merge(other: MethodGroup) = MethodGroup(name, this.methods ++ other.methods)
 }
 
 case class Parameter(

@@ -18,8 +18,8 @@ import java.nio.file._
 
 object Parser {
   
-  def parseFile(name: String, input: FileInputStream): Either[(String, Int), FileNode] =
-    parse(input, file(name)(_)) match {
+  def parseFile(name: String, input: File): Either[(String, Int), FileNode] =
+    parse(new FileInputStream(input), file(input)(_)) match {
       case Success(ast, _) => Right(ast)
       case Failure(label, index, extra) => Left((makeSyntaxErrorMsg(label, index, extra), index))
     }
@@ -27,7 +27,7 @@ object Parser {
   def makeSyntaxErrorMsg(label: String, index: Int, extra: Extra): String =
     s"Syntax error at offset ${extra.startIndex}, label = $label"
 
-  def file[_: P](name: String): P[FileNode] = P(packageStmt.? ~ importStmt.rep ~ Classlike.rep ~ End).map {
-    case (pkgStmt, imptStmts, templateDefs) => new FileNode(name, pkgStmt, imptStmts, templateDefs)
+  def file[_: P](file: File): P[FileNode] = P(packageStmt.? ~ importStmt.rep ~ classlike.rep ~ End).map {
+    case (pkgStmt, imptStmts, templateDefs) => new FileNode(file.getName(), pkgStmt, imptStmts, templateDefs, file)
   }
 }

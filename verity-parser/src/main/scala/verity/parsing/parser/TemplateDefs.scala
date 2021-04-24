@@ -26,13 +26,13 @@ private object TemplateDefs {
   
   //TODO add modifiers and annotations
   //todo enums, interfaces, annotation definitions
-  def Classlike[_: P] = P(modifiers ~ Index ~ StringIn("class", "interface").! ~ Index ~ identifier ~ classOrInterfaceBody).map {
+  def classlike[_: P] = P(modifiers ~ Index ~ StringIn("class", "interface").! ~ Index ~ identifier ~ classOrInterfaceBody).map {
     case (modifiers, metaclassStart, metaclass, metaclassEnd, name, (braceStart, members, braceEnd)) =>
       val (fields, methods) = members.partition(_.isInstanceOf[Field])
       ClassDef(
         ListBuffer(), 
         modifiers.to(ListBuffer),
-        TemplateDefType.CLASS(TextRange(-1, -1)),
+        ClasslikeType.CLASS(TextRange(-1, -1)),
         name,
         fields.to(ListBuffer).asInstanceOf[ListBuffer[Field]],
         methods.to(ListBuffer).asInstanceOf[ListBuffer[Method]],
