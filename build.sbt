@@ -4,10 +4,11 @@ val scala2version = "2.13.5"
 val verityVersion = "0.1.0"
 
 name := projectName
-version in ThisBuild := verityVersion
-organization in ThisBuild := "com.ysthakur"
+ThisBuild / version := verityVersion
+ThisBuild / organization := "com.ysthakur"
 // scalaVersion in ThisBuild := scala3version
-mainClass in (Compile, run) := Some("Main")
+Compile / mainClass := Some("Main")
+// run / mainClass := Some("Main")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
@@ -102,5 +103,5 @@ val commonScala2Options = Seq(
 val commonScala3Options = Seq(
   "-Yexplicit-nulls",
 //  "-explain",
-  "-Ycheck-init"
+  "-Ycheck-init", //will be "-Ysafe-init"
 )

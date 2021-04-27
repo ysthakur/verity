@@ -24,7 +24,7 @@ private object Methods {
       )
   }
   //TODO make separate givenParamList pattern
-  def paramList[_: P] = P(Index ~ "(" ~ param.rep ~ ")" ~ Index).map {
+  def paramList[_: P] = P(Index ~ "(" ~/ param.rep ~ ")" ~ Index).map {
     case (start, params, end) => ParamList(params.toList, TextRange(start, end))
   }
 
@@ -56,12 +56,26 @@ private object Methods {
     }
 
   /**
+    * A constructor
+    */
+  def ctor[_: P]: P[Method] =
+    P(modifiers ~ identifier ~ paramList ~ (methodBody | ";" ~ Index)).map {
+      case (modifiers, name, params, body) =>
+        Method(
+            modifiers.to(ListBuffer),
+            ToBeInferred(ObjectType, NothingType, Nil),
+            name,
+            params,
+            body match {
+              case b: Block => Some(b)
+              case _        => None
+            },
+            false
+        )
+    }
+
+  /**
     * A normal method or a constructor
     */
-  def method[_: P]: P[Method] =
-    P(
-        modifiers ~ identifier ~ (typeArgList.? ~ identifier).? ~ paramList ~ (methodBody | ";" ~ Index)
-    ).map {
-      case foo => ???
-    }
+  def method[_: P]: P[Method] = P(ctor | normMethod)
 }

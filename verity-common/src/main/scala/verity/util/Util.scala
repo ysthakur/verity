@@ -2,7 +2,7 @@ package verity.util
 
 import scala.collection.IterableOps
 
-extension [A, I[x] <: IterableOps[x, I, I[x]]](it: I[A | UncheckedNull])
+extension [A, I[x] <: IterableOps[x, I, I[x]]](it: I[A | Null])
   inline def filterNotNull: I[A] = it.filter(_ != null).asInstanceOf[I[A]]
   inline def removeNull: I[A] = it.asInstanceOf[I[A]]
 

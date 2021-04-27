@@ -20,7 +20,7 @@ private object TemplateDefs {
   }
 
   //TODO field or method
-  def templateDefMember[_: P] = P(normMethod | field)
+  def templateDefMember[_: P] = P((normMethod: P[Any]) | (ctor: P[Any]) | (field: P[Any]))
 
   def classOrInterfaceBody[_: P] = P(Index ~ "{" ~ templateDefMember.rep ~ "}" ~ Index)
   

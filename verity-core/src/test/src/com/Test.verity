@@ -1,9 +1,15 @@
 package com;
 
-import java.util.ArrayList;
-import java.util.*;
+//import java.util.ArrayList;
+//import java.util.*;
 
 class Test2 {
+  int foo = 5;
+
+  public Test2(int foo) {
+    int bar = foo;
+  }
+
   public static void main() {
     System.out.println("Hello world!");
   }

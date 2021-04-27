@@ -6,6 +6,7 @@ import java.util.regex.Pattern
 import verity.parsing.parser._
 
 object ParserTestMain {
-  def main(args: Array[String]): Unit =
-    new ParseExprTest()
+  def main(args: Array[String]): Unit = {
+    // new ParseExprTest()
+  }
 }

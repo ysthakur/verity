@@ -41,7 +41,7 @@ object Compiler {
       .map { file =>
         Parser.parseFile(file.getName.unsafeNN, file) match {
           case e @ Left((errorMsg, offset)) =>
-            logger.debug(errorMsg) //todo
+            logger.error(errorMsg) //todo
             e
           case s => s
         }

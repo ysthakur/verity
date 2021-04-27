@@ -5,8 +5,8 @@ import verity.parsing._
 
 import scala.collection.mutable.ListBuffer
 
-trait MethodLike {
-  def returnType: TypeRef
+trait Methodlike {
+  def returnType: Type
   def name: Name
   def params: ParamList
   
@@ -16,12 +16,12 @@ trait MethodLike {
 
 case class Method(
     override val modifiers: ListBuffer[Modifier],
-    returnType: TypeRef,
+    returnType: Type,
     name: Name,
     params: ParamList,
     private var _body: Option[Block],
     isCtor: Boolean
-) extends MethodLike, NamedTree, HasModifiers {
+) extends Methodlike, NamedTree, HasModifiers {
   def text: String = s"${modifiers.map(_.text).mkString(" ")} ${returnType.text} ${name.text} ${params.text} ${body.fold(";")(_.text)}"
   override def body: Option[Block] = _body
   def body_=(newBody: Option[Block]): Unit = _body = newBody

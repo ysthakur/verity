@@ -61,6 +61,21 @@ sealed trait Package extends NamedTree {
   override def toString = s"package $name"
 }
 
+case class RootPkg(subPkgs: ListBuffer[PkgNode], files: ListBuffer[FileNode]) extends Package {
+  def name = ""
+  def parents = Nil
+}
+
+//TODO does the parent have to be stored?
+case class PkgNode(
+    name: String,
+    subPkgs: ListBuffer[PkgNode],
+    files: ListBuffer[FileNode],
+    parent: Package
+) extends Package {
+  def parents = parent :: parent.parents
+}
+
 object Package {
   type Importable = (Package | Classlike | MethodGroup | Method | Field | EnumConstant) & NamedTree
   type ImportParent = Package | Classlike
@@ -97,10 +112,10 @@ object Package {
 
       pkg.subPkgs.view
         .find(_.name == subName)
-        .flatMap(findImptableRel(_, rest))
+        .flatMap(findImptableRel(_, rest)).asInstanceOf[Option[Package.Importable]]
         .orElse(
             findCls(pkg, subName)
-              .flatMap(_.findMember(rest): Option[Package.Importable]): Option[Package.Importable]
+              .flatMap(_.findMember(rest).asInstanceOf[Option[Package.Importable]]: Option[Package.Importable]): Option[Package.Importable]
         ): Option[Package.Importable]
     }
 
@@ -123,17 +138,3 @@ object Package {
     parents.foldLeft(pkgName)((endName, parentName) => s"$parentName.$endName")
 }
 
-case class RootPkg(subPkgs: ListBuffer[PkgNode], files: ListBuffer[FileNode]) extends Package {
-  def name = "<root>"
-  def parents = Nil
-}
-
-//TODO does the parent have to be stored?
-case class PkgNode(
-    name: String,
-    subPkgs: ListBuffer[PkgNode],
-    files: ListBuffer[FileNode],
-    parent: Package
-) extends Package {
-  def parents = parent :: parent.parents
-}

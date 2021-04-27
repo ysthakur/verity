@@ -23,6 +23,6 @@ class ParsePackageTest {
 
     // val srcDirChildren = srcDir.listFiles.asInstanceOf[Array[File]]
 
-    compile(List(File(srcDir, "com")), Nil, options)
+    Compiler.compile(List(File(srcDir, "com")), Nil, options)
   }
 }
