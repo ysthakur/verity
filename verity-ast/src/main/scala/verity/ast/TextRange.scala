@@ -1,4 +1,4 @@
-package verity.parsing
+package verity.ast
 
 case class TextRange(start: Int, end: Int) {
   def isEmpty: Boolean = start == end

@@ -1,8 +1,6 @@
 package verity.ast
 
 import verity.ast.*
-import verity.parsing.*
-// import verity.parsing.GetText.given GetText
 import verity.ast.infile.*
 
 import java.io.File

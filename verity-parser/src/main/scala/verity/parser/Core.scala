@@ -19,7 +19,7 @@ private object Core {
     }
     
 
-  def typeRef[_: P]: P[TypeRef] = P(identifier ~ ("<" ~ typeArgList ~ ">").?).map {
+  def typeRef[_: P]: P[TypeRef] = P(identifier ~ ("<" ~/ typeArgList ~ ">").?).map {
     case (name, args) => TypeRef(name, args.getOrElse(List.empty))
   }
   def wildCard[_: P]: P[Wildcard] =

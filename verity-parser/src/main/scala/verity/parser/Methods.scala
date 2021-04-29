@@ -31,16 +31,26 @@ private object Methods {
   def exprStmt[_: P] = P(expr ~ ";" ~ Index).map {
     case (expr, end) => new ExprStmt(expr, end)
   }
-  //TODO add control flow, etc. (BEFORE exprStmt)
-  def stmt[_: P]: P[Statement] = P(exprStmt)
 
-  def methodBody[_: P]: P[Block] = P(Index ~ "{" ~ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
+  //todo allow final modifier
+  def localVars[_: P] = P(typeRef ~ identifier ~ ("=" ~ expr).? ~ ";" ~ Index).map {
+    case (typ, name, expr, end) => new LocalVar(name, typ, expr, false, end)
+  }
+
+  def returnStmt[_: P] = P(Index ~ "return" ~/ expr ~ ";" ~ Index).map {
+    case (start, expr, end) => new ReturnStmt(expr, TextRange(start, end))
+  }
+
+  //TODO add control flow, etc. (BEFORE exprStmt)
+  def stmt[_: P]: P[Statement] = P(exprStmt | localVars)
+
+  def block[_: P]: P[Block] = P(Index ~ "{" ~ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
     case (start, stmts, end) => Block(stmts.to(ListBuffer), TextRange(start, end))
   }
 
   //TODO add type parameters
   def normMethod[_: P]: P[Method] =
-    P(modifiers ~ typeRef ~ identifier ~ paramList ~ (methodBody | ";" ~ Index)).map {
+    P(modifiers ~ typeRef ~ identifier ~ paramList ~ (block | ";" ~ Index)).map {
       case (modifiers, returnType, name, params, body) =>
         Method(
             modifiers.to(ListBuffer),

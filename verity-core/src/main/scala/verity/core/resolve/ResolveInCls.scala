@@ -21,12 +21,29 @@ import scala.collection.mutable.HashMap
   */
 private def resolveSimpleRefsInCls(
     cls: Classlike,
-    pkgMap: Refs[Package],
-    clsMap: Refs[Classlike],
-    mthdMap: Refs[MethodGroup],
+    pkgRefs: Refs[Package],
+    clsRefs: Refs[Classlike],
+    mthdRefs: Refs[MethodGroup],
     file: FileNode
 )(using rootPkg: RootPkg, logger: Logger): Unit = {
-  val fieldMap: Refs[VariableDecl] = cls.fields.view.map(f => f.name.toString -> f).toMap
-  val mthdMap2 = mthdMap ++ cls.methods.view.map(m => m.name.toString -> m)
+  val fieldRefs: Refs[VariableDecl] = cls.fields.view.map(f => f.name.toString -> f).toMap
+  val newMthdRefs = mthdRefs ++ cls.methods.view.map(m => m.name.toString -> m)
   
+  cls.methods.foreach { mthd =>
+    if (mthd.isCtor) {
+      
+    }
+    resolveSimpleRefsInMthd(mthd, pkgRefs, clsRefs, newMthdRefs, cls, file)
+  }
+}
+
+private def resolveSimpleRefsInMthd(
+  mthd: Method,
+  pkgRefs: Refs[Package],
+  clsRefs: Refs[Classlike],
+  mthdRefs: Refs[MethodGroup],
+  cls: Classlike,
+  file: FileNode
+)(using rootPkg: RootPkg, logger: Logger): Unit = {
+
 }

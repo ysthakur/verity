@@ -8,6 +8,8 @@ class Test2 {
 
   public Test2(int foo) {
     int bar = foo;
+    //bar = 2;sadfff iu3r83289 
+    return 3+2;
   }
 
   public static void main() {

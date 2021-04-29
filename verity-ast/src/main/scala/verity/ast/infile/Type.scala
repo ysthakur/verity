@@ -49,6 +49,9 @@ enum PrimitiveType extends Type {
   def text = this.toString.toLowerCase.nn
   def textRange = TextRange.synthetic
 }
+object PrimitiveType {
+  val fromName: String => Option[PrimitiveType] = PrimitiveType.values.view.map(typ => typ.text -> typ).toMap.get
+}
 
 // given ToJava[PrimitiveType] = primType => s"Type ${primType.toString.toLowerCase}"
 
@@ -100,7 +103,7 @@ case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type 
   def strictSubTypeOf(sup: Type): Boolean = upper.strictSubTypeOf(sup)
   def strictSuperTypeOf(sub: Type) = lower.strictSuperTypeOf(sub)
   
-  def text = ???
+  def text = "NOT INFERRED AAA!!!"
 
   override def textRange: TextRange = ???
 }

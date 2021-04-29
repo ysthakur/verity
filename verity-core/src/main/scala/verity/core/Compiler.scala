@@ -6,7 +6,7 @@ import verity.ast.*
 import verity.parsing.*
 import verity.parsing.parser.Parser
 import verity.checks.initial.InitialChecks
-import verity.core.references.ReferenceResolve
+import verity.core.resolve
 import verity.util.*
 
 import com.typesafe.scalalogging.Logger
@@ -21,7 +21,7 @@ object Compiler {
     given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
 
     parsePkg(pkgs, files, rootPkg)
-    ReferenceResolve.resolveSimpleRefs(rootPkg)
+    resolve.resolveSimpleRefs(rootPkg)
     OutputJava.outputJavaPkg(rootPkg, options.javaOutputDir)
   }
 
@@ -41,7 +41,7 @@ object Compiler {
       .map { file =>
         Parser.parseFile(file.getName.unsafeNN, file) match {
           case e @ Left((errorMsg, offset)) =>
-            logger.error(errorMsg) //todo
+            logger.error(s"Error while parsing ${file.getName.unsafeNN}: $errorMsg") //todo
             e
           case s => s
         }

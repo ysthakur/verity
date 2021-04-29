@@ -1,4 +1,4 @@
-package verity.parsing
+package verity.ast
 
 //TODO Replace with a typeclass?
 trait HasText {
