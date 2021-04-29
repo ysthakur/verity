@@ -1,7 +1,5 @@
 package verity.ast
 
-import verity.parsing.{TextRange, HasText, GetText}
-
 trait Tree {
   def synthetic: Boolean = false
 }

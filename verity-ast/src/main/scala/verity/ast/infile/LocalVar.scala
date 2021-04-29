@@ -1,10 +1,9 @@
 package verity.ast.infile
 
-import verity.parsing.TextRange
 import verity.ast.infile.Expr
 
 class LocalVar(
-    override val name: Name,
+    override val name: String,
     var myType: Type,
     var initExpr: Option[Expr] = None,
     val isFinal: Boolean,

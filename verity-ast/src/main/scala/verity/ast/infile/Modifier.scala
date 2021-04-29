@@ -1,7 +1,6 @@
 package verity.ast.infile
 
-import verity.ast.Tree
-import verity.parsing._
+import verity.ast.*
 
 import scala.collection.mutable.ListBuffer
 

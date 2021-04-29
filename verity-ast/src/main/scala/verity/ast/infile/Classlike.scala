@@ -1,7 +1,6 @@
 package verity.ast.infile
 
-import verity.ast.{ParentNode, Tree}
-import verity.parsing._
+import verity.ast.*
 
 import scala.collection.mutable.ListBuffer
 
@@ -53,7 +52,7 @@ case class ClassDef(
     annotations: ListBuffer[Annotation],
     modifiers: ListBuffer[Modifier],
     defType: ClasslikeType,
-    name: Name,
+    name: String,
     fields: ListBuffer[Field],
     methods: ListBuffer[Method],
     bodyRange: TextRange
@@ -71,7 +70,7 @@ case class InterfaceDef(
     annotations: ListBuffer[Annotation],
     modifiers: ListBuffer[Modifier],
     defType: ClasslikeType,
-    name: Name,
+    name: String,
     fields: ListBuffer[Field],
     methods: ListBuffer[Method],
     bodyRange: TextRange
@@ -86,7 +85,7 @@ case class EnumDef(
     annotations: ListBuffer[Annotation],
     modifiers: ListBuffer[Modifier],
     defType: ClasslikeType,
-    name: Name,
+    name: String,
     constants: List[EnumConstant],
     fields: ListBuffer[Field],
     methods: ListBuffer[Method],
@@ -97,4 +96,4 @@ case class EnumDef(
     s"${modifiers.map(_.text).mkString(" ")} ${defType.text} $name { ${methods.mkString(" ")}}"
 }
 
-case class EnumConstant(name: Name) extends NamedTree
+case class EnumConstant(name: String) extends NamedTree

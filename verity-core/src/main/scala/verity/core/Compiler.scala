@@ -2,12 +2,11 @@ package verity.core
 
 import scala.language.unsafeNulls
 
-import verity.ast.*
-import verity.parsing.*
-import verity.parsing.parser.Parser
+import verity.ast.{Package, FileNode, TextRange}
 import verity.checks.initial.InitialChecks
 import verity.core.resolve
 import verity.util.*
+import verity.parsing.Parser
 
 import com.typesafe.scalalogging.Logger
 
@@ -41,7 +40,8 @@ object Compiler {
       .map { file =>
         Parser.parseFile(file.getName.unsafeNN, file) match {
           case e @ Left((errorMsg, offset)) =>
-            logger.error(s"Error while parsing ${file.getName.unsafeNN}: $errorMsg") //todo
+            //todo
+            logger.error(s"Error while parsing ${file.getName.unsafeNN}: $errorMsg")
             e
           case s => s
         }

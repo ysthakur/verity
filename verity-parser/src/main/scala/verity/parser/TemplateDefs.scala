@@ -2,7 +2,6 @@ package verity.parsing.parser
 
 import language.implicitConversions
 
-import verity.parsing._
 import verity.ast._, infile._
 import Core._
 import Exprs._

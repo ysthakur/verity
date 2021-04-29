@@ -1,8 +1,6 @@
 package verity.ast.infile
 
 import verity.ast.*
-// import verity.ast.ToJava.given
-import verity.parsing.*
 
 sealed trait Type extends Tree, HasText {
   def strictSubTypeOf(sup: Type): Boolean
@@ -53,23 +51,18 @@ object PrimitiveType {
   val fromName: String => Option[PrimitiveType] = PrimitiveType.values.view.map(typ => typ.text -> typ).toMap.get
 }
 
-// given ToJava[PrimitiveType] = primType => s"Type ${primType.toString.toLowerCase}"
-
-case class TypeRef(name: Name, args: Seq[Type]) extends Type {
+class TypeRef(name: String, args: Seq[Type], nameRange: TextRange) extends Type {
   def strictSubTypeOf(sup: Type): Boolean = ???
   def strictSuperTypeOf(sub: Type) = ???
 
-  def text = if (args.isEmpty) name.text else s"${name.text}<${args.mkString(",")}>"
-  override def textRange: TextRange = if (args.isEmpty) name.textRange else TextRange(name.textRange.start, args.last.textRange.end)
+  def text = if (args.isEmpty) name else s"$name<${args.mkString(",")}>"
+  override def textRange: TextRange = if (args.isEmpty) nameRange else TextRange(nameRange.start, args.last.textRange.end)
 
   private var _resolve: Option[TypeDef] = None
   def resolve: Option[TypeDef] = _resolve
   private[verity] def resolve_=(typeDef: TypeDef) =
     _resolve = Some(typeDef)
 }
-
-// given ToJava[TypeRef] = typeRef =>
-//   typeRef.name.toJava + (if (typeRef.args.isEmpty) "" else typeRef.args.view.map(_.toJava).mkString(","))
 
 case class TypeRange(var upper: Type, var lower: Type) extends Type {
   def strictSubTypeOf(sup: Type): Boolean = upper.strictSubTypeOf(sup)

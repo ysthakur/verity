@@ -1,9 +1,8 @@
 package verity.ast.infile
 
-import verity.ast.Tree
-import verity.parsing.{TextRange, HasText}
+import verity.ast.*
 
-case class DotRef(path: Iterable[Name]) extends Tree, HasText {
-  override def textRange = TextRange(path.head.textRange.start, path.last.textRange.end)
-  override def text = path.map(_.text).mkString(".")
+case class DotRef(path: Iterable[(String, TextRange)]) extends Tree, HasText {
+  override def textRange = TextRange(path.head._2.start, path.last._2.end)
+  override def text = path.map(_._1).mkString(".")
 }

@@ -1,13 +1,12 @@
 package verity.ast.infile
 
-import verity.ast.Tree
-import verity.parsing.HasText
+import verity.ast.*
 
 /**
   * A variable declaration (local variable or field)
   */
 trait VariableDecl extends Tree, HasText, HasType, NamedTree {
-  def name: Name
+  def name: String
   /**
     * What it gets initialized to, unless it's just declared
     * @return

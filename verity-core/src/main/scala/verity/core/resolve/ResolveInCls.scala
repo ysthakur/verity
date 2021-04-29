@@ -2,7 +2,7 @@ package verity.core.resolve
 
 import verity.ast.*
 import verity.ast.infile.*
-import verity.core.{Compiler, Context}
+import verity.core.{Compiler, Context, Keywords}
 import verity.util.*
 import verity.checks.initial.*
 import Package.Importable
@@ -27,11 +27,15 @@ private def resolveSimpleRefsInCls(
     file: FileNode
 )(using rootPkg: RootPkg, logger: Logger): Unit = {
   val fieldRefs: Refs[VariableDecl] = cls.fields.view.map(f => f.name.toString -> f).toMap
-  val newMthdRefs = mthdRefs ++ cls.methods.view.map(m => m.name.toString -> m)
+  val newMthdRefs: Refs[MethodGroup] = mthdRefs ++ cls.methods.view.map(m => m.name.toString -> m)
   
   cls.methods.foreach { mthd =>
     if (mthd.isCtor) {
-      
+      val mthdName = mthd.name.toString
+      if (mthdName != cls.name.toString && mthdName != Keywords.constructorName) {
+        Compiler.logError(s"Wrong constructor name: $mthdName", mthd, file)
+      }
+      mthd.returnType = TypeRef(cls.name, cls)
     }
     resolveSimpleRefsInMthd(mthd, pkgRefs, clsRefs, newMthdRefs, cls, file)
   }

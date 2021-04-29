@@ -1,35 +1,32 @@
 package verity.parsing.parser
 
-import language.implicitConversions
-
-import verity.parsing._
 import verity.ast._, infile._
 import Core._
 import Exprs._
 
 import fastparse._, JavaWhitespace._
 
-import collection.mutable._
+import scala.collection.mutable._
 
 private object Methods {
-  def param[_: P] = P(typeRef ~ identifier).map {
-    case (typ, name) =>
+  def param[_: P] = P(typeRef ~ Index ~ identifier ~ Index).map {
+    case (typ, nameStart, name, nameEnd) =>
       Parameter(
           List.empty, //TODO Add annotations!
           typ,
           name,
           false,
           false,
-          TextRange(typ.textRange.start, name.textRange.end)
+          TextRange(typ.textRange.start, nameEnd)
       )
   }
   //TODO make separate givenParamList pattern
-  def paramList[_: P] = P(Index ~ "(" ~/ param.rep ~ ")" ~ Index).map {
-    case (start, params, end) => ParamList(params.toList, TextRange(start, end))
+  def paramList[_: P] = P(Index ~ "(" ~/ param.rep ~ ")" ~ Index).map { case (start, params, end) =>
+    ParamList(params.toList, TextRange(start, end))
   }
 
-  def exprStmt[_: P] = P(expr ~ ";" ~ Index).map {
-    case (expr, end) => new ExprStmt(expr, end)
+  def exprStmt[_: P] = P(expr ~ ";" ~ Index).map { case (expr, end) =>
+    new ExprStmt(expr, end)
   }
 
   //todo allow final modifier
@@ -37,8 +34,8 @@ private object Methods {
     case (typ, name, expr, end) => new LocalVar(name, typ, expr, false, end)
   }
 
-  def returnStmt[_: P] = P(Index ~ "return" ~/ expr ~ ";" ~ Index).map {
-    case (start, expr, end) => new ReturnStmt(expr, TextRange(start, end))
+  def returnStmt[_: P] = P(Index ~ "return" ~/ expr ~ ";" ~ Index).map { case (start, expr, end) =>
+    new ReturnStmt(expr, TextRange(start, end))
   }
 
   //TODO add control flow, etc. (BEFORE exprStmt)
@@ -52,7 +49,7 @@ private object Methods {
   def normMethod[_: P]: P[Method] =
     P(modifiers ~ typeRef ~ identifier ~ paramList ~ (block | ";" ~ Index)).map {
       case (modifiers, returnType, name, params, body) =>
-        Method(
+        new Method(
             modifiers.to(ListBuffer),
             returnType,
             name,
@@ -61,31 +58,34 @@ private object Methods {
               case b: Block => Some(b)
               case _        => None
             },
-            false
+            false,
+            TextRange(
+                (if (modifiers.isEmpty) returnType else modifiers.head).textRange.start,
+                body match {
+                  case b: Block => b.textRange.end
+                  case e: Int   => e
+                }
+            )
         )
     }
 
-  /**
-    * A constructor
+  /** A constructor
     */
   def ctor[_: P]: P[Method] =
-    P(modifiers ~ identifier ~ paramList ~ (methodBody | ";" ~ Index)).map {
-      case (modifiers, name, params, body) =>
-        Method(
+    P(Index ~ modifiers ~ identifier ~ paramList ~ block).map {
+      case (start, modifiers, name, params, body) =>
+        new Method(
             modifiers.to(ListBuffer),
             ToBeInferred(ObjectType, NothingType, Nil),
             name,
             params,
-            body match {
-              case b: Block => Some(b)
-              case _        => None
-            },
-            false
+            Some(body),
+            false,
+            TextRange(start, body.textRange.end)
         )
     }
 
-  /**
-    * A normal method or a constructor
+  /** A normal method or a constructor
     */
   def method[_: P]: P[Method] = P(ctor | normMethod)
 }

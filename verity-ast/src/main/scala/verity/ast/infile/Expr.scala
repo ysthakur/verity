@@ -43,28 +43,27 @@ enum NumType {
   case DOUBLE
 }
 
-case class StringLiteral(override val text: String, override val textRange: TextRange) extends Expr
+class StringLiteral(override val text: String, override val textRange: TextRange) extends Expr
 
-case class ThisRef(override val textRange: TextRange) extends Expr {
+class ThisRef(override val textRange: TextRange) extends Expr {
   override def text: String = "this"
 }
 
-case class SuperRef(override val textRange: TextRange) extends Expr {
+class SuperRef(override val textRange: TextRange) extends Expr {
   override def text: String = "super"
 }
 
-case class VarRef(varName: Name) extends Expr {
-  override def text = varName.text
-  override def textRange = varName.textRange
+class VarRef(val varName: String, val textRange: TextRange) extends Expr {
+  override def text = varName
 }
 
-case class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr {
+class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr {
   def text = s"(${expr.text})"
 }
 
-case class DotChainedExpr(expr: Expr, propertyName: Name) extends Expr {
-  override def text: String = s"${expr.text}.${propertyName.text}"
-  override lazy val textRange = expr.textRange to propertyName.textRange
+class DotChainedExpr(expr: Expr, propertyName: String, propertyNameRange: TextRange) extends Expr {
+  override def text: String = s"${expr.text}.${propertyName}"
+  override lazy val textRange = TextRange(expr.textRange.start, propertyNameRange.end)
 }
 
 case class ArraySelect(arr: Expr, index: Expr, val bracketsTextRange: TextRange) extends Expr {
@@ -115,14 +114,14 @@ case class ToBeGiven(typ: Type) extends Expr {
 
 case class MethodCall(
   obj: Option[Expr],
-  name: Name,
+  name: String,
   valArgs: ArgList,
   //givenArgs: Seq[Expr], //TODO do givenArgs!!
   typeArgs: Seq[Type]) extends Expr {
   //TODO figure out how to print types
   def text: String = obj.fold("")(_.text + ".") 
     + (if (typeArgs.isEmpty) "" else typeArgs.map(_.text).mkString("<", ",", ">"))
-    + name.text
+    + name
     + valArgs.text
   override def textRange: TextRange = ???
 }
@@ -140,7 +139,7 @@ case class Argument(expr: Expr) extends HasText {
   def textRange = expr.textRange
 }
 
-case class FieldAccess(obj: Expr, fieldName: Name) extends Expr, HasText {
-  override def textRange = TextRange(obj.textRange.start, fieldName.textRange.end)
-  def text = s"${obj.text}.${fieldName.text}"
+class FieldAccess(obj: Expr, fieldName: String, fieldNameRange: TextRange) extends Expr, HasText {
+  override def textRange = TextRange(obj.textRange.start, fieldNameRange.end)
+  def text = s"${obj.text}.$fieldName"
 }

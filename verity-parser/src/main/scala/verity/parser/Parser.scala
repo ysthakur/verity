@@ -2,7 +2,6 @@ package verity.parsing.parser
 
 import language.implicitConversions
 
-import verity.parsing._
 import verity.ast._, infile._
 import Core._
 import Exprs._
@@ -19,7 +18,7 @@ import java.nio.file._
 object Parser {
   
   def parseFile(name: String, input: File): Either[(String, Int), FileNode] =
-    parse(new FileInputStream(input), file(input)(_)) match {
+    parse(new FileInputStream(input), file(input)(_), verboseFailures=true) match {
       case Success(ast, _) => Right(ast)
       case Failure(label, index, extra) => Left((makeSyntaxErrorMsg(label, index, extra), index))
     }
