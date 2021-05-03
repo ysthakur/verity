@@ -1,4 +1,4 @@
-package verity.parsing.parser
+package verity.parser
 
 import verity.ast._, infile._
 import Core._
@@ -47,10 +47,11 @@ private object Methods {
 
   //TODO add type parameters
   def normMethod[_: P]: P[Method] =
-    P(modifiers ~ typeRef ~ identifier ~ paramList ~ (block | ";" ~ Index)).map {
-      case (modifiers, returnType, name, params, body) =>
-        new Method(
+    P(modifiers ~ typeParamList.? ~ typeRef ~ identifier ~ paramList ~ (block | ";" ~ Index)).map {
+      case (modifiers, typeParams, returnType, name, params, body) =>
+        new NormMethod(
             modifiers.to(ListBuffer),
+            typeParams.getOrElse(TypeParamList.empty),
             returnType,
             name,
             params,
@@ -58,10 +59,9 @@ private object Methods {
               case b: Block => Some(b)
               case _        => None
             },
-            false,
             TextRange(
                 (if (modifiers.isEmpty) returnType else modifiers.head).textRange.start,
-                body match {
+                (body: @unchecked) match {
                   case b: Block => b.textRange.end
                   case e: Int   => e
                 }
@@ -71,21 +71,20 @@ private object Methods {
 
   /** A constructor
     */
-  def ctor[_: P]: P[Method] =
+  def ctor[_: P]: P[(=> HasCtors) => Constructor] =
     P(Index ~ modifiers ~ identifier ~ paramList ~ block).map {
       case (start, modifiers, name, params, body) =>
-        new Method(
+        cls => new Constructor(
             modifiers.to(ListBuffer),
-            ToBeInferred(ObjectType, NothingType, Nil),
             name,
             params,
-            Some(body),
-            false,
-            TextRange(start, body.textRange.end)
+            body,
+            TextRange(start, body.textRange.end),
+            cls
         )
     }
 
   /** A normal method or a constructor
     */
-  def method[_: P]: P[Method] = P(ctor | normMethod)
+  def method[_: P]: P[Any] = P(ctor | normMethod)
 }

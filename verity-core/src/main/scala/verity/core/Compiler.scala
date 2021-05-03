@@ -2,11 +2,11 @@ package verity.core
 
 import scala.language.unsafeNulls
 
-import verity.ast.{Package, FileNode, TextRange}
+import verity.ast.{Package, RootPkg, PkgNode, FileNode, TextRange, HasText}
 import verity.checks.initial.InitialChecks
 import verity.core.resolve
 import verity.util.*
-import verity.parsing.Parser
+import verity.parser.Parser
 
 import com.typesafe.scalalogging.Logger
 
@@ -20,7 +20,7 @@ object Compiler {
     given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
 
     parsePkg(pkgs, files, rootPkg)
-    resolve.resolveSimpleRefs(rootPkg)
+    resolve.initialPass(rootPkg)
     OutputJava.outputJavaPkg(rootPkg, options.javaOutputDir)
   }
 

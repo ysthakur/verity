@@ -95,12 +95,22 @@ lazy val commonLibs3 = Seq(
 )
 
 val commonScala2Options = Seq(
-  // "-language:implicitConversions"
+  "-deprecation",           
+  "-encoding", "UTF-8",
+  "-feature",
+  "-Xlint",
+  "-Xfatal-warnings",
+  "-Ywarn-dead-code",
+  "-Ywarn-value-discard",
   "-Ytasty-reader",
   "-Xsource:3"
 )
 
 val commonScala3Options = Seq(
+  "-deprecation",           
+  "-encoding", "UTF-8",
+  "-feature",
+  "-Xfatal-warnings",
   "-Yexplicit-nulls",
 //  "-explain",
   "-Ycheck-init", //will be "-Ysafe-init"

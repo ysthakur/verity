@@ -6,6 +6,14 @@ trait HasText {
   def textRange: TextRange
 }
 
+object HasText {
+  /**
+   * Convert an Iterable of trees with test to a single string
+   */
+  def seqText(iter: Iterable[HasText], sep: String = ",", start: String = "(", end: String = ")"): String =
+    iter.view.map(_.text).mkString(start, sep, end)
+}
+
 trait GetText[T] {
   def getText(tree: T): String
   extension (tree: T)

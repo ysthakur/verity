@@ -9,9 +9,10 @@ class Field(
     override val modifiers: ListBuffer[Modifier],
     var myType: Type,
     var initExpr: Option[Expr] = None
-) extends VariableDecl
-    with HasModifiers
-    with HasType {
+) extends VariableDecl,
+      ClassChild,
+      HasModifiers,
+      HasType {
   override def text: String = ???
   override def textRange = ???
 }

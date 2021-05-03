@@ -25,15 +25,15 @@ object BoolLiteral {
 sealed trait NumLiteral(val numType: NumType) extends Literal
 
 case class IntegerLiteral(
-  override val text: String,
-  override val textRange: TextRange,
-  isLong: Boolean
+    override val text: String,
+    override val textRange: TextRange,
+    isLong: Boolean
 ) extends NumLiteral(if (isLong) NumType.LONG else NumType.INT)
 
 case class FloatLiteral(
-  override val text: String, 
-  override val textRange: TextRange, 
-  isDouble: Boolean
+    override val text: String,
+    override val textRange: TextRange,
+    isDouble: Boolean
 ) extends NumLiteral(if (isDouble) NumType.DOUBLE else NumType.FLOAT)
 
 enum NumType {
@@ -53,8 +53,16 @@ class SuperRef(override val textRange: TextRange) extends Expr {
   override def text: String = "super"
 }
 
-class VarRef(val varName: String, val textRange: TextRange) extends Expr {
+class NoDotRef(val varName: String, val textRange: TextRange) extends Expr {
   override def text = varName
+}
+
+class DotRef(val first: Expr, val selected: String, val selectedRange: TextRange)
+    extends Tree,
+      Expr,
+      HasText {
+  override def textRange = TextRange(first.textRange.start, selectedRange.end)
+  override def text = s"${first.text}.$selected"
 }
 
 class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr {
@@ -76,7 +84,6 @@ case class BinaryExpr(left: Expr, op: String, right: Expr) extends Expr {
   override def textRange = TextRange(left.textRange.start, right.textRange.end)
 }
 
-
 case class UnaryPreExpr(op: Op, expr: Expr) extends Expr {
   override def text: String = s"(${op.text} ${expr.text})"
   override def textRange = TextRange(op.textRange.start, expr.textRange.end)
@@ -92,12 +99,11 @@ case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Option[Token]) extends 
   override def textRange = TextRange(lhs.textRange.start, rhs.textRange.end)
 }
 
-/**
- * An operator
- * @param symbol
- * @param startOffset
- * @param endOffset
- */
+/** An operator
+  * @param symbol
+  * @param startOffset
+  * @param endOffset
+  */
 case class Op(symbol: String, override val textRange: TextRange) extends Tree, HasText {
   def isBinary: Boolean = ???
   override def text: String = symbol //symbol.text
@@ -112,14 +118,15 @@ case class ToBeGiven(typ: Type) extends Expr {
   override def textRange = ???
 }
 
-case class MethodCall(
-  obj: Option[Expr],
-  name: String,
-  valArgs: ArgList,
-  //givenArgs: Seq[Expr], //TODO do givenArgs!!
-  typeArgs: Seq[Type]) extends Expr {
+class MethodCall(
+    obj: Option[Expr],
+    name: String,
+    valArgs: ArgList,
+    var typeArgs: Seq[Type],
+    givenArgs: ListBuffer[List[Expr]] = ListBuffer.empty //TODO do givenArgs!!
+) extends Expr {
   //TODO figure out how to print types
-  def text: String = obj.fold("")(_.text + ".") 
+  def text: String = obj.fold("")(_.text + ".")
     + (if (typeArgs.isEmpty) "" else typeArgs.map(_.text).mkString("<", ",", ">"))
     + name
     + valArgs.text

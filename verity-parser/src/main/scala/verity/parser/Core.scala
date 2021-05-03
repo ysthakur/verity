@@ -1,6 +1,4 @@
-package verity.parsing.parser
-
-import language.implicitConversions
+package verity.parser
 
 import verity.ast._, infile._
 
@@ -16,6 +14,11 @@ private object Core {
       id -> TextRange(start, end)
     }
 
+  //todo clear this up?
+  def upperBound[_: P] = P("extends" ~/ typeRef)
+  def lowerBound[_: P] = P("super" ~/ typeRef)
+  // def typeBound[_: P] = P(Index ~ StringIn("super", "extends").! ~/ Index ~ typeRef)
+
   def typeRef[_: P]: P[TypeRef] = P(Index ~ identifier ~ ("<" ~/ typeArgList ~ ">").? ~ Index).map {
     case (start, name, args, end) =>
       new TypeRef(name, args.getOrElse(List.empty), TextRange(start, end))
@@ -26,6 +29,14 @@ private object Core {
     }
   def typeArg[_: P]: P[Type] = P(wildCard | typeRef)
   def typeArgList[_: P] = argList(typeArg: P[Type])
+
+  def typeParam[_: P] = P(identifierWithTextRange ~ upperBound.? ~ lowerBound.?).map {
+    case (name, nameRange, upper, lower) =>
+      new TypeParam(name, upper.getOrElse(ObjectType), lower.getOrElse(NothingType), nameRange)
+  }
+  def typeParamList[_: P] = P("<" ~/ Index ~ typeParam ~ ("," ~ typeParam).rep ~ ">" ~ Index).map {
+    case (start, first, rest, end) => new TypeParamList(first +: rest, TextRange(start, end))
+  }
 
   implicit class StringOps(str: String) {
     @inline
@@ -72,16 +83,16 @@ private object Core {
 
   def annotation[_: P]: P[Annotation] = ???
 
-  def dotRef[_: P]: P[DotRef] = P(Index ~ identifier ~ ("." ~ identifier).rep).map {
-    case (top, rest) => new DotRef(top +: rest)
+  def dotPath[_: P] = P(identifierWithTextRange ~ ("." ~ identifierWithTextRange).rep).map {
+    case (top, tr, rest) => DotPath((top, tr) +: rest)
   }
 
-  def packageStmt[_: P]: P[PackageStmt] = P(Index ~ "package" ~/ dotRef ~ ";").map {
+  def packageStmt[_: P]: P[PackageStmt] = P(Index ~ "package" ~/ dotPath ~ ";").map {
     case (pkgTokStart, path) => new PackageStmt(path, pkgTokStart)
   }
 
   def importStmt[_: P]: P[ImportStmt] =
-    P(Index ~ "import" ~/ dotRef ~ ("." ~ "*" ~ Index).? ~ ";").map {
+    P(Index ~ "import" ~/ dotPath ~ ("." ~ "*" ~ Index).? ~ ";").map {
       case (imptTokStart, path, None) =>
         new ImportStmt(path, TextRange(imptTokStart, path.textRange.end), false)
       case (imptTokStart, path, Some(wildcardInd)) =>

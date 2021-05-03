@@ -21,7 +21,7 @@ case class FileNode(
 /** @param path The path of the package this file is in
   * @param pkgTokStartOffset The start offset of the "package" token
   */
-case class PackageStmt(val path: DotRef, val pkgTokStartOffset: Int) extends Tree, HasText {
+case class PackageStmt(val path: DotPath, val pkgTokStartOffset: Int) extends Tree, HasText {
   override def text: String = s"package ${path.text};"
   override def textRange = TextRange(pkgTokStartOffset, path.textRange.end)
 }
@@ -29,8 +29,13 @@ case class PackageStmt(val path: DotRef, val pkgTokStartOffset: Int) extends Tre
 /** @param path The path of the import (excluding the wildcard)
   * @param pkgTokStartOffset The start offset of the "import" token
   */
-case class ImportStmt(path: DotRef, override val textRange: TextRange, wildCard: Boolean = false)
+case class ImportStmt(path: DotPath, override val textRange: TextRange, wildCard: Boolean = false)
     extends Tree,
       HasText {
   override def text = s"import ${path.text}${if (wildCard) ".*" else ""};"
+}
+
+case class DotPath(path: Iterable[(String, TextRange)]) extends Tree, HasText {
+  def text = path.view.map(_._1).mkString(".")
+  def textRange = TextRange(path.head._2.start, path.last._2.end)
 }

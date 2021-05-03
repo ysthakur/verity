@@ -1,7 +1,10 @@
 package verity.ast
 
+import verity.ast.infile.Empty
+
 case class TextRange(start: Int, end: Int) {
   def isEmpty: Boolean = start == end
+  def isSynthetic: Boolean = this == TextRange.synthetic
   def length: Int = end - start
   def to(other: TextRange) = TextRange(this.start, other.end)
 }

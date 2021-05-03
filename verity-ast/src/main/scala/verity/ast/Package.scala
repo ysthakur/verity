@@ -1,7 +1,6 @@
 package verity.ast
 
-import verity.ast.*
-import verity.ast.infile.*
+import verity.ast.infile.{Classlike, ClassChild}
 
 import com.typesafe.scalalogging.Logger
 
@@ -20,7 +19,7 @@ sealed trait Package extends NamedTree {
   /** Find a class directly in this package (not in a subpackage) by the given name.
     */
   def findClasslike(className: String): Option[Classlike] =
-    this.classlikes.find(_.name.toString == className)
+    this.classlikes.find(_.name == className)
 
   def walk(f: FileNode => (RootPkg, Logger) ?=> Unit)(using RootPkg, Logger): Unit = {
     this.subPkgs.foreach { p => Future(p.walk(f))(ExecutionContext.global) }
@@ -75,7 +74,7 @@ case class PkgNode(
 }
 
 object Package {
-  type Importable = (Package | Classlike | MethodGroup | Method | Field | EnumConstant) & NamedTree
+  type Importable = (Package | Classlike | ClassChild) & NamedTree
   type ImportParent = Package | Classlike
 
   /** Find a subpackage given the relative path of the package. The last found subpackage and the remaining path are returned.
@@ -130,7 +129,7 @@ object Package {
   /** Find a class with the given name directly in this package (not in a subpackage)
     */
   def findCls(pkg: Package, clsName: String): Option[Classlike] =
-    pkg.classlikes.find(_.name.toString == clsName)
+    pkg.classlikes.find(_.name == clsName)
 
   private def canonicalName(pkgName: String, parents: Iterable[Package]) =
     parents.foldLeft(pkgName)((endName, parentName) => s"$parentName.$endName")

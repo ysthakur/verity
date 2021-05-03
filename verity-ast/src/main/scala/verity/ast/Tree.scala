@@ -20,3 +20,7 @@ trait ChildNode extends Tree {
   type Parent <: ParentNode
   def parent: Parent
 }
+
+trait NamedTree extends Tree {
+  def name: String
+}

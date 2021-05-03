@@ -7,6 +7,11 @@ import scala.collection.mutable.ListBuffer
 trait HasModifiers extends Tree {
   def modifiers: Iterable[Modifier]
   def modifiersText: String = modifiers.mkString(" ")
+
+  def hasModifier(modType: ModifierType) = this.modifiers.exists(_.modType == modType)
+
+  def accessModifier: Option[ModifierType] =
+    this.modifiers.view.map(_.modType).find(ModifierType.accessModifiers)
 }
 
 case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasText {
@@ -26,5 +31,15 @@ enum ModifierType extends Tree {
     TRANSIENT,
     VOLATILE,
     SYNCHRONIZED,
-    CONST
+    CONST,
+    GIVEN,
+    PROOF
+}
+
+object ModifierType {
+  val accessModifiers: Set[ModifierType] = Set(
+    ModifierType.PUBLIC,
+    ModifierType.PRIVATE,
+    ModifierType.PROTECTED
+  )
 }

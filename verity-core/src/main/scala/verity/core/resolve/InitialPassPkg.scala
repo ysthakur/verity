@@ -17,9 +17,9 @@ import scala.collection.mutable.HashMap
   * @param parentPkgs A list of this package's parents (topmost packages at the end)
   * @param logger The logger to use
   */
-def resolveSimpleRefs(root: RootPkg)(using logger: Logger): Unit = {
+def initialPass(root: RootPkg)(using logger: Logger): Unit = {
   given RootPkg = root
-  root.walkWithPath(resolveSimpleRefsInFile)
+  root.walkWithPath(initialPassFile)
 }
 
 /** Resolve all references to classes and type parameters in a file
@@ -28,7 +28,7 @@ def resolveSimpleRefs(root: RootPkg)(using logger: Logger): Unit = {
   * @param root The root package
   * @param logger The logger to use
   */
-private def resolveSimpleRefsInFile(
+private def initialPassFile(
     file: FileNode,
     parentPkgs: List[Package],
     pkgName: String
@@ -46,7 +46,7 @@ private def resolveSimpleRefsInFile(
 
   //todo find a way to reduce code duplication
   pkgMap.addAll(rootPkg.subPkgs.view.map(p => p.name -> p))
-  clsMap.addAll(currPkg.classlikes.map(c => c.name.toString -> c))
+  clsMap.addAll(currPkg.classlikes.map(c => c.name -> c))
 
   imptsMap.foreach { case (name, imported, imptStmt) =>
     imported match {
@@ -83,19 +83,19 @@ private def resolveSimpleRefsInFile(
   val clsIMap = clsMap.toMap
   val mthdIMap = mthdMap.toMap
 
-  file.classlikes.foreach(c => resolveSimpleRefsInCls(c, pkgIMap, clsIMap, mthdIMap, file))
+  file.classlikes.foreach(c => initialPassCls(c, pkgIMap, clsIMap, mthdIMap, file))
 }
 
 private def resolveImports(
     imports: Iterable[ImportStmt],
     file: FileNode
 )(using rootPkg: RootPkg, logger: Logger): Iterable[(String, Importable, ImportStmt)] =
-  imports.view.flatMap { case imptStmt @ ImportStmt(DotRef(dotRef), _, wildcard) =>
-    val path = dotRef.view.map(_.text)
+  imports.view.flatMap { case imptStmt @ ImportStmt(DotPath(dotPath), _, wildcard) =>
+    val path = dotPath.view.map(_._1)
     Package
       .findImptableAbs(path)
       .fold {
-        logger.error(s"Not found $dotRef")
+        logger.error(s"Not found $dotPath")
         Nil
       } { impt =>
         if (!wildcard) {
@@ -104,14 +104,13 @@ private def resolveImports(
           impt match {
             case pkg: Package =>
               pkg.subPkgs.view.map(p => (p.name, p, imptStmt))
-                ++ pkg.classlikes.map(c => (c.name.toString, c, imptStmt))
+                ++ pkg.classlikes.map(c => (c.name, c, imptStmt))
             case cls: Classlike =>
-              cls.children.view.map(c => (c.name.toString, c, imptStmt))
+              cls.children.view.map(c => (c.name, c, imptStmt))
             case _ =>
               Compiler.logError(s"Cannot import members of ${impt.name}", imptStmt, file)
               Nil
           }
         }
       }
-
   }

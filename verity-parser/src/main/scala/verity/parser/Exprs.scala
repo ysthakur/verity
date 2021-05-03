@@ -1,6 +1,4 @@
-package verity.parsing.parser
-
-import language.implicitConversions
+package verity.parser
 
 import verity.ast._, infile._
 import Core._
@@ -34,11 +32,22 @@ private object Exprs {
   def parenExpr[_: P] = P(Index ~ "(" ~ expr ~/ ")" ~ Index).map { case (start, expr, end) =>
     new ParenExpr(expr, TextRange(start, end))
   }
-  //TODO
+
   def varRefOrMethodCall[_: P]: P[Expr] =
-    P(Index ~ identifier ~ ("." ~ identifierWithTextRange) ~ ("(" ~/ Index ~ methodArgList ~ ")").? ~ Index).map {
-      case (start, first, rest, Some((argStart, args, argsEnd)), end) => new MethodCall(None, name, args, Nil)
-      case (start, first, rest, _, end)                               => new VarRef(name, TextRange(start, end))
+    P(Index ~ identifier ~ Index ~ ("(" ~/ Index ~ methodArgList ~ ")" ~ Index).?).map {
+      case (idStart, name, idEnd, Some((argStart, args, argsEnd))) =>
+        new MethodCall(None, name, args, Nil)
+      case (start, name, end, _) => new NoDotRef(name, TextRange(start, end))
+    }
+
+  def dotRefOrMethodCall[_: P]: P[Expr => Expr] =
+    P(
+        "." ~ Index ~ identifier ~/ Index ~ ("(" ~/ Index ~ methodArgList ~ ")" ~ Index).?
+    ).map {
+      case (nameStart, name, nameEnd, Some((argStart, args, argsEnd))) =>
+        obj => new MethodCall(Some(obj), name, args, Nil)
+      case (nameStart, name, nameEnd, _) =>
+        prev => new DotRef(prev, name, TextRange(nameStart, nameEnd))
     }
 
   def methodArg[_: P] = P(expr).map(Argument.apply)
@@ -51,22 +60,17 @@ private object Exprs {
 
   def selectable[_: P]: P[Expr] = P(parenExpr | literal | varRefOrMethodCall)
 
-  def fieldAccessOrMethodCall[_: P]: P[Expr => Expr] = P("." ~ identifier ~ methodArgList.?).map {
-    case (name, Some(args)) =>
-      (obj: Expr) => MethodCall(Some(obj), name, args, Nil)
-    case (name, _) => (obj: Expr) => FieldAccess(obj, name)
-  }
   def typeParamsFirstMethodCall[_: P]: P[Expr => Expr] = P(
       "." ~ "<" ~/ Index ~ typeArgList ~ ">" ~ Index ~ identifier ~ methodArgList
   ).map { case (typeArgStart, typeArgs, typeArgEnd, name, valArgs /*, givenArgs*/ ) =>
-    (obj: Expr) => MethodCall(Some(obj), name, valArgs, /*givenArgs,*/ typeArgs)
+    (obj: Expr) => new MethodCall(Some(obj), name, valArgs, typeArgs /*, givenArgs */)
   }
   def arrayAccess[_: P]: P[Expr => Expr] = P("[" ~/ Index ~ expr ~ "]" ~ Index).map {
-    case (start, index, end) => (arr: Expr) => ArraySelect(arr, index, TextRange(start, end))
+    case (start, index, end) => arr => ArraySelect(arr, index, TextRange(start, end))
   }
 
   def topExpr[_: P]: P[Expr] =
-    P(selectable ~ (fieldAccessOrMethodCall | typeParamsFirstMethodCall | arrayAccess).rep).map {
+    P(selectable ~ (dotRefOrMethodCall | typeParamsFirstMethodCall | arrayAccess).rep).map {
       case (expr, ctors) => ctors.foldLeft(expr)((e, f) => f(e))
     }
 
