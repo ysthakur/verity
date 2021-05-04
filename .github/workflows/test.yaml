@@ -1,0 +1,11 @@
+name: Test
+on: [push]
+
+jobs:
+  build:
+    name: SBT Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run sbt test
+        run:
+          sbt test
