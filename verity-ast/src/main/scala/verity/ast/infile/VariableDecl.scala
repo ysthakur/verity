@@ -29,7 +29,7 @@ trait VariableDecl extends Tree, HasText, HasType, HasModifiers, NamedTree {
 class Field(
     val fieldName: Text,
     override val modifiers: ListBuffer[Modifier],
-    override var typ: Type,
+    var typ: Type,
     override val initExpr: Option[Expr] = None
 ) extends VariableDecl,
       ClassChild,

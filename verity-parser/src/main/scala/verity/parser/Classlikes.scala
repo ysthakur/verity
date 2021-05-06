@@ -1,9 +1,11 @@
 package verity.parser
 
-import verity.ast._, infile._
+import verity.ast._
+import infile._
 import Core._
 import Exprs._
 import Methods._
+import Types._
 
 import fastparse._, JavaWhitespace._
 
@@ -12,12 +14,12 @@ import collection.mutable.ListBuffer
 //TODO add annotations
 private object Classlikes {
 
-  // def field[_: P] = P(modifiers ~ typeRef ~ identifierText ~ ("=" ~/ expr).? ~ ";").map {
+  // def field[_: P] = P(modifiers ~ nonWildcardType ~ identifierText ~ ("=" ~/ expr).? ~ ";").map {
   //   case (mods, typ, name, initExpr) => new Field(name, mods.to(ListBuffer), typ, initExpr)
   // }
 
   def methodOrField[_: P]: P[Seq[Modifier] => Any] =
-    P(typeRef ~ identifierText ~/ (field2 | methodWithoutTypeParams)).map {
+    P(nonWildcardType ~ identifierText ~/ (field2 | methodWithoutTypeParams)).map {
       case (typ, text, fieldOrMethod) => fieldOrMethod(typ, text)
     }
 
@@ -34,10 +36,10 @@ private object Classlikes {
       case (mods, astCtor) => astCtor(mods)
     }
 
-  def classOrInterfaceBody[_: P] = P("{" ~/ Index ~ templateDefMember2.rep ~ "}" ~ Index)
+  def classOrInterfaceBody[_: P]: P[(Int, Seq[Any], Int)] = P("{" ~/ Index ~ templateDefMember2.rep ~ "}" ~ Index)
 
   //TODO add modifiers and annotations
-  def clazz[_: P] = P(
+  def clazz[_: P]: P[ClassDef] = P(
       modifiers ~ Index ~ "class" ~/ Index ~ identifier ~ typeParamList.? ~ classOrInterfaceBody
   ).map {
     case (modifiers, classTokStart, classTokEnd, name, typeParams, (braceStart, members, braceEnd)) =>

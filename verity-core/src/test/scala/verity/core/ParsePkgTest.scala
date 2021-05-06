@@ -8,7 +8,7 @@ import org.junit.Test
 import org.junit.Before
 import java.io.File
 
-class ParsePackageTest {
+class ParsePkgTest {
   val testDir = raw"C:\Users\yasht\verity\verity-core\src\test\"
   val srcDir = File(testDir + "src")
 

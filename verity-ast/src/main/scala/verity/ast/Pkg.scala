@@ -9,7 +9,7 @@ import scala.annotation.{tailrec, targetName}
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.{Future, ExecutionContext}
 
-sealed trait Package extends NamedTree {
+sealed trait Pkg extends NamedTree {
   def name: String
   def subPkgs: ListBuffer[PkgNode]
   def files: ListBuffer[FileNode]
@@ -28,9 +28,9 @@ sealed trait Package extends NamedTree {
   }
 
   protected def walkWithPath(
-      parents: List[Package],
-      path: String,
-      f: (FileNode, List[Package], String) => (RootPkg, Logger) ?=> Unit
+                              parents: List[Pkg],
+                              path: String,
+                              f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
   )(using RootPkg, Logger): Unit = {
     val newParents = this :: parents
     val newPath = path + this.name
@@ -47,18 +47,18 @@ sealed trait Package extends NamedTree {
     * @param f Execute on a file, also given the list of packages the file is in (in reverse) and the file's path
     */
   def walkWithPath(
-      f: (FileNode, List[Package], String) => (RootPkg, Logger) ?=> Unit
+      f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
   )(using RootPkg, Logger): Unit = {
     val parents = this.parents
-    this.walkWithPath(parents, Package.canonicalName(this.name, parents), f)
+    this.walkWithPath(parents, Pkg.canonicalName(this.name, parents), f)
   }
 
-  def parents: List[Package]
+  def parents: List[Pkg]
 
   override def toString = s"package $name"
 }
 
-case class RootPkg(subPkgs: ListBuffer[PkgNode], files: ListBuffer[FileNode]) extends Package {
+case class RootPkg(subPkgs: ListBuffer[PkgNode], files: ListBuffer[FileNode]) extends Pkg {
   def name = ""
   def parents = Nil
 }
@@ -68,23 +68,23 @@ case class PkgNode(
     name: String,
     subPkgs: ListBuffer[PkgNode],
     files: ListBuffer[FileNode],
-    parent: Package
-) extends Package {
+    parent: Pkg
+) extends Pkg {
   def parents = parent :: parent.parents
 }
 
-object Package {
-  type Importable = (Package | Classlike | Field | MethodGroup | EnumConstant) & NamedTree
-  type ImportParent = Package | Classlike
+object Pkg {
+  type Importable = (Pkg | Classlike | Field | MethodGroup | EnumConstant) & NamedTree
+  type ImportParent = Pkg | Classlike
 
   /** Find a subpackage given the relative path of the package. The last found subpackage and the remaining path are returned.
     * @param pkgPath The path of a subpackage or class or other tree somewhere inside this package.
     *                The Iterable is *not* in reverse order.
     */
   @tailrec def findPkgRel(
-      pkg: Package,
-      pkgPath: Iterable[String]
-  ): (Package, Iterable[String]) =
+                           pkg: Pkg,
+                           pkgPath: Iterable[String]
+  ): (Pkg, Iterable[String]) =
     if (pkgPath.isEmpty) {
       (pkg, pkgPath)
     } else {
@@ -100,7 +100,7 @@ object Package {
     * @param path The path of a subpackage or class or other tree somewhere inside this package.
     *                The Iterable is *not* in reverse order.
     */
-  def findImptableRel(pkg: Package, path: Iterable[String]): Option[Importable] =
+  def findImptableRel(pkg: Pkg, path: Iterable[String]): Option[Importable] =
     if (path.isEmpty) {
       Some(pkg)
     } else {
@@ -109,18 +109,18 @@ object Package {
 
       pkg.subPkgs.view
         .find(_.name == subName)
-        .flatMap(findImptableRel(_, rest)).asInstanceOf[Option[Package.Importable]]
+        .flatMap(findImptableRel(_, rest)).asInstanceOf[Option[Pkg.Importable]]
         .orElse(
             findCls(pkg, subName)
-              .flatMap(_.findMember(rest).asInstanceOf[Option[Package.Importable]]: Option[Package.Importable]): Option[Package.Importable]
-        ): Option[Package.Importable]
+              .flatMap(_.findMember(rest).asInstanceOf[Option[Pkg.Importable]]: Option[Pkg.Importable]): Option[Pkg.Importable]
+        ): Option[Pkg.Importable]
     }
 
   /** Find a subpackage given the absolute path of the package. The last found subpackage and the remaining path are returned.
     * @param pkgPath The path of a subpackage or class or other tree somewhere inside this package.
     *                The Iterable is *not* in reverse order.
     */
-  def findPkgPAbs(pkgPath: Iterable[String])(using root: RootPkg): (Package, Iterable[String]) =
+  def findPkgPAbs(pkgPath: Iterable[String])(using root: RootPkg): (Pkg, Iterable[String]) =
     findPkgRel(root, pkgPath)
 
   def findImptableAbs(path: Iterable[String])(using root: RootPkg): Option[Importable] =
@@ -128,10 +128,10 @@ object Package {
 
   /** Find a class with the given name directly in this package (not in a subpackage)
     */
-  def findCls(pkg: Package, clsName: String): Option[Classlike] =
+  def findCls(pkg: Pkg, clsName: String): Option[Classlike] =
     pkg.classlikes.find(_.name == clsName)
 
-  private def canonicalName(pkgName: String, parents: Iterable[Package]) =
+  private def canonicalName(pkgName: String, parents: Iterable[Pkg]) =
     parents.foldLeft(pkgName)((endName, parentName) => s"$parentName.$endName")
 }
 

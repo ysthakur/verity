@@ -13,26 +13,26 @@ sealed trait Expr extends Tree, HasText {
 trait UnresolvedType extends Expr {
   private[this] var _exprType: Type = ToBeInferred(BuiltinTypes.objectType, NothingType, List.empty)
   override def exprType: Type = _exprType
-  private[verity] def exprType_=(typ: Type) = _exprType = typ
+  private[verity] def exprType_=(typ: Type): Unit = _exprType = typ
 }
 
 sealed trait Literal extends Expr
 
 trait BoolLiteral(override val text: String, override val textRange: TextRange) extends Literal {
-  def exprType = PrimitiveType.BOOLEAN
+  def exprType: Type = PrimitiveType.BOOLEAN
 }
 case class TrueLiteral(tr: TextRange) extends BoolLiteral("true", tr)
 case class FalseLiteral(tr: TextRange) extends BoolLiteral("false", tr)
 object BoolLiteral {
-  def apply(token: Token) =
+  def apply(token: Token): BoolLiteral =
     if (token.text.charAt(0) == 't') TrueLiteral(token.textRange)
     else FalseLiteral(token.textRange)
 }
 
 sealed trait NumLiteral(val numType: NumType) extends Literal {
-  def literal: Text
+  val exprType: Type = numType.typ
 
-  val exprType = numType.typ
+  def literal: Text
 }
 
 enum IntegerLiteral(numType: NumType) extends NumLiteral(numType) {
@@ -41,16 +41,16 @@ enum IntegerLiteral(numType: NumType) extends NumLiteral(numType) {
   case IntLiteral(literal: Text) extends IntegerLiteral(NumType.INT)
   case LongLiteral(literal: Text) extends IntegerLiteral(NumType.LONG)
   
-  def text = literal.text
-  def textRange = literal.textRange
+  def text: String = literal.text
+  def textRange: TextRange = literal.textRange
 }
 
 enum FloatingLiteral(numType: NumType) extends NumLiteral(numType) {
   case FloatLiteral(literal: Text) extends FloatingLiteral(NumType.FLOAT)
   case DoubleLiteral(literal: Text) extends FloatingLiteral(NumType.DOUBLE)
 
-  def text = literal.text
-  def textRange = literal.textRange
+  def text: String = literal.text
+  def textRange: TextRange = literal.textRange
 }
 
 enum NumType(val typ: Type) {
@@ -62,11 +62,11 @@ enum NumType(val typ: Type) {
   case DOUBLE extends NumType(PrimitiveType.DOUBLE)
 }
 
-case class StringLiteral(val literal: Text) extends Expr {
-  val exprType = BuiltinTypes.stringType
+case class StringLiteral(literal: Text) extends Expr {
+  val exprType: Type = BuiltinTypes.stringType
 
-  def text = literal.text
-  def textRange = literal.textRange
+  def text: String = literal.text
+  def textRange: TextRange = literal.textRange
 }
 
 class ThisRef(override val textRange: TextRange) extends Expr, UnresolvedType {
@@ -81,31 +81,26 @@ class SuperRef(override val textRange: TextRange) extends Expr, UnresolvedType {
  * An unresolved reference to a variable, package, or class
  */
 case class DotlessRef(refName: Text) extends Expr {
-  override def text = refName.text
-  override def textRange = refName.textRange
+  override def text: String = refName.text
+  override def textRange: TextRange = refName.textRange
 
-  def exprType = ???
+  def exprType: Type = ???
 }
 
 /**
  * A resolved reference to a variable
  */
 case class VarRef(varName: Text, decl: VariableDecl) extends Expr, UnresolvedType {
-  override def text = varName.text
-  override def textRange = varName.textRange
+  override def text: String = varName.text
+  override def textRange: TextRange = varName.textRange
 }
 
-case class DotRef(val first: Expr, val selected: Text)
+case class DotRef(first: Expr, selected: Text)
     extends Tree,
       Expr,
       HasText, UnresolvedType {
-  override def textRange = TextRange(first.textRange.start, selected.textRange.end)
+  override def textRange: TextRange = TextRange(first.textRange.start, selected.textRange.end)
   override def text = s"${first.text}.$selected"
-}
-
-case class MultiDotRef(val path: Seq[Text]) {
-  def text = path.view.map(_.text).mkString(".")
-  def textRange = TextRange(path.head.textRange.start, path.last.textRange.end)
 }
 
 
@@ -113,21 +108,21 @@ case class MultiDotRef(val path: Seq[Text]) {
  * Used for referring to classes when calling static methods or accessing static
  * fields, NOT used like TypeRef
  */
-case class ClassRef(val clsName: Text, cls: Classlike, pkgRef: Option[PkgRef]) extends HasText {
-  def text = clsName.text
-  def textRange = clsName.textRange
+case class ClassRef(cls: Classlike, pkgRef: Option[PkgRef], clsNameRange: TextRange) extends HasText {
+  def text: String = cls.name
+  def textRange: TextRange = TextRange(pkgRef.fold(clsNameRange)(_.textRange).start, clsNameRange.end)
 }
 
 /**
  * Used for referring to references to packages such as `foo.bar.baz`
  */
-case class PkgRef(val path: Seq[Text], pkg: Package) extends HasText {
-  def text = path.view.map(_.text).mkString(".")
-  def textRange = TextRange(path.head.textRange.start, path.last.textRange.end)
+case class PkgRef(path: Seq[Text], pkg: Pkg) extends HasText {
+  def text: String = path.view.map(_.text).mkString(".")
+  def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
 }
 
 case class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr {
-  def exprType = expr.exprType
+  def exprType: Type = expr.exprType
   def text = s"(${expr.text})"
 }
 
@@ -136,29 +131,29 @@ case class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr
 //   override lazy val textRange = TextRange(expr.textRange.start, propertyName.textRange.end)
 // }
 
-case class ArraySelect(arr: Expr, index: Expr, val bracketsTextRange: TextRange) extends Expr, UnresolvedType {
+case class ArraySelect(arr: Expr, index: Expr, bracketsTextRange: TextRange) extends Expr, UnresolvedType {
   override def text: String = s"${arr.text}[${index.text}]"
-  override def textRange = TextRange(arr.textRange.start, bracketsTextRange.end)
+  override def textRange: TextRange = TextRange(arr.textRange.start, bracketsTextRange.end)
 }
 
 case class BinaryExpr(left: Expr, op: Op, right: Expr) extends Expr, UnresolvedType {
   override def text: String = s"(${left.text} $op ${right.text})"
-  override def textRange = TextRange(left.textRange.start, right.textRange.end)
+  override def textRange: TextRange = TextRange(left.textRange.start, right.textRange.end)
 }
 
 case class UnaryPreExpr(op: Op, expr: Expr) extends Expr, UnresolvedType {
   override def text: String = s"(${op.text} ${expr.text})"
-  override def textRange = TextRange(op.textRange.start, expr.textRange.end)
+  override def textRange: TextRange = TextRange(op.textRange.start, expr.textRange.end)
 }
 
 case class UnaryPostExpr(expr: Expr, op: Op) extends Expr, UnresolvedType {
   override def text: String = s"(${expr.text}${op.text})"
-  override def textRange = TextRange(expr.textRange.start, op.textRange.end)
+  override def textRange: TextRange = TextRange(expr.textRange.start, op.textRange.end)
 }
 
 case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Option[Token]) extends Expr, UnresolvedType {
-  def text = lhs.text + extraOp.fold("")(_.text) + "=" + rhs.text
-  override def textRange = TextRange(lhs.textRange.start, rhs.textRange.end)
+  def text: String = lhs.text + extraOp.fold("")(_.text) + "=" + rhs.text
+  override def textRange: TextRange = TextRange(lhs.textRange.start, rhs.textRange.end)
 }
 
 class InstanceOf(val expr: Expr, val exprType: Type, val textRange: TextRange) extends Expr {
@@ -199,15 +194,11 @@ object OpType {
 }
 
 case class Block(stmts: ListBuffer[Statement], textRange: TextRange) extends Expr, Statement, UnresolvedType {
-  def text = stmts.map(_.text).mkString("{", "", "}")
+  def text: String = stmts.map(_.text).mkString("{", "", "}")
 }
 
-case class ToBeGiven(typ: Type) extends Expr, UnresolvedType {
-  override def text = ???
-  override def textRange = ???
-}
 
-case class MethodCall(
+case class MethodCall (
     obj: Option[Expr],
     methodName: Text,
     valArgs: ArgList,
@@ -228,7 +219,7 @@ case class MethodCall(
 }
 
 case class ArgList(args: List[Expr], argsKind: ArgsKind, textRange: TextRange) extends HasText {
-  def text = args.view.map(_.text).mkString("(", ",", ")")
+  def text: String = args.view.map(_.text).mkString("(", ",", ")")
 }
 
 enum ArgsKind {
@@ -238,11 +229,52 @@ enum ArgsKind {
 }
 
 class FieldAccess(obj: Expr, field: Field, fieldNameRange: TextRange) extends Expr, HasText, UnresolvedType {
-  override def textRange = TextRange(obj.textRange.start, fieldNameRange.end)
+  override def textRange: TextRange = TextRange(obj.textRange.start, fieldNameRange.end)
   def text = s"${obj.text}.${field.name}"
 }
 
 class StaticFieldAccess(clsRef: ClassRef, field: Field, fieldNameRange: TextRange) extends Expr, HasText, UnresolvedType {
-  override def textRange = TextRange(clsRef.textRange.start, fieldNameRange.end)
+  override def textRange: TextRange = TextRange(clsRef.textRange.start, fieldNameRange.end)
   def text = s"${clsRef.text}.${field.name}"
+}
+
+object Unresolved {
+  case class UnresolvedVarRef(varName: Text) extends Expr, HasText, UnresolvedType {
+    override def textRange: TextRange = varName.textRange
+    def text: String = varName.text
+  }
+
+  case class UnresolvedFieldAccess(obj: Expr, fieldName: Text) extends Expr, HasText, UnresolvedType {
+    override def textRange: TextRange = TextRange(obj.textRange.start, fieldName.textRange.end)
+    def text = s"${obj.text}.${fieldName.text}"
+  }
+
+  case class UnresolvedMethodCall(
+      objOrCls: Option[HasText],
+      methodName: Text,
+      valArgs: ArgList,
+      typeArgs: TypeArgList,
+      givenArgs: Option[ArgList], //TODO do givenArgs!!
+      proofArgs: Option[ArgList] //TODO do proofArgs!!
+  ) extends Expr, UnresolvedType {
+    private[verity] var resolved: Option[Method] = None
+
+    def text: String = objOrCls.fold("")(_.toString)
+      + typeArgs.text
+      + methodName.text
+      + valArgs.text
+      + HasText.optText(givenArgs)
+      + HasText.optText(proofArgs)
+    override def textRange: TextRange = ???
+  }
+
+  case class MultiDotRef(path: Seq[Text]) extends HasText {
+    def text: String = path.view.map(_.text).mkString(".")
+    def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
+  }
+
+  case class MultiDotRefExpr(path: Seq[Text]) extends Expr, UnresolvedType {
+    def text: String = path.view.map(_.text).mkString(".")
+    def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
+  }
 }

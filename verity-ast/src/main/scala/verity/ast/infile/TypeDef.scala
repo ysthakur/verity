@@ -6,8 +6,8 @@ trait TypeDef extends NamedTree {
   /**
    * Get a reference to this type parameter
    */
-  def makeRef(typeArgs: Seq[Type] = Nil): TypeRef =
-  	TypeRef(Text(this.name), typeArgs, Some(this), TextRange.synthetic)
+  def makeRef(typeArgs: TypeArgList = Empty[TypeArgList]): TypeRef =
+  	TypeRef(Text(this.name) :: Nil, typeArgs, Some(this))
 
   def fields: Iterable[Field]
   def methods: Iterable[Method]

@@ -1,11 +1,10 @@
 package verity.core.resolve
 
+import com.typesafe.scalalogging.Logger
 import verity.ast.*
 import verity.ast.infile.*
+import verity.core.Context.Defs
 import verity.core.{Compiler, Context, Keywords}
-import Context.Refs
-
-import com.typesafe.scalalogging.Logger
 
 //todo make a proper solver for this stuff
 private def resolveStmt(
@@ -14,7 +13,7 @@ private def resolveStmt(
 )(using ctxt: Context, rootPkg: RootPkg, logger: Logger): Statement | Iterable[Statement] = {
   logger.debug(s"Resolving statement ${stmt.text}, ${stmt.getClass}")
   stmt match {
-    case rs: ReturnStmt => ReturnStmt(resolveExpr(rs.expr, mthdReturnType), rs.textRange)
+    case rs: ReturnStmt => ReturnStmt(resolveAndCheckExpr(rs.expr, mthdReturnType), rs.textRange)
     case lv: LocalVar =>
       logger.debug(s"Resolving localvar ${lv.text}")
       val newType = lv.typ match {
@@ -32,7 +31,7 @@ private def resolveStmt(
               lv.modifiers,
               lv.varName,
               newType,
-              Some(resolveExpr(e, newType)),
+              Some(resolveAndCheckExpr(e, newType)),
               lv.endInd
           )
         case None =>
@@ -40,11 +39,9 @@ private def resolveStmt(
           lv
       }
     case block: Block =>
-      var varRefs = ctxt.varRefs
+      //A variable because new variable declarations will be added as it goes down the block
       var context = ctxt
       val newStmts = block.stmts.map { stmt =>
-        // given Context = Context(_varRefs, mthdRefs, givens, proofs, clsRefs, pkgRefs, cls, file)
-
         resolveStmt(stmt, mthdReturnType)(using context) match {
           case stmts: Iterable[_] =>
             Block(
@@ -55,12 +52,12 @@ private def resolveStmt(
             stmt match {
               case vd: LocalVar => //Add a new variable to _varRefs
                 context = Context(
-                    varRefs + (vd.name -> vd),
-                    context.mthdRefs,
-                    context.givens,
-                    context.proofs,
-                    context.clsRefs,
-                    context.pkgRefs,
+                    context.varDefs + (vd.name -> vd),
+                    context.mthdDefs,
+                    context.givenDefs,
+                    context.givenDefs,
+                    context.typeDefs,
+                    context.pkgDefs,
                     context.cls,
                     context.file
                 )
@@ -74,32 +71,35 @@ private def resolveStmt(
   }
 }
 
-private def resolveExpr(expr: Expr, expectedType: Type)(using
+private def resolveAndCheckExpr(expr: Expr, expectedType: Type)(using
     ctxt: Context,
     logger: Logger
 ): Expr = {
   logger.debug(s"Resolving expr ${expr.text}")
-  val resolved = expr match {
-    case MultiDotRef(path) =>
-      ReferenceResolve.resolveDotChainedRef(path) match {
-        case Right(resolved) =>
-          resolved match {
-            case e: Expr => e
-            case c: ClassRef =>
-              Compiler.logError(s"${c.text} is a class, not an expression", c, ctxt.file)
+
+  import Unresolved.*
+
+  val resolved: Expr = expr match {
+    case UnresolvedFieldAccess(obj, fieldName) =>
+      val owner = resolveAndCheckExpr(obj, BuiltinTypes.objectType)
+      ReferenceResolve
+        .findField(owner.exprType, fieldName.text)
+        .fold(expr)(field => FieldAccess(owner, field, fieldName.textRange))
+    case mc: UnresolvedMethodCall =>
+      (mc.objOrCls: @unchecked) match {
+        case None => resolveUnresolvedMethodCall(ClassRef(ctxt.cls, None, TextRange.synthetic), mc)
+        case Some(e: Expr) => resolveUnresolvedMethodCall(resolveAndCheckExpr(e, BuiltinTypes.objectType), mc)
+        case Some(MultiDotRef(path)) =>
+          ReferenceResolve.resolveDotChainedRef(path) match {
+            case Right(caller) => resolveUnresolvedMethodCall(caller, mc)
+            case Left(errorMsg, textRange) =>
+              Compiler.logError(errorMsg, textRange)
               expr
           }
-        case Left(wrongText) =>
-          Compiler.logError(
-              s"Could not resolve reference ${wrongText.text}",
-              wrongText.textRange,
-              ctxt.file
-          )
-          expr
       }
     case b: BinaryExpr  => resolveBinaryExpr(b)
     case mc: MethodCall => resolveMethodCall(mc)
-    case _              => ???
+    case _              => logger.error(s"aahh!! ${expr}");???
   }
 
   if (!resolved.exprType.subTypeOf(expectedType)) {
@@ -110,17 +110,19 @@ private def resolveExpr(expr: Expr, expectedType: Type)(using
   resolved
 }
 
+private def resolveUnresolvedMethodCall(caller: Expr | ClassRef, mthdCall: Unresolved.UnresolvedMethodCall): MethodCall = {
+  ???
+}
+
 private def resolveBinaryExpr(
     expr: BinaryExpr
 )(using ctxt: Context, logger: Logger): BinaryExpr = {
   val BinaryExpr(lhs, op, rhs) = expr
-
   import OpType.*
-
   op.opType match {
     case SUBTRACT | MULTIPLY | DIVIDE =>
-      val newLhs = resolveExpr(lhs, PrimitiveType.numericTypes)
-      val newRhs = resolveExpr(rhs, PrimitiveType.numericTypes)
+      val newLhs = resolveAndCheckExpr(lhs, PrimitiveType.numericTypes)
+      val newRhs = resolveAndCheckExpr(rhs, PrimitiveType.numericTypes)
 
       BinaryExpr(newLhs, op, newRhs)
     case _ => ???
@@ -135,9 +137,9 @@ private def resolveMethodCall(
   //Filter based on name
   val availableMthds = obj match {
     case Some(expr) =>
-      val resolvedCallee = resolveExpr(expr, BuiltinTypes.objectType)
+      val resolvedCallee = resolveAndCheckExpr(expr, BuiltinTypes.objectType)
       resolvedCallee.exprType.methods.filter(_.name == mthdName)
-    case None => ctxt.mthdRefs(mthdName).methods
+    case None => ctxt.mthdDefs(mthdName).methods
   }
 
   //Filter based on number of parameters
@@ -164,10 +166,10 @@ private def resolveMethodCall(
     mthdCall
   } else {
     val resolvedMthd = possibleMthds.head
-    val expectedTypes = resolvedMthd.params.params.map(_.paramType)
+    val expectedTypes = resolvedMthd.params.params.map(_.typ)
     val newValArgs =
       mthdCall.valArgs.args.lazyZip(expectedTypes).map { case (arg, expectedType) =>
-        resolveExpr(arg, expectedType)
+        resolveAndCheckExpr(arg, expectedType)
       }
     val newMthdCall =
       mthdCall.copy(valArgs = ArgList(newValArgs, ArgsKind.Normal, valArgs.textRange))

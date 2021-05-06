@@ -7,7 +7,7 @@ class Test2 {
   boolean baz = 5;
 
   public Test2(int foo) {
-    int bar = foo;
+    int bar = foo.bar.baz;
     // bar = 2;
     return 3 + 2;
   }

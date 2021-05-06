@@ -6,13 +6,13 @@ import verity.core.{Compiler, Context, Keywords}
 import verity.core.resolve.ReferenceResolve
 import verity.util.*
 import verity.checks.InitialChecks
-import Package.Importable
-import Context.Refs
+import Pkg.Importable
+import Context.Defs
 
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable.HashMap
-
+//todo move into verity.core?
 object InitialChecks {
 
   /** Resolve method and field types
@@ -33,7 +33,7 @@ object InitialChecks {
     */
   private def initialPassFile(
       file: FileNode,
-      parentPkgs: List[Package],
+      parentPkgs: List[Pkg],
       pkgName: String
   )(using rootPkg: RootPkg, logger: Logger): Unit = {
     val currPkg = parentPkgs.head
@@ -44,7 +44,7 @@ object InitialChecks {
     val resolvedImports =
       ReferenceResolve.resolveImports(imports, file): Iterable[(String, Importable, ImportStmt)]
 
-    val pkgMap = HashMap[String, Package]()
+    val pkgMap = HashMap[String, Pkg]()
     val clsMap = HashMap[String, Classlike]()
 
     //todo find a way to reduce code duplication
@@ -53,10 +53,10 @@ object InitialChecks {
 
     file.resolvedImports = resolvedImports.map { case (name, imported, imptStmt) =>
       imported match {
-        case pkg: Package =>
+        case pkg: Pkg =>
           if (pkgMap.contains(name)) {
             Compiler.logError(
-                s"Cannot import package ${name}: package of same name already in scope",
+                s"Cannot import package ${name}: Pkg of same name already in scope",
                 imptStmt,
                 file
             )
@@ -75,7 +75,7 @@ object InitialChecks {
           }
       }
 
-      imported.asInstanceOf[Package.Importable]
+      imported.asInstanceOf[Pkg.Importable]
     }
 
     val pkgIMap = pkgMap.toMap
@@ -93,12 +93,12 @@ object InitialChecks {
     * @param file The current file
     */
   private def initialPassCls(
-      cls: Classlike,
-      clsRefs: Refs[Classlike],
-      pkgRefs: Refs[Package],
-      file: FileNode
+                              cls: Classlike,
+                              clsRefs: Defs[Classlike],
+                              pkgRefs: Defs[Pkg],
+                              file: FileNode
   )(using logger: Logger): Unit = {
-    val fieldRefs: Refs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
+    val fieldRefs: Defs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
 
     cls match {
       case c: HasCtors if c.ctors.isEmpty => c.addCtor(Constructor.defaultCtor(c))
@@ -128,11 +128,11 @@ object InitialChecks {
   }
 
   private def initialPassMthd(
-      mthd: Method,
-      clsRefs: Refs[Classlike],
-      pkgRefs: Refs[Package],
-      cls: Classlike,
-      file: FileNode
+                               mthd: Method,
+                               clsRefs: Defs[Classlike],
+                               pkgRefs: Defs[Pkg],
+                               cls: Classlike,
+                               file: FileNode
   )(using logger: Logger): Unit = {
     val isCtor = mthd.isInstanceOf[Constructor]
     given Context = Context(

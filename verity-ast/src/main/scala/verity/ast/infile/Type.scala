@@ -1,6 +1,6 @@
 package verity.ast.infile
 
-import verity.ast.*
+import verity.ast.{Tree, NamedTree, HasText, TextRange, Text, Synthetic}
 
 sealed trait Type extends Tree, HasText {
 
@@ -22,14 +22,14 @@ sealed trait Type extends Tree, HasText {
 
 object Type {
   val placeholder: Type = new Type {
-    override def strictSubTypeOf(sup: Type) = ???
-    override def strictSuperTypeOf(sub: Type) = ???
+    override def strictSubTypeOf(sup: Type): Boolean = ???
+    override def strictSuperTypeOf(sub: Type): Boolean = ???
 
-    def fields = Nil
-    def methods = ??? //collection.mutable.ListBuffer()
+    def fields: Iterable[Field] = Nil
+    def methods: Iterable[Method] = ??? //collection.mutable.ListBuffer()
 
-    def text = ???
-    def textRange = ???
+    def text: Nothing = ???
+    def textRange: Nothing = ???
   }
 }
 
@@ -44,83 +44,88 @@ object BuiltinTypes {
 
 object NothingType extends Type, Synthetic {
   override def strictSubTypeOf(sup: Type) = false
-  override def strictSuperTypeOf(sub: Type) = sub != BuiltinTypes.objectType
+  override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectType
 
-  def fields = Nil
-  def methods = Nil
+  def fields: Iterable[Field] = Nil
+  def methods: Iterable[Method] = Nil
   override def text = "Type Nothing"
 }
 
 // given ToJava[NothingType.type] = _ => "Type Nothing"
 
+case class PrimitiveTypeRef(typ: PrimitiveType, textRange: TextRange) extends Type {
+  def fields: Iterable[Field] = Nil
+  def methods: Iterable[Method] = Nil
+
+  def text: String = typ.text
+}
+
 enum PrimitiveType extends Type, Synthetic {
   case BOOLEAN, BYTE, SHORT, CHAR, INT, FLOAT, LONG, DOUBLE
 
   override def strictSubTypeOf(sup: Type): Boolean = ???
-  override def strictSuperTypeOf(sub: Type) = ???
+  override def strictSuperTypeOf(sub: Type): Boolean = ???
 
-  def fields = Nil
-  def methods = Nil
+  def fields: Iterable[Field] = Nil
+  def methods: Iterable[Method] = Nil
 
-  override def text = this.toString.toLowerCase.nn
+  override def text: String = this.toString.toLowerCase.nn
 }
 object PrimitiveType {
+  lazy val numericTypes: TypeUnion = TypeUnion(List(BYTE, CHAR, SHORT, INT, FLOAT, LONG, DOUBLE))
+
   val fromName: String => Option[PrimitiveType] =
     PrimitiveType.values.view.map(typ => typ.text -> typ).toMap.get
-
-  lazy val numericTypes: TypeUnion = TypeUnion(List(BYTE, SHORT, CHAR, INT, FLOAT, LONG))
 }
 
 case class TypeRef(
-    val name: Text,
-    val args: Iterable[Type],
-    private[this] var resolved: Option[TypeDef] = None,
-    val argsRange: TextRange
+    path: Seq[Text],
+    args: TypeArgList,
+    private[this] var _resolved: Option[TypeDef] = None
 ) extends Type {
-  def resolve: Option[TypeDef] = resolved
-  private[verity] def resolve_=(typeDef: TypeDef) = resolved = Some(typeDef)
+  def resolved: Option[TypeDef] = _resolved
+  private[verity] def resolved_=(typeDef: TypeDef): Unit = _resolved = Some(typeDef)
 
   override def strictSubTypeOf(sup: Type): Boolean = ???
-  override def strictSuperTypeOf(sub: Type) = ???
+  override def strictSuperTypeOf(sub: Type): Boolean = ???
 
-  def fields = resolved.fold(Nil)(_.fields)
-  def methods = resolved.fold(Nil)(_.methods)
+  def fields: Iterable[Field] = resolved.fold(Nil)(_.fields)
+  def methods: Iterable[Method] = resolved.fold(Nil)(_.methods)
 
-  override def text = if (args.isEmpty) name.text else s"$name<${args.mkString(",")}>"
+  override def text: String = HasText.seqText(path, ".") + args.text
 
   override def textRange: TextRange =
-    if (args.isEmpty) name.textRange
-    else if (argsRange.isSynthetic) TextRange.synthetic
-    else TextRange(name.textRange.start, args.last.textRange.end)
+    if (args.isEmpty || args.textRange.isSynthetic) TextRange(path.head.textRange.start, path.last.textRange.end)
+    else TextRange(path.head.textRange.start, args.textRange.end)
 
   override def equals(other: Any): Boolean = other match {
     case tr: TypeRef =>
-      this.name == tr.name && this.args.size == tr.args.size && this.args
-        .lazyZip(tr.args)
+      resolved.flatMap(typ => tr.resolved.map(_ == typ)).getOrElse(false) && this.args.args.size == tr.args.args.size && this.args.args
+        .lazyZip(tr.args.args)
         .forall(_ == _)
     case _ => false
   }
 }
 
-case class TypeUnion(val types: Iterable[Type]) extends Type, Synthetic {
+case class TypeUnion(types: Iterable[Type]) extends Type, Synthetic {
   override def strictSubTypeOf(sup: Type): Boolean = ???
-  override def strictSuperTypeOf(sub: Type) = ???
+  override def strictSuperTypeOf(sub: Type): Boolean = ???
 
-  def fields = ???
-  def methods = ???
+  def fields: Iterable[Field] = ???
+  def methods: Iterable[Method] = ???
 
-  def text = ???
+  def text: Nothing = ???
 }
 
 //todo is this necessary?
 case class TypeRange(var upper: Type, var lower: Type) extends Type {
   override def strictSubTypeOf(sup: Type): Boolean = upper.strictSubTypeOf(sup)
-  override def strictSuperTypeOf(sub: Type) = lower.strictSuperTypeOf(sub)
+  override def strictSuperTypeOf(sub: Type): Boolean = lower.strictSuperTypeOf(sub)
 
-  def fields = upper.fields
-  def methods = upper.methods
+  def fields: Iterable[Field] = upper.fields
+  def methods: Iterable[Method] = upper.methods
 
-  override def text = ???
+  override def text: Nothing = ???
   override def textRange: TextRange = ???
 }
 
@@ -133,12 +138,12 @@ case class TypeRange(var upper: Type, var lower: Type) extends Type {
 
 case class Wildcard(upper: Option[TypeRef], lower: Option[TypeRef]) extends Type {
   override def strictSubTypeOf(sup: Type): Boolean = upper.fold(false)(_.strictSubTypeOf(sup))
-  override def strictSuperTypeOf(sub: Type) = lower.fold(false)(_.strictSuperTypeOf(sub))
+  override def strictSuperTypeOf(sub: Type): Boolean = lower.fold(false)(_.strictSuperTypeOf(sub))
 
-  def fields = upper.fold(BuiltinTypes.objectType.fields)(_.fields)
-  def methods = upper.fold(BuiltinTypes.objectType.methods)(_.methods)
+  def fields: Iterable[Field] = upper.fold(BuiltinTypes.objectType.fields)(_.fields)
+  def methods: Iterable[Method] = upper.fold(BuiltinTypes.objectType.methods)(_.methods)
 
-  override def text = ???
+  override def text: Nothing = ???
   override def textRange: TextRange = ???
 }
 
@@ -147,23 +152,32 @@ case class ArrayType()
 
 case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type {
   override def strictSubTypeOf(sup: Type): Boolean = upper.strictSubTypeOf(sup)
-  override def strictSuperTypeOf(sub: Type) = lower.strictSuperTypeOf(sub)
+  override def strictSuperTypeOf(sub: Type): Boolean = lower.strictSuperTypeOf(sub)
 
-  def fields = upper.fields
-  def methods = upper.methods
+  def fields: Iterable[Field] = upper.fields
+  def methods: Iterable[Method] = upper.methods
 
   override def text = "NOT INFERRED AAA!!!"
   override def textRange: TextRange = ???
 }
 
-case class TypeParamList(params: Iterable[TypeParam], val textRange: TextRange)
-    extends Tree,
-      HasText {
+object UnknownType extends Type {
+  override def strictSubTypeOf(sup: Type): Boolean = false
+  override def strictSuperTypeOf(sub: Type): Boolean = false
+
+  def fields: Iterable[Field] = Nil
+  def methods: Iterable[Method] = Nil
+
+  override def text = "<Unknown Type>"
+  override def textRange: TextRange = TextRange.synthetic
+}
+
+case class TypeParamList(params: Iterable[TypeParam], textRange: TextRange) extends Tree, HasText {
   override def text: String = HasText.seqText(params, ",", "<", ">")
 }
 
 object TypeParamList {
-  def empty = TypeParamList(Seq.empty, TextRange.synthetic)
+  def empty: TypeParamList = TypeParamList(Seq.empty, TextRange.synthetic)
 }
 
 class TypeParam(
@@ -174,10 +188,10 @@ class TypeParam(
 ) extends HasText,
       NamedTree,
       TypeDef {
-  def fields = upperBound.fields
-  def methods = upperBound.methods
+  def fields: Iterable[Field] = upperBound.fields
+  def methods: Iterable[Method] = upperBound.methods
   override def text = s"$name extends ${upperBound.text} super ${lowerBound.text}"
-  override def textRange = TextRange(
+  override def textRange: TextRange = TextRange(
       nameRange.start,
       if (!lowerBound.textRange.isSynthetic) lowerBound.textRange.end
       else if (!upperBound.textRange.isSynthetic) upperBound.textRange.end
@@ -195,6 +209,10 @@ enum BoundType {
   case EXTENDS, SUPER, NOT_EXTENDS, NOT_SUPER
 }
 
-case class TypeArgList(args: Iterable[Type], val textRange: TextRange) extends Tree, HasText {
+case class TypeArgList(args: Iterable[Type], textRange: TextRange) extends Tree, HasText {
+  def isEmpty: Boolean = args.isEmpty
   override def text: String = HasText.seqText(args, ",", "<", ">")
 }
+
+given Empty[TypeArgList] with
+  def empty: TypeArgList = TypeArgList(Nil, TextRange.synthetic)

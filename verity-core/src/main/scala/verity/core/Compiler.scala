@@ -2,7 +2,7 @@ package verity.core
 
 import scala.language.unsafeNulls
 
-import verity.ast.{Package, RootPkg, PkgNode, FileNode, TextRange, HasText}
+import verity.ast.{Pkg, RootPkg, PkgNode, FileNode, TextRange, HasText}
 import verity.checks.InitialChecks
 import verity.core.resolve
 import verity.util.*
@@ -39,7 +39,7 @@ object Compiler {
   def parsePkg(
       pkgs: Iterable[File],
       files: Iterable[File],
-      parent: Package
+      parent: Pkg
   )(using logger: Logger): Unit = {
     parent.files ++= files
       .map { file =>

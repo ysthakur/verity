@@ -1,17 +1,21 @@
 package verity.parser
 
-import verity.ast._, infile._
-import Core._
-
-import fastparse._, JavaWhitespace._
+import fastparse.JavaWhitespace._
+import fastparse._
+import verity.ast._
+import verity.ast.infile.Unresolved._
+import verity.ast.infile._
+import verity.parser.Core._
+import verity.parser.Types._
 
 private object Exprs {
-  def boolLiteral[_: P] = P(Index ~ ("true".! | "false".!) ~ Index).map { case (start, text, end) =>
+  /****************************BEGIN ATOMS****************************************/
+  def boolLiteral[_: P]: P[BoolLiteral] = P(Index ~ ("true".! | "false".!) ~ Index).map { case (start, text, end) =>
     if (text(0) == 't') new TrueLiteral(TextRange(start, end))
     else new FalseLiteral(TextRange(start, end))
   }
   //TODO merge int and float literals, and allow underscores
-  def intLiteral[_: P] = P(Index ~ CharsWhileIn("0-9").! ~ CharIn("bBsSlL").?.! ~ Index).map {
+  def intLiteral[_: P]: P[IntegerLiteral] = P(Index ~ CharsWhileIn("0-9").! ~ CharIn("bBsSlL").?.! ~ Index).map {
     case (start, num, suffix, end) =>
       val literal = Text(num, TextRange(start, end))
       import IntegerLiteral._
@@ -22,66 +26,74 @@ private object Exprs {
         case _         => IntLiteral(literal)
       }
   }
-  def numLiteral[_: P] = P(intLiteral)
-  def stringLiteral[_: P] =
+  def numLiteral[_: P]: P[IntegerLiteral] = P(intLiteral)
+  def stringLiteral[_: P]: P[StringLiteral] =
     P("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
       case (start, text, end) => new StringLiteral(Text("\"" + text + "\"", TextRange(start, end)))
     }
-  def thisRef[_: P] = P(Index ~ "this" ~ Index).map { case (start, end) =>
+  def thisRef[_: P]: P[ThisRef] = P(Index ~ "this" ~ Index).map { case (start, end) =>
     new ThisRef(TextRange(start, end))
   }
-  def superRef[_: P] = P(Index ~ "super" ~ Index).map { case (start, end) =>
+  def superRef[_: P]: P[SuperRef] = P(Index ~ "super" ~ Index).map { case (start, end) =>
     new SuperRef(TextRange(start, end))
   }
-  def literal[_: P] = P(numLiteral | boolLiteral | stringLiteral | thisRef | superRef)
+  def literal[_: P]: P[Expr] = P(numLiteral | boolLiteral | stringLiteral | thisRef | superRef)
   // def varRef[_: P] = P(Index ~ identifier ~ Index).map { case (start, varName, end) =>
   //   new VarRef(varName, TextRange(start, end))
   // }
-  def parenExpr[_: P] = P(Index ~ "(" ~ expr ~/ ")" ~ Index).map { case (start, expr, end) =>
+  def parenExpr[_: P]: P[ParenExpr] = P(Index ~ "(" ~ expr ~/ ")" ~ Index).map { case (start, expr, end) =>
     new ParenExpr(expr, TextRange(start, end))
   }
 
   //TODO parse given and proof arguments!!!
-  def varRefOrMethodCall[_: P]: P[Expr] =
-    P(identifierText ~ ("(" ~/ Index ~ methodArgList ~ ")" ~ Index).?).map {
-      case (name, Some((argStart, args, argsEnd))) =>
-        new MethodCall(None, name, args, None)
-      case (name, _) => new DotlessRef(name)
+  def noObjMethodCall[_: P]: P[Expr] =
+    P(typeArgList ~ identifierText ~ "(" ~/ Index ~ methodArgList ~ ")" ~ Index).map {
+      case (typeArgs, name, argStart, args, argsEnd) =>
+        new UnresolvedMethodCall(None, name, args, typeArgs, None, None)
     }
 
-  def dotRefOrMethodCall[_: P]: P[Expr => Expr] =
+  def varRefOrMethodCall[_: P]: P[Expr] =
+    P(identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList ~ identifierText ~ methodArgList).?).map {
+      case (first, rest, Some((typeArgs, name, valArgs))) =>
+        new UnresolvedMethodCall(
+          Some(MultiDotRef(first +: rest)),
+          name,
+          valArgs,
+          typeArgs,
+          None,
+          None
+        )
+      case (first, rest, None) =>
+        if (rest.isEmpty) new UnresolvedVarRef(first)
+        else new MultiDotRefExpr(first +: rest)
+    }
+
+  //todo add constructor call
+  def selectable[_: P]: P[Expr] = P(parenExpr | literal | noObjMethodCall | varRefOrMethodCall)
+  /****************************END ATOMS****************************************/
+
+  /****************************BEGIN TOP-LEVEL STUFF AFTER ATOMS****************************************/
+  def fieldAccessOrMethodCall[_: P]: P[Expr => Expr] =
     P(
         "." ~ identifierText ~/ ("(" ~/ Index ~ methodArgList ~ ")" ~ Index).?
     ).map {
       case (name, Some((argStart, args, argsEnd))) =>
-        obj => new MethodCall(Some(obj), name, args, None)
+        obj => new UnresolvedMethodCall(Some(obj), name, args, TypeArgList(Nil, TextRange.synthetic), None, None)
       case (name, _) =>
-        prev => new DotRef(prev, name)
-    }
-  def dotChainedRef[_: P]: P[Seq[Text]] =
-    P(identifierText ~ !"(" ~ ("." ~ identifierText ~ !"(").rep).map { case (head, rest) =>
-      head +: rest
+        prev => new UnresolvedFieldAccess(prev, name)
     }
 
-  def methodArgList[_: P] =
-    P("(" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
-      case (start, None, end) => ArgList(Nil, ArgsKind.Normal, TextRange(start, end))
-      case (start, Some((firstArg, args)), end) =>
-        ArgList(firstArg :: args.toList, ArgsKind.Normal, TextRange(start, end))
-    }
-
-  def selectable[_: P]: P[Expr] = P(parenExpr | literal | varRefOrMethodCall)
-
-  def typeParamsFirstMethodCall[_: P]: P[Expr => Expr] = P(
-      "." ~ "<" ~/ Index ~ typeArgList ~ ">" ~ Index ~ identifierText ~ methodArgList
-  ).map { case (typeArgStart, typeArgs, typeArgEnd, name, valArgs /*, givenArgs*/ ) =>
-    (obj: Expr) =>
-      new MethodCall(
-          Some(obj),
+  def typeParamsFirstMethodCall[_: P]: P[HasText => Expr] = P(
+      "." ~ typeArgList ~ identifierText ~ methodArgList
+  ).map { case (typeArgs, name, valArgs /*, givenArgs*/ ) =>
+    (caller: HasText) =>
+      new UnresolvedMethodCall(
+          Some(caller),
           name,
           valArgs,
-          Some(TypeArgList(typeArgs, TextRange(typeArgStart, typeArgEnd)))
-          /*, givenArgs */
+          typeArgs,
+          None,
+          None
       )
   }
   def arrayAccess[_: P]: P[Expr => Expr] = P("[" ~/ Index ~ expr ~ "]" ~ Index).map {
@@ -89,22 +101,25 @@ private object Exprs {
   }
 
   def topExpr[_: P]: P[Expr] =
-    P(selectable ~ (dotRefOrMethodCall | typeParamsFirstMethodCall | arrayAccess).rep).map {
+    P(selectable ~ (fieldAccessOrMethodCall | typeParamsFirstMethodCall  | arrayAccess).rep).map {
       case (expr, ctors) => ctors.foldLeft(expr)((e, f) => f(e))
     }
+  /****************************END TOP-LEVEL STUFF AFTER ATOMS****************************************/
 
-  def mulDivMod[_: P] =
+  /****************************BEGIN OPERATORS****************************************/
+  def mulDivMod[_: P]: P[Expr] =
     P(topExpr ~ (Index ~ CharIn("*/").! ~/ Index ~ topExpr).rep).map(foldBinExpr)
+  //noinspection MutatorLikeMethodIsParameterless
   // def mulDivMod[_: P] = binExpr(CharIn("*/%").!, topExpr)
-  def addSub[_: P] =
+  def addSub[_: P]: P[Expr] =
     P(mulDivMod ~ (Index ~ CharIn("+\\-").! ~/ Index ~ mulDivMod).rep).map(foldBinExpr)
-  def bitShift[_: P] =
+  def bitShift[_: P]: P[Expr] =
     P(addSub ~ (Index ~ StringIn(">>>", ">>", "<<").! ~/ Index ~ addSub).rep).map(foldBinExpr)
-  def relational[_: P] =
+  def relational[_: P]: P[Expr] =
     P(
         bitShift ~
           (Index ~ StringIn("<=", "<", ">=", ">").! ~/ Index ~ bitShift
-            | Index ~ "instanceof".! ~ Index ~/ typeRef).rep
+            | Index ~ "instanceof".! ~ Index ~/ nonWildcardType).rep
     ).map { case (first, reps) =>
       reps.foldLeft(first) { case (lhs, (opStart, op, opEnd, rhs)) =>
         val opRange = TextRange(opStart, opEnd)
@@ -115,16 +130,17 @@ private object Exprs {
         }
       }
     }
-  def eqNoteq[_: P] =
+  def eqNoteq[_: P]: P[Expr] =
     P(relational ~ (Index ~ StringIn("==", "!=").! ~/ Index ~ relational).rep).map(foldBinExpr)
-  def bitAnd[_: P] = P(eqNoteq ~ (Index ~ "&".! ~ !"&" ~/ Index ~ eqNoteq).rep).map(foldBinExpr)
-  def bitXor[_: P] = P(bitAnd ~ (Index ~ "^".! ~/ Index ~ bitAnd).rep).map(foldBinExpr)
-  def bitOr[_: P] = P(bitXor ~ (Index ~ "|".! ~ !"|" ~/ Index ~ bitXor).rep).map(foldBinExpr)
-  def logicAnd[_: P] = P(bitOr ~ (Index ~ "&&".! ~/ Index ~ bitOr).rep).map(foldBinExpr)
-  def logicOr[_: P] = P(logicAnd ~ (Index ~ "||".! ~/ Index ~ logicAnd).rep).map(foldBinExpr)
+  def bitAnd[_: P]: P[Expr] = P(eqNoteq ~ (Index ~ "&".! ~ !"&" ~/ Index ~ eqNoteq).rep).map(foldBinExpr)
+  def bitXor[_: P]: P[Expr] = P(bitAnd ~ (Index ~ "^".! ~/ Index ~ bitAnd).rep).map(foldBinExpr)
+  def bitOr[_: P]: P[Expr] = P(bitXor ~ (Index ~ "|".! ~ !"|" ~/ Index ~ bitXor).rep).map(foldBinExpr)
+  def logicAnd[_: P]: P[Expr] = P(bitOr ~ (Index ~ "&&".! ~/ Index ~ bitOr).rep).map(foldBinExpr)
+  def logicOr[_: P]: P[Expr] = P(logicAnd ~ (Index ~ "||".! ~/ Index ~ logicAnd).rep).map(foldBinExpr)
 
   //TODO add ternary and assignment
   def expr[_: P]: P[Expr] = P(logicOr)
+  /****************************END OPERATORS****************************************/
 
   //todo allow accessing fields and modifying arrays
   // def assignExpr[_: P] = P(identifierText ~ (Index ~ "=".! ~/ Index ~ logicAnd).rep).map(foldBinExpr)
@@ -134,4 +150,11 @@ private object Exprs {
       new BinaryExpr(lhs, Op(OpType.findBySymbol(op).get, TextRange(opStart, opEnd)), rhs)
     }
   }
+
+  def methodArgList[_: P]: P[ArgList] =
+    P("(" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
+      case (start, None, end) => ArgList(Nil, ArgsKind.Normal, TextRange(start, end))
+      case (start, Some((firstArg, args)), end) =>
+        ArgList(firstArg :: args.toList, ArgsKind.Normal, TextRange(start, end))
+    }
 }

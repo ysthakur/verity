@@ -1,41 +1,44 @@
 package verity.parser
 
-import verity.ast._, infile._
+import verity.ast._
+import infile._
 import Core._
 import Exprs._
+import Types._
 
-import fastparse._, JavaWhitespace._
+import fastparse._
+import JavaWhitespace._
 
 import collection.mutable.ListBuffer
 
 private object Methods {
-  def param[_: P] = P(typeRef ~ Index ~ identifier ~ Index).map {
-    case (typ, nameStart, name, nameEnd) =>
+  def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map {
+    case (typ, name) =>
       Parameter(
           List.empty, //TODO Add annotations!
           typ,
           name,
-          false,
-          false,
-          TextRange(typ.textRange.start, nameEnd)
+          isGiven = false,
+          isErased = false,
+          TextRange(typ.textRange.start, name.textRange.end)
       )
   }
   //TODO make separate givenParamList pattern
-  def paramList[_: P] = P(Index ~ "(" ~/ param.rep ~ ")" ~ Index).map { case (start, params, end) =>
+  def paramList[_: P]: P[ParamList] = P(Index ~ "(" ~/ param.rep ~ ")" ~ Index).map { case (start, params, end) =>
     ParamList(params.toList, TextRange(start, end))
   }
 
-  def exprStmt[_: P] = P(expr ~ ";" ~ Index).map { case (expr, end) =>
+  def exprStmt[_: P]: P[ExprStmt] = P(expr ~ ";" ~ Index).map { case (expr, end) =>
     new ExprStmt(expr, end)
   }
 
   //todo allow final modifier
-  def localVars[_: P] = P(modifiers ~ typeRef ~ Index ~ identifier ~ Index ~ ("=" ~ expr).? ~ ";" ~ Index).map {
+  def localVars[_: P]: P[LocalVar] = P(modifiers ~ nonWildcardType ~ Index ~ identifier ~ Index ~ ("=" ~ expr).? ~ ";" ~ Index).map {
     case (mods, typ, idStart, name, idEnd, expr, end) =>
       new LocalVar(mods, Text(name, TextRange(idStart, idEnd)), typ, expr, end)
   }
 
-  def returnStmt[_: P] = P("return" ~ Index ~/ expr ~ ";" ~ Index).map { case (start, expr, end) =>
+  def returnStmt[_: P]: P[ReturnStmt] = P("return" ~ Index ~/ expr ~ ";" ~ Index).map { case (start, expr, end) =>
     new ReturnStmt(expr, TextRange(start - 6, end))
   }
 
@@ -48,7 +51,7 @@ private object Methods {
 
   //TODO add type parameters
   def normMethod[_: P]: P[Method] =
-    P(modifiers ~ typeParamList.? ~ typeRef ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
+    P(modifiers ~ typeParamList.? ~ nonWildcardType ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
       case (modifiers, typeParams, returnType, name, params, body) =>
         new NormMethod(
             modifiers.to(ListBuffer),
@@ -104,8 +107,8 @@ private object Methods {
         )
     }
 
-  def methodWithTypeParams[_: P] =
-    P(typeParamList ~/ typeRef ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
+  def methodWithTypeParams[_: P]: P[Seq[Modifier] => NormMethod] =
+    P(typeParamList ~/ nonWildcardType ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
       case (typeParams, returnType, name, params, body) =>
         (modifiers: Seq[Modifier]) =>
           new NormMethod(
