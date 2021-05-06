@@ -1,6 +1,6 @@
 package verity.ast
 
-import verity.ast.infile.{Classlike, ClassChild}
+import verity.ast.infile.{Classlike, ClassChild, Field, MethodGroup, EnumConstant}
 
 import com.typesafe.scalalogging.Logger
 
@@ -74,7 +74,7 @@ case class PkgNode(
 }
 
 object Package {
-  type Importable = (Package | Classlike | ClassChild) & NamedTree
+  type Importable = (Package | Classlike | Field | MethodGroup | EnumConstant) & NamedTree
   type ImportParent = Package | Classlike
 
   /** Find a subpackage given the relative path of the package. The last found subpackage and the remaining path are returned.

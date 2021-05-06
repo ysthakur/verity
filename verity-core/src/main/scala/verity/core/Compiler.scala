@@ -3,7 +3,7 @@ package verity.core
 import scala.language.unsafeNulls
 
 import verity.ast.{Package, RootPkg, PkgNode, FileNode, TextRange, HasText}
-import verity.checks.initial.InitialChecks
+import verity.checks.InitialChecks
 import verity.core.resolve
 import verity.util.*
 import verity.parser.Parser
@@ -20,7 +20,7 @@ object Compiler {
     given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
 
     parsePkg(pkgs, files, rootPkg)
-    resolve.initialPass(rootPkg)
+    resolve.resolveAndCheck(rootPkg)
     OutputJava.outputJavaPkg(rootPkg, options.javaOutputDir)
   }
 
@@ -30,7 +30,12 @@ object Compiler {
   def logError(msg: String, tree: HasText, file: FileNode)(using logger: Logger): Unit =
     logError(msg, tree.textRange, file)
 
+  def logError(msg: String, pos: TextRange)(using ctxt: Context, logger: Logger): Unit =
+    logError(msg, pos, ctxt.file)
 
+  def logError(msg: String, tree: HasText)(using ctxt: Context, logger: Logger): Unit =
+    logError(msg, tree.textRange, ctxt.file)
+  
   def parsePkg(
       pkgs: Iterable[File],
       files: Iterable[File],

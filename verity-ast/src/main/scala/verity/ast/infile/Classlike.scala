@@ -4,24 +4,39 @@ import verity.ast.*
 
 import scala.collection.mutable.ListBuffer
 
-/**
- * Base trait for classes, interfaces, enums, and annotations
- */
-sealed trait Classlike(val defType: ClasslikeType) extends NamedTree, TypeDef, HasText, HasModifiers, HasAnnotations {
+/** Base trait for classes, interfaces, enums, and annotations
+  */
+sealed trait Classlike(val defType: ClasslikeType)
+    extends NamedTree,
+      TypeDef,
+      HasText,
+      HasModifiers,
+      HasAnnotations {
   def modifiers: ListBuffer[Modifier]
   def typeParams: TypeParamList
   def fields: Iterable[Field]
   def methods: Iterable[Method]
-  /**
-   * The TextRange for the "class", "interface", or "enum" keyword token.
-   */
+
+  /** The TextRange for the "class", "interface", or "enum" keyword token.
+    */
   def metaclassTokTR: TextRange
-  /**
-   * The TextRange of the braces
-   */
+
+  /** The TextRange of the braces
+    */
   def bodyRange: TextRange
 
   def children: Iterable[ClassChild]
+
+  def givenChildren: Iterable[VariableDecl | Method] =
+    fields.view.filter(_.isGiven) ++ methods.view.filter(_.isGiven)
+
+  def proofChildren: Iterable[VariableDecl | Method] =
+    fields.view.filter(_.isProof) ++ methods.view.filter(_.isProof)
+
+  def importableChildren: Iterable[Field | EnumConstant | MethodGroup] =
+    children
+      .filter(!_.isInstanceOf[Method])
+      .asInstanceOf[Iterable[Field | EnumConstant]] ++ this.methodGroups
 
   override def textRange = TextRange(
       if (annotations.nonEmpty) annotations.head.textRange.start
@@ -61,11 +76,10 @@ enum ClasslikeType(val text: String) extends Tree {
   case ENUM extends ClasslikeType("enum")
 }
 
-/**
- * A class definition (not an interface, enum, or annotation)
- * @param metaclassTokTR The `TextRange` of the "class" keyword token
- * @param bodyRange The `TextRange` of the braces
- */
+/** A class definition (not an interface, enum, or annotation)
+  * @param metaclassTokTR The `TextRange` of the "class" keyword token
+  * @param bodyRange The `TextRange` of the braces
+  */
 case class ClassDef(
     annotations: ListBuffer[Annotation],
     modifiers: ListBuffer[Modifier],
@@ -76,7 +90,8 @@ case class ClassDef(
     normMethods: ListBuffer[NormMethod],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
-) extends Classlike(ClasslikeType.CLASS), HasCtors {
+) extends Classlike(ClasslikeType.CLASS),
+      HasCtors {
 
   def methods = ctors ++ normMethods
   def children = fields ++ methods
@@ -115,7 +130,8 @@ case class EnumDef(
     methods: ListBuffer[Method],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
-) extends Classlike(ClasslikeType.ENUM), HasCtors {
+) extends Classlike(ClasslikeType.ENUM),
+      HasCtors {
   def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor

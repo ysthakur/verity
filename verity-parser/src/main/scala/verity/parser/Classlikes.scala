@@ -12,14 +12,29 @@ import collection.mutable.ListBuffer
 //TODO add annotations
 private object Classlikes {
 
-  def field[_: P] = P(modifiers ~ typeRef ~ identifier ~ ("=" ~/ expr).? ~ ";").map {
-    case (mods, typ, name, initExpr) => new Field(name, mods.to(ListBuffer), typ, initExpr)
-  }
+  // def field[_: P] = P(modifiers ~ typeRef ~ identifierText ~ ("=" ~/ expr).? ~ ";").map {
+  //   case (mods, typ, name, initExpr) => new Field(name, mods.to(ListBuffer), typ, initExpr)
+  // }
 
-  //TODO field or method
-  def templateDefMember[_: P]: P[Any] = P((normMethod: P[Any]) | (ctor: P[Any]) | (field: P[Any]))
+  def methodOrField[_: P]: P[Seq[Modifier] => Any] =
+    P(typeRef ~ identifierText ~/ (field2 | methodWithoutTypeParams)).map {
+      case (typ, text, fieldOrMethod) => fieldOrMethod(typ, text)
+    }
 
-  def classOrInterfaceBody[_: P] = P(Index ~ "{" ~ templateDefMember.rep ~ "}" ~ Index)
+  def field2[_: P]: P[(Type, Text) => Seq[Modifier] => Any] =
+    P(("=" ~/ expr).? ~ ";").map { initExpr =>
+      (typ: Type, name: Text) => (modifiers: Seq[Modifier]) => new Field(name, modifiers.to(ListBuffer), typ, initExpr)
+    }
+
+  //field or method
+  // def templateDefMember[_: P]: P[Any] = P((normMethod: P[Any]) | (ctor: P[Any]) | (field: P[Any]))
+
+  def templateDefMember2[_: P]: P[Any] =
+    P(modifiers ~ (methodWithTypeParams | ctor2 | methodOrField : P[Seq[Modifier] => Any])).map { 
+      case (mods, astCtor) => astCtor(mods)
+    }
+
+  def classOrInterfaceBody[_: P] = P("{" ~/ Index ~ templateDefMember2.rep ~ "}" ~ Index)
 
   //TODO add modifiers and annotations
   def clazz[_: P] = P(
@@ -34,11 +49,12 @@ private object Classlikes {
           name,
           typeParams.getOrElse(TypeParamList.empty),
           fields.to(ListBuffer).asInstanceOf[ListBuffer[Field]],
-          ctors.map(_.asInstanceOf[(=> Classlike) => Constructor](cls)).to(ListBuffer),
+          ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ListBuffer),
           normMethods.to(ListBuffer).asInstanceOf[ListBuffer[NormMethod]],
           TextRange(classTokStart, classTokEnd),
           TextRange(braceStart, braceEnd)
       )
+
       cls
   }
 

@@ -1,19 +1,19 @@
 package com;
 
-//import java.util.ArrayList;
-//import java.util.*;
+// import java.util.ArrayList;
+// import java.util.*;
 
 class Test2 {
-  int foo = 5;
+  boolean baz = 5;
 
   public Test2(int foo) {
     int bar = foo;
-    //bar = 2;sadfff iu3r83289 
-    return 3+2;
+    // bar = 2;
+    return 3 + 2;
   }
 
   public static void main() {
-    System.out.println("Hello world!");
+    // System.out.println("Hello world!");
   }
 
   private static void foo(int bar); //no checking of modifiers yet

@@ -13,6 +13,7 @@ case class FileNode(
     origFile: File
 ) {
   private[verity] var pkg: Package | Null = null
+  private[verity] var resolvedImports: Iterable[Package.Importable] = List.empty
   def text =
     s"${packageRef.fold("")(_.text)}${imports.view.map(_.text).mkString}${classlikes.view.map(_.text).mkString}"
   override def toString = s"file $name"

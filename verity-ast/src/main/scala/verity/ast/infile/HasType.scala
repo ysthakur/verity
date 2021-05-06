@@ -1,6 +1,6 @@
 package verity.ast.infile
 
 trait HasType {
-  def myType: Type
-  def myType_=(newType: Type): Unit
+  def typ: Type
+  def typ_=(newType: Type): Unit
 }

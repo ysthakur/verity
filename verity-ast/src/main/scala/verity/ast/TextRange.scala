@@ -17,6 +17,14 @@ object TextRange {
   //def toEnd(startInt)(toks: Iterable[Token[_]]): TextRange = TextRange(start, toks.last.pos)
 }
 
+class Text(val text: String, val textRange: TextRange) extends HasText {
+  override def toString = text
+}
+object Text {
+  def apply(text: String, textRange: TextRange = TextRange.synthetic) = new Text(text, textRange)
+  inline def unapply(text: Text): Some[String] = Some(text.text)
+}
+
 // case class Position(var row: Int, var col: Int, var offset: Int) {
 //   def copy()Int = Position(row, col, offset)
 //   def in(tr: TextRange): Boolean = 

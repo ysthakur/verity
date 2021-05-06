@@ -12,6 +12,9 @@ object HasText {
    */
   def seqText(iter: Iterable[HasText], sep: String = ",", start: String = "(", end: String = ")"): String =
     iter.view.map(_.text).mkString(start, sep, end)
+
+  def optText(opt: Option[HasText], default: => String = ""): String =
+    opt.fold(default)(_.text)
 }
 
 trait GetText[T] {

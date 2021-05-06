@@ -1,0 +1,1 @@
+package com; class Test2 { public Test2 ( int foo) {intbar=foo;return (3 Op(ADD,TextRange(188,190)) 2);} public static void main () {} private static void foo ( int bar) ;}
