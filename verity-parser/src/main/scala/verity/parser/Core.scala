@@ -38,7 +38,11 @@ private object Core {
     P("?" ~ ("extends" ~ typeRef).? ~ ("super" ~ typeRef).?).map { case (upper, lower) =>
       Wildcard(upper, lower)
     }
-  def typeArg[_: P]: P[Type] = P(wildCard | typeRef)
+  def primitiveType[_: P] =
+    P(StringIn("boolean", "byte", "char", "short", "int", "float", "long", "double").! ~ Index).map {
+      case (typ, end) => PrimitiveType.valueOf(typ)
+    }
+  def typeArg[_: P]: P[Type] = P(wildCard | primitiveType | typeRef)
   def typeArgList[_: P] = argList(typeArg: P[Type])
 
   def typeParam[_: P] = P(identifierWithTextRange ~ upperBound.? ~ lowerBound.?).map {

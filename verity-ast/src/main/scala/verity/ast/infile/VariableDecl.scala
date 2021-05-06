@@ -23,6 +23,7 @@ trait VariableDecl extends Tree, HasText, HasType, HasModifiers, NamedTree {
 
   def isGiven = this.hasModifier(ModifierType.GIVEN)
   def isProof = this.hasModifier(ModifierType.PROOF)
+  def isFinal = this.hasModifier(ModifierType.FINAL)
 }
 
 class Field(
@@ -37,7 +38,7 @@ class Field(
   def isStatic: Boolean = this.hasModifier(ModifierType.STATIC)
 
   override def name = fieldName.text
-  override def text: String = ??? //s"${fieldName.text}"
+  override def text: String = ??? //s"${Modifier.modifiersText(modifiers)} ${fieldName.text}"
   override def textRange = ???
 }
 
@@ -46,14 +47,13 @@ case class LocalVar(
     val varName: Text,
     var typ: Type,
     override val initExpr: Option[Expr] = None,
-    val isFinal: Boolean,
     val endInd: Int
 ) extends VariableDecl, Statement {
   
   def name = varName.text
   
   override def text: String = {
-    val sb = StringBuilder(if (isFinal) "final " else "").append(typ.text).append(name)
+    val sb = StringBuilder(Modifier.modifiersText(modifiers)).append(typ.text).append(" ").append(name)
     if (initExpr != None) sb.append('=').append(initExpr.get.text).append(';')
     sb.toString
   }

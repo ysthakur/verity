@@ -16,7 +16,7 @@ import collection.mutable.ListBuffer
 
 object Compiler {
   def compile(pkgs: Iterable[File], files: Iterable[File], options: Options) = {
-    given logger: Logger = Logger("Syntax errors")
+    given logger: Logger = Logger("thelogger")
     given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
 
     parsePkg(pkgs, files, rootPkg)

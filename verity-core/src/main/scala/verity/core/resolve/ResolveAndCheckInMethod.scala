@@ -12,24 +12,32 @@ private def resolveStmt(
     stmt: Statement,
     mthdReturnType: Type
 )(using ctxt: Context, rootPkg: RootPkg, logger: Logger): Statement | Iterable[Statement] = {
+  logger.debug(s"Resolving statement ${stmt.text}, ${stmt.getClass}")
   stmt match {
     case rs: ReturnStmt => ReturnStmt(resolveExpr(rs.expr, mthdReturnType), rs.textRange)
     case lv: LocalVar =>
+      logger.debug(s"Resolving localvar ${lv.text}")
       val newType = lv.typ match {
-        case typeRef: TypeRef => ReferenceResolve.resolveType(typeRef)
-        case primitive        => primitive
+        case typeRef: TypeRef =>
+          logger.debug(s"Localvar has typeref ${typeRef.text}")
+          ReferenceResolve.resolveType(typeRef)
+        case primitive        =>
+          logger.debug(s"Localvar has primitive type ${primitive.text}")
+          primitive
       }
       lv.initExpr match {
         case Some(e) =>
+          logger.debug("Resolving initExpr ${e.text} for local var")
           LocalVar(
               lv.modifiers,
               lv.varName,
               newType,
               Some(resolveExpr(e, newType)),
-              lv.isFinal,
               lv.endInd
           )
-        case None => lv
+        case None =>
+          logger.debug("No initExpr for local var")
+          lv
       }
     case block: Block =>
       var varRefs = ctxt.varRefs
@@ -62,14 +70,15 @@ private def resolveStmt(
       }
 
       newStmts
+    case _ => logger.debug("Did not resolve statement!"); ???
   }
 }
 
 private def resolveExpr(expr: Expr, expectedType: Type)(using
     ctxt: Context,
-    rootPkg: RootPkg,
     logger: Logger
 ): Expr = {
+  logger.debug(s"Resolving expr ${expr.text}")
   val resolved = expr match {
     case MultiDotRef(path) =>
       ReferenceResolve.resolveDotChainedRef(path) match {
@@ -103,7 +112,7 @@ private def resolveExpr(expr: Expr, expectedType: Type)(using
 
 private def resolveBinaryExpr(
     expr: BinaryExpr
-)(using ctxt: Context, rootPkg: RootPkg, logger: Logger): BinaryExpr = {
+)(using ctxt: Context, logger: Logger): BinaryExpr = {
   val BinaryExpr(lhs, op, rhs) = expr
 
   import OpType.*
@@ -120,7 +129,7 @@ private def resolveBinaryExpr(
 
 private def resolveMethodCall(
     mthdCall: MethodCall
-)(using ctxt: Context, rootPkg: RootPkg, logger: Logger): MethodCall = {
+)(using ctxt: Context, logger: Logger): MethodCall = {
   val MethodCall(obj, nameText @ Text(mthdName), valArgs, typeArgs, givenArgs, proofArgs) = mthdCall
 
   //Filter based on name

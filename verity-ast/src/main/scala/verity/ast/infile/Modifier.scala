@@ -17,6 +17,9 @@ trait HasModifiers extends Tree {
 case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasText {
   override def text: String = modType.toString.toLowerCase.nn
 }
+object Modifier {
+  def modifiersText(modifiers: Iterable[Modifier]) = HasText.seqText(modifiers, "", " ", "")
+}
 
 enum ModifierType extends Tree {
   case

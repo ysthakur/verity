@@ -32,7 +32,7 @@ private object Methods {
   //todo allow final modifier
   def localVars[_: P] = P(modifiers ~ typeRef ~ Index ~ identifier ~ Index ~ ("=" ~ expr).? ~ ";" ~ Index).map {
     case (mods, typ, idStart, name, idEnd, expr, end) =>
-      new LocalVar(mods, Text(name, TextRange(idStart, idEnd)), typ, expr, false, end)
+      new LocalVar(mods, Text(name, TextRange(idStart, idEnd)), typ, expr, end)
   }
 
   def returnStmt[_: P] = P("return" ~ Index ~/ expr ~ ";" ~ Index).map { case (start, expr, end) =>
