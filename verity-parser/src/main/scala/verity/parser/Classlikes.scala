@@ -32,13 +32,14 @@ private object Classlikes {
   // def templateDefMember[_: P]: P[Any] = P((normMethod: P[Any]) | (ctor: P[Any]) | (field: P[Any]))
 
   def templateDefMember2[_: P]: P[Any] =
-    P(modifiers ~ (methodWithTypeParams | ctor2 | methodOrField : P[Seq[Modifier] => Any])).map { 
+    P(modifiers ~ (methodWithTypeParams | ctor | methodOrField : P[Seq[Modifier] => Any])).map { 
       case (mods, astCtor) => astCtor(mods)
     }
 
   def classOrInterfaceBody[_: P]: P[(Int, Seq[Any], Int)] = P("{" ~/ Index ~ templateDefMember2.rep ~ "}" ~ Index)
 
   //TODO add modifiers and annotations
+  //TODO allow extending classes, interfaces
   def clazz[_: P]: P[ClassDef] = P(
       modifiers ~ Index ~ "class" ~/ Index ~ identifier ~ typeParamList.? ~ classOrInterfaceBody
   ).map {
@@ -49,7 +50,9 @@ private object Classlikes {
           ListBuffer(), //todo annotations
           modifiers.to(ListBuffer),
           name,
-          typeParams.getOrElse(TypeParamList.empty),
+          typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
+          null, //todo
+          null, //todo
           fields.to(ListBuffer).asInstanceOf[ListBuffer[Field]],
           ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ListBuffer),
           normMethods.to(ListBuffer).asInstanceOf[ListBuffer[NormMethod]],

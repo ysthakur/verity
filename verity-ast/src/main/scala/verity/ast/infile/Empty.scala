@@ -13,7 +13,4 @@ object Empty {
 
   given Empty[TextRange] with
     def empty = TextRange.synthetic
-
-  given Empty[Block] with
-    def empty = Block(ListBuffer.empty, Empty[TextRange])
 }

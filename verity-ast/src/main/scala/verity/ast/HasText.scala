@@ -4,6 +4,7 @@ package verity.ast
 trait HasText {
   def text: String
   def textRange: TextRange
+  def isSynthetic: Boolean = this.textRange.isSynthetic
 }
 
 object HasText {

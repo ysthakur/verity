@@ -4,32 +4,33 @@ import fastparse.JavaWhitespace._
 import fastparse._
 import verity.ast._
 import verity.ast.infile._
+import verity.ast.infile.unresolved._
 import verity.parser.Core.{argList, identifierText, identifierWithTextRange}
 
 object Types {
 
   //todo clear this up?
-  def upperBound[_: P]: P[TypeRef] = P("extends" ~/ typeRef)
-  def lowerBound[_: P]: P[TypeRef] = P("super" ~/ typeRef)
+  def upperBound[_: P]: P[UnresolvedTypeRef] = P("extends" ~/ typeRef)
+  def lowerBound[_: P]: P[UnresolvedTypeRef] = P("super" ~/ typeRef)
   // def typeBound[_: P] = P(Index ~ StringIn("super", "extends").! ~/ Index ~ typeRef)
 
-  private def typeRef[_: P]: P[TypeRef] =
+  private def typeRef[_: P]: P[UnresolvedTypeRef] =
     P(identifierText ~ ("." ~ identifierText).rep ~ typeArgList).map {
       case (first, restPath, args) =>
-        new TypeRef(
+        UnresolvedTypeRef(
           first +: restPath,
           args,
           None
         )
     }
-  def wildCard[_: P]: P[Wildcard] =
+  def wildCard[_: P]: P[UnresolvedWildcard] =
     P("?" ~ ("extends" ~ typeRef).? ~ ("super" ~ typeRef).?).map { case (upper, lower) =>
-      Wildcard(upper, lower)
+      UnresolvedWildcard(upper, lower)
     }
-  def primitiveType[_: P]: P[PrimitiveTypeRef] =
+  def primitiveType[_: P]: P[PrimitiveType] =
     P(StringIn("boolean", "byte", "char", "short", "int", "float", "long", "double").! ~ Index)
       .map { case (typ, end) =>
-        PrimitiveTypeRef(PrimitiveType.fromName(typ).get, TextRange(end - typ.length, end))
+        PrimitiveType(PrimitiveTypeDef.fromName(typ).get, TextRange(end - typ.length, end))
       }
   def nonWildcardType[_: P]: P[Type] = P(primitiveType | typeRef)
   def typeArg[_: P]: P[Type] = P(wildCard | nonWildcardType)

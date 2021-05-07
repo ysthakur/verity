@@ -13,7 +13,7 @@ trait VariableDecl extends Tree, HasText, HasType, HasModifiers, NamedTree {
     * What it gets initialized to, unless it's just declared
     * @return
     */
-  def initExpr: Option[Expr]
+  def initExpr: Option[ResolvedOrUnresolvedExpr]
 
   /**
     * Whether or not this is simply a declaration
@@ -30,7 +30,7 @@ class Field(
     val fieldName: Text,
     override val modifiers: ListBuffer[Modifier],
     var typ: Type,
-    override val initExpr: Option[Expr] = None
+    override val initExpr: Option[ResolvedOrUnresolvedExpr] = None
 ) extends VariableDecl,
       ClassChild,
       HasModifiers,
@@ -46,7 +46,7 @@ case class LocalVar(
     val modifiers: Iterable[Modifier],
     val varName: Text,
     var typ: Type,
-    override val initExpr: Option[Expr] = None,
+    override val initExpr: Option[ResolvedOrUnresolvedExpr] = None,
     val endInd: Int
 ) extends VariableDecl, Statement {
   
@@ -67,6 +67,6 @@ case class LocalVar(
 }
 
 object LocalVar {
-  def unapply(lv: LocalVar): (String, Type, Option[Expr]) =
+  def unapply(lv: LocalVar): (String, Type, Option[ResolvedOrUnresolvedExpr]) =
     (lv.name, lv.typ, lv.initExpr)
 }

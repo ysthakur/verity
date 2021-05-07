@@ -10,11 +10,11 @@ trait Statement extends Tree, HasText {
 /**
  * An expression with a semicolon after it
  */
-class ExprStmt(val expr: Expr, end: Int) extends Statement {
-  def text = s"${expr.text};"
-  def textRange = TextRange(expr.textRange.start, end)
+class ExprStmt(val expr: ResolvedOrUnresolvedExpr, end: Int) extends Statement {
+  override def text = s"${expr.text};"
+  override def textRange = TextRange(expr.textRange.start, end)
 }
 
-class ReturnStmt(val expr: Expr, val textRange: TextRange) extends Statement {
-  def text = s"return ${expr.text};"
+class ReturnStmt(val expr: ResolvedOrUnresolvedExpr, val textRange: TextRange) extends Statement {
+  override def text = s"return ${expr.text};"
 }

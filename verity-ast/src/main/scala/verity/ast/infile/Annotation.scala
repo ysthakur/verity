@@ -4,8 +4,8 @@ import verity.ast._
 // import verity.ast.ToJava.given
 
 case class Annotation(name: String, args: ArgList, appliedTo: Tree, startOffset: Int) extends HasText {
-  def text: String = s"@$name$args"
-  def textRange = TextRange(startOffset, args.textRange.end)
+  override def text: String = s"@$name$args"
+  override def textRange = TextRange(startOffset, args.textRange.end)
 }
 
 object Annotation {

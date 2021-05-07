@@ -1,1 +1,1 @@
-package com; class Test2 { public Test2 ( int foo) { int bar=foo.bar.baz;return (3 Op(ADD,TextRange(196,198)) 2);} public static (void)<> main () {} private static (void)<> foo ( int bar) ;}
+package com; class Test2 { public Test2 ( int foo) { int bar=foo; int baz=<>isEven(bar);} public boolean isEven ( int x) {return (((x % 2) < 0));} public static (void)<> main () {}  (void)<> foo () ; private static (void)<> foo ( int bar) ;}

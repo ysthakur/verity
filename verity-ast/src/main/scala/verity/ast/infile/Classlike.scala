@@ -14,8 +14,8 @@ sealed trait Classlike(val defType: ClasslikeType)
       HasAnnotations {
   def modifiers: ListBuffer[Modifier]
   def typeParams: TypeParamList
-  def fields: Iterable[Field]
-  def methods: Iterable[Method]
+  override def fields: Iterable[Field]
+  override def methods: Iterable[Method]
 
   /** The TextRange for the "class", "interface", or "enum" keyword token.
     */
@@ -85,6 +85,8 @@ case class ClassDef(
     modifiers: ListBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
+    superClass: ClassRef,
+    superInterfaces: Iterable[ClassRef],
     fields: ListBuffer[Field],
     ctors: ListBuffer[Constructor],
     normMethods: ListBuffer[NormMethod],
@@ -93,8 +95,10 @@ case class ClassDef(
 ) extends Classlike(ClasslikeType.CLASS),
       HasCtors {
 
-  def methods = ctors ++ normMethods
+  override def methods = ctors ++ normMethods
   def children = fields ++ methods
+
+  override def superTypes: Iterable[Type] = (superInterfaces.toSeq :+ superClass).map(_.cls.makeRef)
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 
@@ -108,12 +112,14 @@ case class InterfaceDef(
     modifiers: ListBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
+    superInterfaces: Iterable[ClassRef],
     fields: ListBuffer[Field],
     methods: ListBuffer[Method],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.INTERFACE) {
   def children = fields ++ methods
+  override def superTypes: Iterable[Type] = superInterfaces.map(_.cls.makeRef)
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} interface $name { ${methods.mkString(" ")}}"
 }
@@ -124,6 +130,7 @@ case class EnumDef(
     modifiers: ListBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
+    superInterfaces: Iterable[ClassRef],
     constants: List[EnumConstant],
     fields: ListBuffer[Field],
     ctors: ListBuffer[Constructor],
@@ -133,6 +140,8 @@ case class EnumDef(
 ) extends Classlike(ClasslikeType.ENUM),
       HasCtors {
   def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
+
+  override def superTypes: Iterable[Type] = superInterfaces.map(_.cls.makeRef)
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 

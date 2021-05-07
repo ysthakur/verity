@@ -6,9 +6,15 @@ trait TypeDef extends NamedTree {
   /**
    * Get a reference to this type parameter
    */
-  def makeRef(typeArgs: TypeArgList = Empty[TypeArgList]): TypeRef =
-  	TypeRef(Text(this.name) :: Nil, typeArgs, Some(this))
+  def makeRef(typeArgs: TypeArgList): ResolvedTypeRef =
+  	ResolvedTypeRef(Text(this.name) :: Nil, typeArgs, this)
+
+  def makeRef: ResolvedTypeRef =
+    ResolvedTypeRef(Text(this.name) :: Nil, TypeArgList(typeParams.params.map(_.makeRef), TextRange.synthetic), this)
 
   def fields: Iterable[Field]
   def methods: Iterable[Method]
+  def superTypes: Iterable[Type]
+
+  def typeParams: TypeParamList
 }

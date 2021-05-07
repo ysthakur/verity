@@ -5,7 +5,7 @@ import verity.ast.infile.*
 import verity.core.{Compiler, Context, Keywords}
 import verity.core.resolve.ReferenceResolve
 import verity.util.*
-import verity.checks.InitialChecks
+import verity.checks.InitialPass
 import Pkg.Importable
 import Context.Defs
 
@@ -13,7 +13,7 @@ import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable.HashMap
 //todo move into verity.core?
-object InitialChecks {
+object InitialPass {
 
   /** Resolve method and field types
     * @param pkg The package to work on
@@ -39,7 +39,7 @@ object InitialChecks {
     val currPkg = parentPkgs.head
     val FileNode(name, pkgRef, imports, classlikes, jFile) = file
 
-    InitialChecks.verifyPkgStmt(pkgRef, pkgName, name)
+    InitialPass.verifyPkgStmt(pkgRef, pkgName, name)
 
     val resolvedImports =
       ReferenceResolve.resolveImports(imports, file): Iterable[(String, Importable, ImportStmt)]
@@ -115,12 +115,8 @@ object InitialChecks {
           if (mthdName != cls.name && mthdName != Keywords.constructorName) {
             Compiler.logError(s"Wrong constructor name: $mthdName", mthd, file)
           }
-        case m: NormMethod =>
-          m.returnType = m.returnType match {
-            case tr: TypeRef =>
-              ReferenceResolve.resolveType(tr)(using dummyCtxt)
-            case primitive => primitive
-          }
+        case m: NormMethod => //TODO!!!!!!!!!!!!!!!!!!!1
+//          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using dummyCtxt)
       }
 
       initialPassMthd(mthd, clsRefs, pkgRefs, cls, file)
@@ -159,6 +155,8 @@ object InitialChecks {
         if (!mthd.isAbstract)
           Compiler.logError("Method requires abstract modifier or implementation", mthd, file)
     }
+//TODO resolve return type
+//    mthd.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)
   }
 
   def verifyPkgStmt(pkgRef: Option[PackageStmt], pkgName: String, fileName: String)(using

@@ -4,11 +4,40 @@ import fastparse.JavaWhitespace._
 import fastparse._
 import verity.ast._
 import verity.ast.infile._
-import verity.ast.infile.Unresolved._
+import verity.ast.infile.unresolved._
 
 private object Core {
+  //todo update list of hard keywords
   def identifier[_: P]: P[String] =
-    P(CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!).map {
+    P(!StringIn(
+      "class",
+      "interface",
+      "enum",
+      "new",
+      "throw",
+      "try",
+      "catch",
+      "if",
+      "else",
+      "super",
+      "this",
+      "return",
+      "final",
+      "public",
+      "protected",
+      "private",
+      "synchronized",
+      "transient",
+      "volatile",
+      "native",
+      "const",
+      "given",
+      "proof",
+      "default",
+      "static",
+      "abstract")
+      ~ CharPred(_.isUnicodeIdentifierStart).!
+      ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!).map {
       case (first, rest) => first + rest
     }
 
@@ -82,7 +111,7 @@ private object Core {
     }
 
   def packageStmt[_: P]: P[PackageStmt] = P(Index ~ "package" ~/ dotPath ~ ";").map {
-    case (pkgTokStart, path) => new PackageStmt(path, pkgTokStart)
+    case (pkgTokStart, path) => PackageStmt(path, pkgTokStart)
   }
 
   def importStmt[_: P]: P[ImportStmt] =

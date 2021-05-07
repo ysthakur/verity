@@ -1,9 +1,7 @@
 package verity.core
 
-import scala.language.unsafeNulls
-
 import verity.ast.{Pkg, RootPkg, PkgNode, FileNode, TextRange, HasText}
-import verity.checks.InitialChecks
+import verity.checks.InitialPass
 import verity.core.resolve
 import verity.util.*
 import verity.parser.Parser
@@ -20,22 +18,32 @@ object Compiler {
     given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
 
     parsePkg(pkgs, files, rootPkg)
+    verity.checks.InitialPass.initialPass(rootPkg)
     resolve.resolveAndCheck(rootPkg)
     OutputJava.outputJavaPkg(rootPkg, options.javaOutputDir)
   }
 
-  def logError(msg: String, pos: TextRange, file: FileNode)(using logger: Logger): Unit =
-    logger.error(s"Error: $msg from offset ${pos.start} to ${pos.end} in file ${file.name}")
-
   def logError(msg: String, tree: HasText, file: FileNode)(using logger: Logger): Unit =
     logError(msg, tree.textRange, file)
+
+  def logError(msg: String, pos: TextRange, file: FileNode)(using logger: Logger): Unit =
+    logger.error(s"Error: $msg from offset ${pos.start} to ${pos.end} in file ${file.name}")
 
   def logError(msg: String, pos: TextRange)(using ctxt: Context, logger: Logger): Unit =
     logError(msg, pos, ctxt.file)
 
   def logError(msg: String, tree: HasText)(using ctxt: Context, logger: Logger): Unit =
     logError(msg, tree.textRange, ctxt.file)
-  
+
+  def logError(errorMsg: ErrorMsg)(using ctxt: Context, logger: Logger): Unit =
+    logger.error(
+        errorMsg.msg,
+        errorMsg.textRangeOrTree match {
+          case tr: TextRange => tr
+          case ht: HasText   => ht.textRange
+        }
+    )
+
   def parsePkg(
       pkgs: Iterable[File],
       files: Iterable[File],

@@ -22,11 +22,21 @@ trait Method extends Methodlike, ClassChild, HasText, HasModifiers {
   def isGiven: Boolean = this.hasModifier(ModifierType.GIVEN)
   def isProof: Boolean = this.hasModifier(ModifierType.PROOF)
 }
+object Method {
+  /**
+   * Merge a bunch of methods - if one is a subtype of another, keep the overridden method. Also return any methods
+   * that can't be merged.
+   * @return (mergedMethods, unmergeableMethods)
+   */
+  def mergeMethods(methods: Iterable[Method]): (Iterable[Method], Iterable[Iterable[Method]]) = {
+    (methods, Nil) //TODO implement this!!!
+  }
+}
 
 class NormMethod(
     val modifiers: ListBuffer[Modifier],
     val typeParams: TypeParamList,
-    private var _returnType: Type,
+    val returnType: Type,
     val methodName: Text,
     val params: ParamList,
     val givenParams: Option[ParamList],
@@ -34,12 +44,8 @@ class NormMethod(
     val body: Option[Block],
     val textRange: TextRange
 ) extends Method {
-  def text = s"${modifiers.map(_.text).mkString(" ")} ${returnType.text} $name ${params.text} ${body
+  override def text = s"${modifiers.map(_.text).mkString(" ")} ${returnType.text} $name ${params.text} ${body
     .fold(";")(_.text)}"
-
-  def returnType: Type = _returnType
-
-  private[verity] def returnType_=(typ: Type): Unit = _returnType = typ
 
   def name: String = methodName.text
 }
@@ -52,17 +58,15 @@ class Constructor(
     val proofParams: Option[ParamList],
     _body: Block,
     val textRange: TextRange,
-    _cls: () => HasCtors
+    val cls: HasCtors
 ) extends Method {
-  lazy val cls: HasCtors = _cls() //TODO find a better way to do this
-
-  lazy val typeParams: TypeParamList = TypeParamList(cls.typeParams.params, TextRange.synthetic)
-  lazy val returnType: Type =
-    TypeRef(Text(cls.name) :: Nil, TypeArgList(typeParams.params.view.map(_.makeRef()), TextRange.synthetic), Some(cls))
+  val typeParams: TypeParamList = TypeParamList(cls.typeParams.params, TextRange.synthetic)
+  val returnType: Type =
+    ResolvedTypeRef(Text(cls.name) :: Nil, TypeArgList(typeParams.params.view.map(_.makeRef), TextRange.synthetic), cls)
 
   val body: Option[Block] = Some(_body)
 
-  def text =
+  override def text =
     s"${modifiers.map(_.text).mkString(" ")} $name ${params.text} ${body.fold(";")(_.text)}"
 
   def name: String = ctorName.text
@@ -76,9 +80,9 @@ object Constructor {
         Empty[ParamList],
         None,
         None,
-        Empty[Block],
+        Block.empty(VoidType),
         Empty[TextRange],
-        () => cls
+        cls
     )
 }
 
@@ -100,7 +104,7 @@ case class Parameter(
   def modifiers: Iterable[Modifier] = ???
 //    if (isGiven) if (isErased) List(Modifier(ModifierType.GIVEN))
   def initExpr: None.type = None
-  def text: String =
+  override def text: String =
     (if (isGiven) "given " else "") +
       (if (isErased) "erased " else "") +
       s"${annotations.map(_.text).mkString(" ")} ${typ.text} $name"
@@ -109,7 +113,7 @@ case class Parameter(
 }
 
 case class ParamList(params: List[Parameter], textRange: TextRange) extends Tree, HasText {
-  def text: String = HasText.seqText(params, ",", "(", ")")
+  override def text: String = HasText.seqText(params, ",", "(", ")")
 }
 
 given Empty[ParamList] with

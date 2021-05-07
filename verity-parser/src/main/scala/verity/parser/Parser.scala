@@ -3,7 +3,6 @@ package verity.parser
 import verity.ast.FileNode
 
 import fastparse._, JavaWhitespace._
-// import com.typesafe.scalalogging.Logger
 
 import java.io.{File, FileInputStream}
 
@@ -19,6 +18,6 @@ object Parser {
     s"Syntax error at offset ${extra.index}, label = $label, ${extra.stack}"
 
   def file[_: P](file: File): P[FileNode] = P(Core.packageStmt.? ~ Core.importStmt.rep ~ Classlikes.classlike.rep ~ End).map {
-    case (pkgStmt, imptStmts, templateDefs) => new FileNode(file.getName, pkgStmt, imptStmts, templateDefs, file)
+    case (pkgStmt, imptStmts, templateDefs) => FileNode(file.getName, pkgStmt, imptStmts, templateDefs, file)
   }
 }

@@ -3,7 +3,7 @@ package verity.core.resolve
 import verity.ast.*
 import verity.ast.Pkg.Importable
 import verity.ast.infile.*
-import verity.checks.InitialChecks
+import verity.checks.InitialPass
 import verity.core.Context.Defs
 import verity.core.{Compiler, Context, Keywords}
 import verity.util.*
@@ -35,8 +35,6 @@ private def resolveAndCheckFile(
 )(using rootPkg: RootPkg, logger: Logger): Unit = {
   val currPkg = parentPkgs.head
   val FileNode(name, pkgRef, imports, classlikes, jFile) = file
-
-  InitialChecks.verifyPkgStmt(pkgRef, pkgName, name)
 
   val resolvedImports = file.resolvedImports
 
@@ -74,27 +72,14 @@ private[resolve] def resolveAndCheckCls(
   }
 
   val newMthdRefs: Defs[MethodGroup] = mthdRefs ++ cls.methodGroups.view.map(m => m.name -> m)
+  logger.debug("emthodgroups" + cls.methodGroups.map(_.name).mkString(","))
 
   val givenDefs = cls.methods.filter(_.isGiven).toList
   val proofDefs = cls.methods.filter(_.isProof).toList
 
-  val dummyCtxt = Context(Map.empty, Map.empty, Nil, Nil, typeDefs, pkgDefs, cls, file)
   cls.methods.foreach { mthd =>
-    mthd match {
-      case c: Constructor =>
-        val mthdName = mthd.name
-        if (mthdName != cls.name && mthdName != Keywords.constructorName) {
-          Compiler.logError(s"Wrong constructor name: $mthdName", mthd, file)
-        }
-      case m: NormMethod =>
-        m.returnType = m.returnType match {
-          case typeRef: TypeRef =>
-            ReferenceResolve.resolveType(typeRef)(using dummyCtxt)
-          case primitive => primitive
-        }
-    }
-
-    initialPassMthd(
+//    logger.debug(s"Working on method ${mthd.name}!!")
+    resolveAndCheckMthd(
         mthd,
         fieldDefs,
         newMthdRefs,
@@ -108,7 +93,7 @@ private[resolve] def resolveAndCheckCls(
   }
 }
 
-private def initialPassMthd(
+private def resolveAndCheckMthd(
     mthd: Method,
     fieldDefs: Defs[VariableDecl],
     mthdRefs: Defs[MethodGroup],
@@ -119,6 +104,7 @@ private def initialPassMthd(
     cls: Classlike,
     file: FileNode
 )(using rootPkg: RootPkg, logger: Logger): Unit = {
+//  logger.debug(s"Resolving method ${mthd.name}")
   val isCtor = mthd.isInstanceOf[Constructor]
 
   mthd.body match {

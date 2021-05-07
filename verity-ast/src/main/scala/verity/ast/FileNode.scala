@@ -37,6 +37,6 @@ case class ImportStmt(path: DotPath, override val textRange: TextRange, wildCard
 }
 
 case class DotPath(path: Iterable[(String, TextRange)]) extends Tree, HasText {
-  def text = path.view.map(_._1).mkString(".")
-  def textRange = TextRange(path.head._2.start, path.last._2.end)
+  override def text = path.view.map(_._1).mkString(".")
+  override def textRange = TextRange(path.head._2.start, path.last._2.end)
 }
