@@ -29,8 +29,8 @@ private object Methods {
     ParamList(params.toList, TextRange(start, end))
   }
 
-  def exprStmt[_: P]: P[ExprStmt] = P(expr ~ ";" ~ Index).map { case (expr, end) =>
-    new ExprStmt(expr, end)
+  def exprStmt[_: P]: P[UnresolvedExprStmt] = P(expr ~ ";" ~ Index).map { case (expr, end) =>
+    new UnresolvedExprStmt(expr, end)
   }
 
   //todo allow final modifier
@@ -47,49 +47,55 @@ private object Methods {
   //TODO add control flow, etc. (BEFORE exprStmt)
   def stmt[_: P]: P[Statement] = P(returnStmt | localVarDecl | exprStmt)
 
-  def block[_: P]: P[UnresolvedBlock] = P(Index ~ "{" ~/ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
-    case (start, stmts, end) => UnresolvedBlock(stmts.to(ListBuffer), TextRange(start, end))
+  def block[_: P]: P[Block] = P(Index ~ "{" ~/ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
+    case (start, stmts, end) =>
+      new Block(
+        stmts.to(ListBuffer),
+        TextRange(start, end),
+        ToBeInferred(UnknownType, UnknownType, Nil)
+      )
   }
 
   //TODO add type parameters
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def normMethod[_: P]: P[Method] =
-    P(modifiers ~ typeParamList.? ~ nonWildcardType ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
+    P(modifiers ~ typeParamList.? ~ returnType ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
       case (modifiers, typeParams, returnType, name, params, body) =>
-        createUnresolvedNormMethod(modifiers, typeParams, returnType, name, params, None, None, body)
+        createNormMethod(modifiers, typeParams, returnType, name, params, None, None, body)
     }
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
-  def ctor[_: P]: P[Seq[Modifier] => UnresolvedConstructor] =
+  def ctor[_: P]: P[Seq[Modifier] => (() => HasCtors) => Constructor] =
     P(identifierText ~ &("(") ~/ paramList ~ block).map {
       case (name, params, body) =>
-        modifiers => new UnresolvedConstructor(
+        modifiers => cls => new Constructor(
             modifiers.to(ListBuffer),
             name,
             params,
             None, //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
             None,
             body,
-            TextRange((if (modifiers.isEmpty) name else modifiers.head).textRange.start, body.textRange.end)
+            TextRange((if (modifiers.isEmpty) name else modifiers.head).textRange.start, body.textRange.end),
+            cls
         )
     }
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
-  def methodWithTypeParams[_: P]: P[Seq[Modifier] => UnresolvedNormMethod] =
-    P(typeParamList ~/ nonWildcardType ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
+  def methodWithTypeParams[_: P]: P[Seq[Modifier] => NormMethod] =
+    P(typeParamList ~/ returnType ~ identifierText ~ paramList ~ (block | ";" ~ Index)).map {
       case (typeParams, returnType, name, params, body) =>
         (modifiers: Seq[Modifier]) =>
-          createUnresolvedNormMethod(modifiers, Some(typeParams), returnType, name, params, None, None, body)
+          createNormMethod(modifiers, Some(typeParams), returnType, name, params, None, None, body)
     }
 
-  def methodWithoutTypeParams[_: P]: P[(Type, Text) => Seq[Modifier] => UnresolvedNormMethod] =
+  def methodWithoutTypeParams[_: P]: P[(Type, Text) => Seq[Modifier] => NormMethod] =
     P(paramList ~ (block | ";" ~ Index)).map {
       case (params, body) =>
         (returnType: Type, name: Text) => (modifiers: Seq[Modifier]) =>
-          createUnresolvedNormMethod(modifiers, None, returnType, name, params, None, None, body)
+          createNormMethod(modifiers, None, returnType, name, params, None, None, body)
     }
     
-  def createUnresolvedNormMethod(
+  def createNormMethod(
       modifiers: Seq[Modifier],
       typeParams: Option[TypeParamList],
       returnType: Type,
@@ -98,12 +104,12 @@ private object Methods {
       givenParams: Option[ParamList],
       proofParams: Option[ParamList],
       bodyOrEnd: Any
-  ): UnresolvedNormMethod = {
+  ): NormMethod = {
     val (body, end) = (bodyOrEnd: @unchecked) match {
-      case b: UnresolvedBlock => Some(b) -> b.textRange.end
+      case b: Block => Some(b) -> b.textRange.end
       case e: Int => None -> e
     }
-    new UnresolvedNormMethod(
+    new NormMethod(
       modifiers.to(ListBuffer),
       typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
       returnType,

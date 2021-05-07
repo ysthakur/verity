@@ -7,39 +7,10 @@ import verity.ast.infile._
 import verity.ast.infile.unresolved._
 
 private object Core {
-  //todo update list of hard keywords
   def identifier[_: P]: P[String] =
-    P(!StringIn(
-      "class",
-      "interface",
-      "enum",
-      "new",
-      "throw",
-      "try",
-      "catch",
-      "if",
-      "else",
-      "super",
-      "this",
-      "return",
-      "final",
-      "public",
-      "protected",
-      "private",
-      "synchronized",
-      "transient",
-      "volatile",
-      "native",
-      "const",
-      "given",
-      "proof",
-      "default",
-      "static",
-      "abstract")
-      ~ CharPred(_.isUnicodeIdentifierStart).!
-      ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!).map {
+    P(CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!).map {
       case (first, rest) => first + rest
-    }
+    }.filter(s => !hardKeywords(s))
 
   /** Like [[identifierWithTextRange]], but doesn't get inlined, and a tuple doesn't have to be
     * turned into a Text object later
@@ -97,7 +68,7 @@ private object Core {
           "default",
           "static",
           "abstract"
-      ).! ~ Index
+      ).! ~ !CharPred(!_.isUnicodeIdentifierPart) ~ Index
   ).map { case (start, modifier, end) =>
     Modifier(ModifierType.valueOf(modifier.toUpperCase), TextRange(start, end))
   }
@@ -121,4 +92,38 @@ private object Core {
       case (imptTokStart, path, Some(wildcardInd)) =>
         ImportStmt(path, TextRange(imptTokStart, wildcardInd), wildCard = true)
     }
+
+  //todo update list of hard keywords
+  val hardKeywords: Set[String] = Set(
+      "class",
+      "interface",
+      "enum",
+      "new",
+      "void",
+      "throw",
+      "return",
+      "try",
+      "catch",
+      "if",
+      "else",
+      "while",
+      "for",
+      "do",
+      "super",
+      "this",
+      "false",
+      "true",
+      "final",
+      "public",
+      "protected",
+      "private",
+      "synchronized",
+      "transient",
+      "volatile",
+      "native",
+      "const",
+      "default",
+      "static",
+      "abstract"
+  )
 }

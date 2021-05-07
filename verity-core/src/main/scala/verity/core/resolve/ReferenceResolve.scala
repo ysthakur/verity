@@ -1,25 +1,28 @@
 package verity.core.resolve
 
 import com.typesafe.scalalogging.Logger
-import verity.ast.*
-import verity.ast.infile.*
-import verity.core.{Compiler, Context, ErrorMsg, ResolveResult}
+import verity.ast._
+import verity.ast.infile._
+import verity.core.{Compiler, Context, errorMsg, ResolveResult, singleMsg}
 import verity.core.Context.Defs
 import verity.ast.Pkg.Importable
+
+import cats.data.{OptionT, Writer}
+import cats.implicits._
 
 import scala.annotation.tailrec
 
 private[verity] object ReferenceResolve {
-  def resolveTypeIfNeeded(typ: Type)(using ctxt: Context): Type = typ match {
-    case pt: PrimitiveType => pt
+  def resolveTypeIfNeeded(typ: Type)(using ctxt: Context): ResolveResult[Type] = typ match {
+    case pt: PrimitiveType => OptionT.some(pt)
     case tr: ResolvedTypeRef => resolveTypeRef(tr)
     case _ => ???
   }
 
-  def resolveTypeRef(typ: ResolvedTypeRef)(using ctxt: Context): Type =
+  def resolveTypeRef(typ: ResolvedTypeRef)(using ctxt: Context): ResolveResult[Type] =
     resolveTypeRef(typ, ctxt.typeDefs, ctxt.pkgDefs)
 
-  def resolveTypeRef(typ: ResolvedTypeRef, typeDefs: Defs[TypeDef], pkgDefs: Defs[Pkg]): Type = {
+  def resolveTypeRef(typ: ResolvedTypeRef, typeDefs: Defs[TypeDef], pkgDefs: Defs[Pkg]): ResolveResult[Type] = {
     ???
   }
 
@@ -28,11 +31,10 @@ private[verity] object ReferenceResolve {
 
   private[resolve] def resolveDotChainedRef(
       path: Seq[Text]
-  )(using ctxt: Context): Either[ErrorMsg, Expr | ClassRef] = {
+  )(using ctxt: Context): ResolveResult[Expr | ClassRef] = {
     val head +: tail = path
-
     ctxt.varDefs.find(_._1 == head.text) match {
-      case Some(decl) => resolveExprOnly(VarRef(head, decl._2), tail)
+      case Some(decl) => resolveExprOnly(VarRef(head, decl._2), tail).asInstanceOf[ResolveResult[Expr | ClassRef]]
       case None =>
         ctxt.typeDefs.find(_._1 == head.text) match {
           case Some((_, cls: Classlike)) =>
@@ -40,7 +42,7 @@ private[verity] object ReferenceResolve {
           case _ =>
             ctxt.pkgDefs.find(_._1 == head.text) match {
               case Some(pkg) => resolveExprOrCls(pkg._2, head :: Nil, tail)
-              case None      => Left(ErrorMsg(s"Symbol ${head.text} not found", head.textRange))
+              case None      => singleMsg(errorMsg(s"Symbol ${head.text} not found", head.textRange))
             }
         }
     }
@@ -51,7 +53,7 @@ private[verity] object ReferenceResolve {
       prev: Pkg,
       prevPath: List[Text],
       path: Seq[Text]
-  ): Either[ErrorMsg, Expr | ClassRef] = path match {
+  ): ResolveResult[Expr | ClassRef] = path match {
     case head +: tail =>
       prev.classlikes.find(_.name == head.text) match {
         case Some(cls) =>
@@ -60,8 +62,8 @@ private[verity] object ReferenceResolve {
           prev.subPkgs.find(_.name == head.text) match {
             case Some(pkg) => resolveExprOrCls(pkg, head :: prevPath, tail)
             case None =>
-              Left(
-                  ErrorMsg(
+              singleMsg(
+                  errorMsg(
                       s"${head.text} is not a member of package ${HasText
                         .seqText(prevPath.reverse, ".")}", head.textRange
                   )
@@ -69,8 +71,8 @@ private[verity] object ReferenceResolve {
           }
       }
     case _ =>
-      Left(
-          ErrorMsg(
+      singleMsg(
+          errorMsg(
               s"${prev.name} is a package, not an expression or class",
               prevPath.head.textRange
           )
@@ -83,13 +85,13 @@ private[verity] object ReferenceResolve {
   private def resolveExprOnly(
       prev: Expr,
       path: Seq[Text]
-  ): Either[ErrorMsg, Expr] = path match {
+  ): ResolveResult[Expr] = path match {
     case head +: tail =>
       prev.typ.fields.find(_.name == head.text) match {
         case Some(field) => resolveExprOnly(FieldAccess(prev, field, head.textRange), tail)
-        case None        => Left(ErrorMsg(s"No field named ${head.text} found", head.textRange))
+        case None        => singleMsg(errorMsg(s"No field named ${head.text} found", head.textRange))
       }
-    case _ => Right(prev)
+    case _ => OptionT.some(prev)
   }
 
   /** Find a field in a class (or one of its field's fields, ...)
@@ -97,45 +99,15 @@ private[verity] object ReferenceResolve {
   private def resolveExprOrCls(
       prev: ClassRef,
       path: Seq[Text]
-  ): Either[ErrorMsg, Expr | ClassRef] = path match {
+  ): ResolveResult[Expr | ClassRef] = path match {
     case head +: tail =>
       prev.cls.fields.find(f => f.isStatic && f.name == head.text) match {
-        case Some(field) => resolveExprOnly(StaticFieldAccess(prev, field, head.textRange), tail)
+        case Some(field) =>
+          resolveExprOnly(StaticFieldAccess(prev, field, head.textRange), tail)
+            .asInstanceOf[ResolveResult[Expr | ClassRef]]
         case None =>
-          Left(ErrorMsg(s"Field ${head.text} not found in class ${prev.cls.name}", head.textRange))
+          singleMsg(errorMsg(s"Field ${head.text} not found in class ${prev.cls.name}", head.textRange))
       }
-    case _ => Right(prev)
+    case _ => OptionT.some(prev)
   }
-
-  /** Resolve imports and return a list of `(<name of pkg or cls, pkg or cls, import stmt it came
-    * from>)`
-    */
-  private[verity] def resolveImports(
-      imports: Iterable[ImportStmt],
-      file: FileNode
-  )(using rootPkg: RootPkg, logger: Logger): Iterable[(String, Importable, ImportStmt)] =
-    imports.view.flatMap { case imptStmt @ ImportStmt(DotPath(dotPath), _, wildcard) =>
-      val path = dotPath.view.map(_._1)
-      Pkg
-        .findImptableAbs(path)
-        .fold {
-          logger.error(s"Not found $dotPath")
-          Nil
-        } { impt =>
-          if !wildcard then {
-            Seq((path.last, impt, imptStmt))
-          } else {
-            impt match {
-              case pkg: Pkg =>
-                pkg.subPkgs.view.map(p => (p.name, p, imptStmt))
-                  ++ pkg.classlikes.map(c => (c.name, c, imptStmt))
-              case cls: Classlike =>
-                cls.importableChildren.map(c => (c.name, c, imptStmt))
-              case _ =>
-                Compiler.logError(s"Cannot import members of ${impt.name}", imptStmt, file)
-                Nil
-            }
-          }
-        }
-    }
 }

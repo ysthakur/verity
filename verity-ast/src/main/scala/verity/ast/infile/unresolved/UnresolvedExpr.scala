@@ -1,6 +1,6 @@
 package verity.ast.infile.unresolved
 
-import verity.ast.{HasText, Text, TextRange, infile}
+import verity.ast.*
 import verity.ast.infile.{ResolvedOrUnresolvedExpr => RoUExpr, *}
 
 import scala.collection.mutable.ListBuffer
@@ -36,6 +36,11 @@ class UnresolvedThisRef(override val textRange: TextRange) extends UnresolvedTyp
 
 class UnresolvedSuperRef(override val textRange: TextRange) extends UnresolvedTypeExpr {
   override def text: String = "super"
+}
+
+case class UnresolvedParenExpr(expr: RoUExpr, override val textRange: TextRange) extends UnresolvedExpr {
+  def typ: Type = expr.typ
+  override def text = s"(${expr.text})"
 }
 
 case class UnresolvedArraySelect(arr: RoUExpr, index: RoUExpr, bracketsTextRange: TextRange)
@@ -123,13 +128,6 @@ case class MultiDotRefExpr(path: Seq[Text]) extends UnresolvedTypeExpr {
   override def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
 }
 
-case class UnresolvedBlock(stmts: ListBuffer[Statement], textRange: TextRange) extends UnresolvedTypeExpr, Statement {
-  override def text: String = stmts.map(_.text).mkString("{", "", "}")
-}
-object UnresolvedBlock {
-  def empty: UnresolvedBlock = UnresolvedBlock(ListBuffer.empty, TextRange.synthetic)
-}
-
 case class UnresolvedTypeRef(
     path: Seq[Text],
     args: TypeArgList,
@@ -190,3 +188,12 @@ case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type 
   override def text = "NOT INFERRED AAA!!!"
   override def textRange: TextRange = ???
 }
+
+/**
+ * An unresolved expression with a semicolon after it
+ */
+class UnresolvedExprStmt(val expr: RoUExpr, val end: Int) extends Statement {
+  override def text = s"${expr.text};"
+  override def textRange = TextRange(expr.textRange.start, end)
+}
+

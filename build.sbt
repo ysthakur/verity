@@ -69,7 +69,7 @@ lazy val `verity-codegen` =project
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
       "org.ow2.asm" % "asm-util" % "8.0.1",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
+//      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
     )
   ).dependsOn(`verity-ast`)
 
@@ -82,12 +82,14 @@ lazy val `verity-core` = project
     libraryDependencies ++= (Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
       "org.ow2.asm" % "asm-util" % "8.0.1",
+      "org.typelevel" %% "cats-core" % "2.5.0",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
     ) ++ commonLibs3)
   ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`)
 
 lazy val commonLibs3 = Seq(
   //"org.scala-lang" % "scala-reflect" % scala_version,
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
+//  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
   "junit" % "junit" % "4.11" % Test,
   "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
   "com.novocode" % "junit-interface" % "0.11" % "test",
@@ -107,7 +109,7 @@ val commonScala2Options = Seq(
 )
 
 val commonScala3Options = Seq(
-  "-deprecation",           
+  "-deprecation",
   "-encoding", "UTF-8",
   "-feature",
   "-Xfatal-warnings",

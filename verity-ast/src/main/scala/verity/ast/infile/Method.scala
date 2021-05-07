@@ -36,7 +36,7 @@ object Method {
 class NormMethod(
     val modifiers: ListBuffer[Modifier],
     val typeParams: TypeParamList,
-    val returnType: Type,
+    private[this] var _returnType: Type,
     val methodName: Text,
     val params: ParamList,
     val givenParams: Option[ParamList],
@@ -44,6 +44,9 @@ class NormMethod(
     val body: Option[Block],
     val textRange: TextRange
 ) extends Method {
+  override def returnType: Type = _returnType
+  private[verity] def returnType_=(typ: Type): Unit = _returnType = typ
+
   override def text = s"${modifiers.map(_.text).mkString(" ")} ${returnType.text} $name ${params.text} ${body
     .fold(";")(_.text)}"
 
@@ -58,11 +61,11 @@ class Constructor(
     val proofParams: Option[ParamList],
     _body: Block,
     val textRange: TextRange,
-    val cls: HasCtors
+    private[this] var _cls: () => HasCtors
 ) extends Method {
-  val typeParams: TypeParamList = TypeParamList(cls.typeParams.params, TextRange.synthetic)
-  val returnType: Type =
-    ResolvedTypeRef(Text(cls.name) :: Nil, TypeArgList(typeParams.params.view.map(_.makeRef), TextRange.synthetic), cls)
+  lazy val cls: HasCtors = _cls()
+  override lazy val typeParams: TypeParamList = TypeParamList(cls.typeParams.params, TextRange.synthetic)
+  override lazy val returnType: Type = cls.makeRef
 
   val body: Option[Block] = Some(_body)
 
@@ -80,9 +83,9 @@ object Constructor {
         Empty[ParamList],
         None,
         None,
-        Block.empty(VoidType),
+        Block.empty(VoidTypeRef(TextRange.synthetic)),
         Empty[TextRange],
-        cls
+        () => cls
     )
 }
 

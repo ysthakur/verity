@@ -1,12 +1,12 @@
 package verity.core.resolve
 
-import verity.ast.*
+import verity.ast._
 import verity.ast.Pkg.Importable
-import verity.ast.infile.*
+import verity.ast.infile._
+import verity.util._
 import verity.checks.InitialPass
 import verity.core.Context.Defs
-import verity.core.{Compiler, Context, Keywords}
-import verity.util.*
+import verity.core.{Compiler, Context, Keywords, CompilerMsg}
 
 import com.typesafe.scalalogging.Logger
 
@@ -17,10 +17,8 @@ import scala.collection.mutable.{HashMap, ListBuffer}
   * @param parentPkgs A list of this package's parents (topmost packages at the end)
   * @param logger The logger to use
   */
-def resolveAndCheck(root: RootPkg)(using logger: Logger): Unit = {
-  given RootPkg = root
-  root.walkWithPath(resolveAndCheckFile)
-}
+def resolveAndCheck(root: RootPkg)(using logger: Logger): Unit =
+  verity.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root, logger)
 
 /** Resolve all references to classes and type parameters in a file
   * @param file The file to work on
@@ -45,7 +43,7 @@ private def resolveAndCheckFile(
         resolvedImports.collect { case c: Classlike => c.name -> c }.toMap,
         resolvedImports.collect { case m: MethodGroup => m.name -> m }.toMap,
         file
-    )
+    ).foreach(Compiler.log(_, file))
   )
 }
 
@@ -63,7 +61,7 @@ private[resolve] def resolveAndCheckCls(
     typeDefs: Defs[TypeDef],
     mthdRefs: Defs[MethodGroup],
     file: FileNode
-)(using rootPkg: RootPkg, logger: Logger): Unit = {
+)(using rootPkg: RootPkg, logger: Logger): Iterable[CompilerMsg] = {
   val fieldDefs: Defs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
 
   cls match {
@@ -77,18 +75,18 @@ private[resolve] def resolveAndCheckCls(
   val givenDefs = cls.methods.filter(_.isGiven).toList
   val proofDefs = cls.methods.filter(_.isProof).toList
 
-  cls.methods.foreach { mthd =>
+  cls.methods.flatMap { mthd =>
 //    logger.debug(s"Working on method ${mthd.name}!!")
     resolveAndCheckMthd(
-        mthd,
-        fieldDefs,
-        newMthdRefs,
-        givenDefs,
-        proofDefs,
-        typeDefs,
-        pkgDefs,
-        cls,
-        file
+      mthd,
+      fieldDefs,
+      newMthdRefs,
+      givenDefs,
+      proofDefs,
+      typeDefs,
+      pkgDefs,
+      cls,
+      file
     )
   }
 }
@@ -97,20 +95,20 @@ private def resolveAndCheckMthd(
     mthd: Method,
     fieldDefs: Defs[VariableDecl],
     mthdRefs: Defs[MethodGroup],
-    givenDefs: Iterable[verity.core.GivenOrProof],
-    proofDefs: Iterable[verity.core.GivenOrProof],
+    givenDefs: Iterable[verity.core.ImplicitDef],
+    proofDefs: Iterable[verity.core.ImplicitDef],
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg],
     cls: Classlike,
     file: FileNode
-)(using rootPkg: RootPkg, logger: Logger): Unit = {
-//  logger.debug(s"Resolving method ${mthd.name}")
+)(using RootPkg, Logger): List[CompilerMsg] = {
+  println(s"Resolving method ${mthd.name},returntype=${mthd.returnType.text}")
   val isCtor = mthd.isInstanceOf[Constructor]
 
   mthd.body match {
     case Some(block) =>
       if (!mthd.isAbstract) {
-        given Context = Context(
+        val ctxt = Context(
             fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),
             mthdRefs,
             givenDefs,
@@ -120,13 +118,16 @@ private def resolveAndCheckMthd(
             cls,
             file
         )
-        val newBlock = (resolveStmt(block, mthd.returnType): @unchecked) match {
-          case stmts: Iterable[_] => stmts.asInstanceOf[Iterable[Statement]]
-        }
-
-        block.stmts.clear()
-        block.stmts.addAll(newBlock)
+        resolveStmt(block, mthd.returnType)(using ctxt).map { newBlock =>
+          block.stmts.clear()
+          newBlock match {
+            case b: Block => block.stmts.addAll(b.stmts)
+            case s => block.stmts += s
+          }
+        }.getOrElse(block).written
+      } else {
+        Nil
       }
-    case _ =>
+    case _ => Nil
   }
 }

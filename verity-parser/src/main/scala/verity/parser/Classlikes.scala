@@ -19,7 +19,7 @@ private object Classlikes {
   // }
 
   def methodOrField[_: P]: P[Seq[Modifier] => Any] =
-    P(nonWildcardType ~ identifierText ~/ (field2 | methodWithoutTypeParams)).map {
+    P(returnType ~ identifierText ~/ (field2 | methodWithoutTypeParams)).map {
       case (typ, text, fieldOrMethod) => fieldOrMethod(typ, text)
     }
 
@@ -41,9 +41,9 @@ private object Classlikes {
   //TODO add modifiers and annotations
   //TODO allow extending classes, interfaces
   def clazz[_: P]: P[ClassDef] = P(
-      modifiers ~ Index ~ "class" ~/ Index ~ identifier ~ typeParamList.? ~ classOrInterfaceBody
+      modifiers ~ "class" ~/ Index ~ identifier ~ typeParamList.? ~ classOrInterfaceBody
   ).map {
-    case (modifiers, classTokStart, classTokEnd, name, typeParams, (braceStart, members, braceEnd)) =>
+    case (modifiers, classTokEnd, name, typeParams, (braceStart, members, braceEnd)) =>
       val (fields, normMethodsAndCtors) = members.partition(_.isInstanceOf[Field])
       val (normMethods, ctors) = normMethodsAndCtors.partition(_.isInstanceOf[NormMethod])
       lazy val cls: ClassDef = new ClassDef(
@@ -56,7 +56,7 @@ private object Classlikes {
           fields.to(ListBuffer).asInstanceOf[ListBuffer[Field]],
           ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ListBuffer),
           normMethods.to(ListBuffer).asInstanceOf[ListBuffer[NormMethod]],
-          TextRange(classTokStart, classTokEnd),
+          TextRange(classTokEnd - 5, classTokEnd),
           TextRange(braceStart, braceEnd)
       )
 

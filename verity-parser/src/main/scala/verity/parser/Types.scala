@@ -39,6 +39,14 @@ object Types {
     case None => TypeArgList(Nil, TextRange.synthetic)
   }
 
+  def returnType[_: P]: P[Type] =
+    P(("void" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ Index) | nonWildcardType) .map { t =>
+      (t: @unchecked) match {
+        case end: Int => new VoidTypeRef(TextRange(end - 4, end))
+        case typ: Type => typ
+      }
+    }
+
   def typeParam[_: P]: P[TypeParam] = P(identifierWithTextRange ~ upperBound.? ~ lowerBound.?).map {
     case (name, nameRange, upper, lower) =>
       new TypeParam(

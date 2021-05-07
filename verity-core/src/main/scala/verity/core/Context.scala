@@ -4,13 +4,13 @@ import verity.ast.*
 import verity.ast.infile.*
 import verity.core.Context.Defs
 
-type GivenOrProof = Expr | VariableDecl | Methodlike
+type ImplicitDef = VariableDecl | Methodlike
 
 case class Context(
     varDefs: Defs[VariableDecl],
     mthdDefs: Defs[MethodGroup],
-    givenDefs: Iterable[GivenOrProof],
-    proofDefs: Iterable[GivenOrProof],
+    givenDefs: Iterable[ImplicitDef],
+    proofDefs: Iterable[ImplicitDef],
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg],
     cls: Classlike,

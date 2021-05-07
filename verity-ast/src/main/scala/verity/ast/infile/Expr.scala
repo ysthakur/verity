@@ -101,7 +101,7 @@ case class PkgRef(path: Seq[Text], pkg: Pkg) extends HasText {
   override def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
 }
 
-case class ParenExpr(expr: ResolvedOrUnresolvedExpr, override val textRange: TextRange) extends Expr {
+case class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr {
   def typ: Type = expr.typ
   override def text = s"(${expr.text})"
 }
@@ -179,7 +179,9 @@ object OpType {
   def findBySymbol(symbol: String): Option[OpType] = OpType.values.find(_.text == symbol)
 }
 
-case class Block(stmts: ListBuffer[Statement], textRange: TextRange, typ: Type) extends Expr, Statement {
+class Block(val stmts: ListBuffer[Statement], val textRange: TextRange, private[this] var _typ: Type) extends Expr, Statement {
+  override def typ: Type = _typ
+  private[verity] def typ_=(newTyp: Type): Unit = _typ = newTyp
   override def text: String = stmts.map(_.text).mkString("{", "", "}")
 }
 object Block {
@@ -193,10 +195,9 @@ case class MethodCall (
     typeArgs: TypeArgList,
     givenArgs: Option[ArgList] = None, //TODO do givenArgs!!
     proofArgs: Option[ArgList] = None,  //TODO do proofArgs!!
-    typ: Type
+    typ: Type,
+    resolved: Method
 ) extends Expr {
-  private[verity] var resolved: Option[Method] = None
-
   //TODO figure out how to print types
   override def text: String = caller.fold("")(_.text + ".")
     + typeArgs.text

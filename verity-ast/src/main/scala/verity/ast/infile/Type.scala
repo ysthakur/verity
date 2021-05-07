@@ -59,7 +59,7 @@ object NothingType extends Type, Synthetic {
   override def text = "Type Nothing"
 }
 
-object VoidType extends Type, Synthetic {
+class VoidTypeRef(val textRange: TextRange) extends Type {
   override def strictSubTypeOf(sup: Type): Boolean = false
   override def strictSuperTypeOf(sub: Type): Boolean = false
 

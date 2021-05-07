@@ -10,10 +10,10 @@ import com.typesafe.scalalogging.Logger
 
 import java.io.{File, FileInputStream, FileFilter}
 import java.nio.file.{Path, Files}
-import collection.mutable.ListBuffer
+import scala.collection.mutable.ListBuffer
 
 object Compiler {
-  def compile(pkgs: Iterable[File], files: Iterable[File], options: Options) = {
+  def compile(pkgs: Iterable[File], files: Iterable[File], options: Options): Unit = {
     given logger: Logger = Logger("thelogger")
     given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
 
@@ -35,14 +35,18 @@ object Compiler {
   def logError(msg: String, tree: HasText)(using ctxt: Context, logger: Logger): Unit =
     logError(msg, tree.textRange, ctxt.file)
 
-  def logError(errorMsg: ErrorMsg)(using ctxt: Context, logger: Logger): Unit =
-    logger.error(
-        errorMsg.msg,
-        errorMsg.textRangeOrTree match {
-          case tr: TextRange => tr
-          case ht: HasText   => ht.textRange
-        }
+  def log(msg: CompilerMsg, file: FileNode)(using Logger): Unit =
+    logError(
+      msg.msg,
+      msg.textRangeOrTree match {
+        case tr: TextRange => tr
+        case ht: HasText   => ht.textRange
+      },
+      file
     )
+    
+  def log(msg: CompilerMsg)(using ctxt: Context, logger: Logger): Unit =
+    log(msg, ctxt.file)
 
   def parsePkg(
       pkgs: Iterable[File],
