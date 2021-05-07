@@ -1,6 +1,6 @@
 package verity.ast.infile
 
-import verity.ast.*
+import verity.ast._
 
 import scala.collection.mutable.ListBuffer
 

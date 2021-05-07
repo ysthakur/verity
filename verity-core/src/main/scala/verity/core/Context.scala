@@ -1,7 +1,7 @@
 package verity.core
 
-import verity.ast.*
-import verity.ast.infile.*
+import verity.ast._
+import verity.ast.infile._
 import verity.core.Context.Defs
 
 type ImplicitDef = VariableDecl | Methodlike

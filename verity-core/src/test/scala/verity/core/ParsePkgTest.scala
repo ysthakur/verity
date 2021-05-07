@@ -1,7 +1,7 @@
 package verity.core
 
-import verity.core.*
-import verity.util.*
+import verity.core._
+import verity.util._
 
 import cats.data.{Writer, OptionT}
 import cats.implicits._
@@ -25,16 +25,5 @@ class ParsePkgTest {
     // val srcDirChildren = srcDir.listFiles.asInstanceOf[Array[File]]
 
     Compiler.compile(List(File(srcDir, "com")), Nil, options)
-  }
-
-  @Test def writerTest() = {
-    val optiont1 = OptionT(Writer(List("foo", "bar"), Some(4)))
-    val option2 = OptionT(Writer(List("baz"), Some(5)))
-    val none = OptionT(Writer(List("blah", "sdfasdfasdf"), None: Option[Int]))
-
-    println(for (o <- optiont1; o2 <- option2) yield o + o2)
-
-    println(for (o <- optiont1; o2 <- none) yield o + o2)
-
   }
 }

@@ -1,9 +1,14 @@
-package com;class Test2 {
+package com;
+
+// import java.util.ArrayList;
+// import java.util.*;
+
+class Test2 {
   boolean baz = 5;
 
   public Test2(int foo) {
-    short bar = foo;
-    int baz = isEven(bar);
+    int bar = foo;
+    boolean baz = isEven(bar);
   }
 
   public boolean isEven(int x) {
@@ -17,5 +22,3 @@ package com;class Test2 {
   private static void foo(int bar); //no checking of most modifiers yet
 }
 
-// import java.util.ArrayList;
-// import java.util.*;

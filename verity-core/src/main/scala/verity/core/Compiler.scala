@@ -3,7 +3,7 @@ package verity.core
 import verity.ast.{Pkg, RootPkg, PkgNode, FileNode, TextRange, HasText}
 import verity.checks.InitialPass
 import verity.core.resolve
-import verity.util.*
+import verity.util._
 import verity.parser.Parser
 
 import com.typesafe.scalalogging.Logger

@@ -1,6 +1,6 @@
 package verity.core
 
-import verity.ast.*
+import verity.ast._
 
 import scala.util.Using
 import java.io.{File, FileWriter}

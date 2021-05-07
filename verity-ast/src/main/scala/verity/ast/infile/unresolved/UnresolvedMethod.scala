@@ -1,6 +1,6 @@
 package verity.ast.infile.unresolved
 
-import verity.ast.infile.*
+import verity.ast.infile._
 import verity.ast.{Text, TextRange}
 
 import scala.collection.mutable.ListBuffer

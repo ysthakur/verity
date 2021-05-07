@@ -1,7 +1,7 @@
 package verity.ast
 
-import verity.ast.*
-import verity.ast.infile.*
+import verity.ast._
+import verity.ast.infile._
 
 import java.io.File
 

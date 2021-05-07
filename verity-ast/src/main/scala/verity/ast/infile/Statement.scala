@@ -1,7 +1,7 @@
 package verity.ast.infile
 
-import verity.*
-import verity.ast.*
+import verity._
+import verity.ast._
 
 //TODO add other kinds of statements
 trait Statement extends Tree, HasText {
