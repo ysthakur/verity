@@ -17,10 +17,6 @@ trait Methodlike extends NamedTree {
 }
 
 trait Method extends Methodlike, ClassChild, HasText, HasModifiers {
-  def isAbstract: Boolean = this.hasModifier(ModifierType.ABSTRACT)
-  def isStatic: Boolean = this.hasModifier(ModifierType.STATIC)
-  def isGiven: Boolean = this.hasModifier(ModifierType.GIVEN)
-  def isProof: Boolean = this.hasModifier(ModifierType.PROOF)
 }
 object Method {
   /**
