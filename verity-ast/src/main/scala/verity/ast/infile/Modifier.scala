@@ -12,6 +12,11 @@ trait HasModifiers extends Tree {
 
   def accessModifier: Option[ModifierType] =
     this.modifiers.view.map(_.modType).find(ModifierType.accessModifiers)
+
+  def isGiven: Boolean = this.hasModifier(ModifierType.GIVEN)
+  def isProof: Boolean = this.hasModifier(ModifierType.PROOF)
+  def isAbstract: Boolean = this.hasModifier(ModifierType.ABSTRACT)
+  def isStatic: Boolean = this.hasModifier(ModifierType.STATIC)
 }
 
 case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasText {
