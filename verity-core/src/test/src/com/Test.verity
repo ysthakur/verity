@@ -21,4 +21,3 @@ class Test2 {
 
   private static void foo(int bar); //no checking of most modifiers yet
 }
-
