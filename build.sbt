@@ -23,15 +23,9 @@ lazy val root = project
     `verity-common`,
     `verity-ast`,
     `verity-parser`,
-<<<<<<< HEAD
     `verity-read-bytecode`
     `verity-codegen`,
     `verity-core`
-=======
-    `verity-codegen`,
-    `verity-core`,
-    `verity-common`
->>>>>>> 5a2e19f32ecf722d998f6eb058fda11ffa7f4862
   ).dependsOn(`verity-ast`, `verity-parser`)
 
 lazy val `verity-common` = project
@@ -48,15 +42,7 @@ lazy val `verity-ast` = project
     name := "verity-ast",
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
-<<<<<<< HEAD
     libraryDependencies ++= commonLibs3
-=======
-    libraryDependencies ++= (Seq(
-      "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1",
-      // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
-    ) ++ commonLibs3)
->>>>>>> 5a2e19f32ecf722d998f6eb058fda11ffa7f4862
   ).dependsOn(`verity-common`)
 
 lazy val `verity-parser` =project
@@ -95,7 +81,6 @@ lazy val `verity-codegen` =project
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
     )
   ).dependsOn(`verity-ast`)
-<<<<<<< HEAD
 
 lazy val `verity-core` = project
   .in(file("verity-core"))
@@ -115,28 +100,6 @@ lazy val commonLibs3 = Seq(
   "junit" % "junit" % "4.11" % Test,
   "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
   "com.novocode" % "junit-interface" % "0.11" % "test",
-=======
-
-lazy val `verity-core` = project
-  .in(file("verity-core"))
-  .settings(
-    name := "verity-core",
-    scalaVersion := scala3version,
-    scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= (Seq(
-      "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1",
-    ) ++ commonLibs3)
-  ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`)
-
-lazy val commonLibs3 = Seq(
-  //"org.scala-lang" % "scala-reflect" % scala_version,
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
-  "junit" % "junit" % "4.11" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
-  "com.novocode" % "junit-interface" % "0.11" % "test",
-  
->>>>>>> 5a2e19f32ecf722d998f6eb058fda11ffa7f4862
 )
 
 val commonScala2Options = Seq(
@@ -152,19 +115,11 @@ val commonScala2Options = Seq(
 )
 
 val commonScala3Options = Seq(
-<<<<<<< HEAD
   "-deprecation",
-=======
-  "-deprecation",           
->>>>>>> 5a2e19f32ecf722d998f6eb058fda11ffa7f4862
   "-encoding", "UTF-8",
   "-feature",
   "-Xfatal-warnings",
   "-Yexplicit-nulls",
-<<<<<<< HEAD
   "-explain",
-=======
-//  "-explain",
->>>>>>> 5a2e19f32ecf722d998f6eb058fda11ffa7f4862
   "-Ycheck-init", //will be "-Ysafe-init"
 )
