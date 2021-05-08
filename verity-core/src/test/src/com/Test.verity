@@ -1,0 +1,24 @@
+package com;
+
+// import java.util.ArrayList;
+// import java.util.*;
+
+class Test2 {
+  boolean baz = 5;
+
+  public Test2(int foo) {
+    int bar = foo;
+    boolean baz = isEven(bar);
+  }
+
+  public boolean isEven(int x) {
+    return (x % 2 < 0); //operators aren't checked yet
+  }
+
+  public static void main() {
+    // System.out.println("Hello world!");
+  }
+
+  private static void foo(int bar); //no checking of most modifiers yet
+}
+

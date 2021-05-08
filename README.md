@@ -1,1 +1,3 @@
 # Verity
+
+A programming language
