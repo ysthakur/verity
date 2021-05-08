@@ -279,10 +279,10 @@ private def resolveMethodCall(
   //TODO Deal with overloading first!!!
 
   if (possibleMthds.isEmpty) {
-    Compiler.logError(s"Cannot resolve method $mthdName", mthdCall)
+    LogUtils.logError(s"Cannot resolve method $mthdName", mthdCall)
     mthdCall
   } else if (possibleMthds.size > 1) {
-    Compiler.logError(s"Ambiguous method call $mthdName", mthdCall)
+    LogUtils.logError(s"Ambiguous method call $mthdName", mthdCall)
     mthdCall
   } else {
     val resolvedMthd = possibleMthds.head

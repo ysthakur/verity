@@ -1,4 +1,4 @@
-package verity.core
+package verity.codegen
 
 import verity.ast._
 

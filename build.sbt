@@ -20,11 +20,12 @@ lazy val root = project
     scalacOptions ++= commonScala3Options)
   .disablePlugins()
   .aggregate(
+    `verity-common`,
     `verity-ast`,
     `verity-parser`,
+    `verity-read-bytecode`
     `verity-codegen`,
-    `verity-core`,
-    `verity-common`
+    `verity-core`
   ).dependsOn(`verity-ast`, `verity-parser`)
 
 lazy val `verity-common` = project
@@ -41,11 +42,7 @@ lazy val `verity-ast` = project
     name := "verity-ast",
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= (Seq(
-      "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1",
-      // "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
-    ) ++ commonLibs3)
+    libraryDependencies ++= commonLibs3
   ).dependsOn(`verity-common`)
 
 lazy val `verity-parser` =project
@@ -61,6 +58,18 @@ lazy val `verity-parser` =project
     scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true)))
   ).dependsOn(`verity-ast`)
 
+lazy val `verity-read-bytecode` = project
+  .in(file("verity-read-bytecode"))
+  .settings(
+    name := "verity-read-bytecode",
+    scalaVersion := scala3version,
+    scalacOptions ++= commonScala3Options,
+    libraryDependencies ++= (Seq(
+      "org.ow2.asm" % "asm" % "8.0.1", 
+      "org.ow2.asm" % "asm-util" % "8.0.1"
+    ) ++ commonLibs3)
+  ).dependsOn(`verity-common`, `verity-ast`)
+
 lazy val `verity-codegen` =project
   .in(file("verity-codegen"))
   .settings(
@@ -68,8 +77,7 @@ lazy val `verity-codegen` =project
     scalaVersion := scala3version,
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1",
-//      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3"
+      "org.ow2.asm" % "asm-util" % "8.0.1"
     )
   ).dependsOn(`verity-ast`)
 
@@ -80,12 +88,10 @@ lazy val `verity-core` = project
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= (Seq(
-      "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1",
       "org.typelevel" %% "cats-core" % "2.5.0",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
     ) ++ commonLibs3)
-  ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`)
+  ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`, `verity-read-bytecode`)
 
 lazy val commonLibs3 = Seq(
   //"org.scala-lang" % "scala-reflect" % scala_version,
@@ -93,7 +99,6 @@ lazy val commonLibs3 = Seq(
   "junit" % "junit" % "4.11" % Test,
   "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
   "com.novocode" % "junit-interface" % "0.11" % "test",
-  
 )
 
 val commonScala2Options = Seq(
@@ -114,6 +119,6 @@ val commonScala3Options = Seq(
   "-feature",
   "-Xfatal-warnings",
   "-Yexplicit-nulls",
-//  "-explain",
+  "-explain",
   "-Ycheck-init", //will be "-Ysafe-init"
 )

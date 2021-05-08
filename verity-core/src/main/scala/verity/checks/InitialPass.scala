@@ -5,7 +5,7 @@ import verity.ast.infile._
 import verity.util._
 import verity.core.Context.Defs
 import verity.core.resolve.ReferenceResolve
-import verity.core.{errorMsg, singleMsg, Compiler, CompilerMsg, Context, Keywords}
+import verity.core.{errorMsg, singleMsg, Compiler, CompilerMsg, Context, Keywords, LogUtils}
 import verity.ast.Pkg.Importable
 
 import com.typesafe.scalalogging.Logger
@@ -54,7 +54,7 @@ object InitialPass {
       imported match {
         case pkg: Pkg =>
           if pkgMap.contains(name) then {
-            Compiler.logError(
+            LogUtils.logError(
                 s"Cannot import package $name: Pkg of same name already in scope",
                 imptStmt,
                 file
@@ -64,7 +64,7 @@ object InitialPass {
           }
         case cls: Classlike =>
           if clsMap.contains(name) then {
-            Compiler.logError(
+            LogUtils.logError(
                 s"Cannot import class ${name}: class of same name already in scope",
                 imptStmt,
                 file
@@ -80,7 +80,7 @@ object InitialPass {
     val pkgIMap = pkgMap.toMap
     val clsIMap = clsMap.toMap
 
-    file.classlikes.foreach(c => initialPassCls(c, clsIMap, pkgIMap, file).foreach(msg => Compiler.log(msg, file)))
+    file.classlikes.foreach(c => initialPassCls(c, clsIMap, pkgIMap, file).foreach(LogUtils.log(_, file)))
   }
 
   //todo check modifiers and stuff
@@ -115,7 +115,7 @@ object InitialPass {
         case c: Constructor =>
           val mthdName = mthd.name
           if mthdName != cls.name && mthdName != Keywords.constructorName then {
-            Compiler.logError(s"Wrong constructor name: $mthdName", mthd, file)
+            LogUtils.logError(s"Wrong constructor name: $mthdName", mthd, file)
           }
         case m: NormMethod => //TODO!!!!!!!!!!!!!!!!!!!1
 //          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using dummyCtxt)
@@ -210,7 +210,7 @@ object InitialPass {
               case cls: Classlike =>
                 cls.importableChildren.map(c => (c.name, c, imptStmt))
               case _ =>
-                Compiler.logError(s"Cannot import members of ${impt.name}", imptStmt, file)
+                LogUtils.logError(s"Cannot import members of ${impt.name}", imptStmt, file)
                 Nil
             }
           }

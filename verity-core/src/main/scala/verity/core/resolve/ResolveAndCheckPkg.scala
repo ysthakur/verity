@@ -6,7 +6,7 @@ import verity.ast.infile._
 import verity.util._
 import verity.checks.InitialPass
 import verity.core.Context.Defs
-import verity.core.{Compiler, Context, Keywords, CompilerMsg}
+import verity.core.{Compiler, Context, Keywords, CompilerMsg, LogUtils}
 
 import com.typesafe.scalalogging.Logger
 
@@ -43,7 +43,7 @@ private def resolveAndCheckFile(
         resolvedImports.collect { case c: Classlike => c.name -> c }.toMap,
         resolvedImports.collect { case m: MethodGroup => m.name -> m }.toMap,
         file
-    ).foreach(Compiler.log(_, file))
+    ).foreach(LogUtils.log(_, file))
   )
 }
 
