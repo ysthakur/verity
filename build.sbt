@@ -65,8 +65,8 @@ lazy val `verity-read-bytecode` = project
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options.filter(_ != "-Yexplicit-nulls"),
     libraryDependencies ++= (Seq(
-      "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1"
+      "org.ow2.asm" % "asm" % "9.1", 
+      "org.ow2.asm" % "asm-util" % "9.1"
     ) ++ commonLibs3)
   ).dependsOn(`verity-common`, `verity-ast`)
 
@@ -76,8 +76,8 @@ lazy val `verity-codegen` =project
     name := "verity-codegen",
     scalaVersion := scala3version,
     libraryDependencies ++= Seq(
-      "org.ow2.asm" % "asm" % "8.0.1", 
-      "org.ow2.asm" % "asm-util" % "8.0.1"
+      "org.ow2.asm" % "asm" % "9.1", 
+      "org.ow2.asm" % "asm-util" % "9.1"
     )
   ).dependsOn(`verity-ast`)
 
