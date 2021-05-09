@@ -10,6 +10,9 @@ case class UnresolvedTypeRef(
     args: TypeArgList,
     private[this] var _resolved: Option[TypeDef] = None
 ) extends Type {
+  def resolved: Option[TypeDef] = _resolved
+  private[verity] def resolved_=(typeDef: TypeDef): Unit = _resolved = Some(typeDef)
+
   override def fields: Iterable[Field] = resolved.fold(Nil)(_.fields)
   override def methods: Iterable[Method] = resolved.fold(Nil)(_.methods)
 
@@ -33,10 +36,6 @@ case class UnresolvedTypeRef(
         .forall(_ == _)
     case _ => false
   }
-
-  def resolved: Option[TypeDef] = _resolved
-
-  private[verity] def resolved_=(typeDef: TypeDef): Unit = _resolved = Some(typeDef)
 }
 
 case class UnresolvedWildcard(upper: Option[UnresolvedTypeRef], lower: Option[UnresolvedTypeRef])

@@ -15,14 +15,14 @@ import scala.annotation.tailrec
 private[verity] object ReferenceResolve {
   def resolveTypeIfNeeded(typ: Type)(using ctxt: Context): ResolveResult[Type] = typ match {
     case pt: PrimitiveType => OptionT.some(pt)
-    case tr: ResolvedTypeRef => resolveTypeRef(tr)
+    case tr: UnresolvedTypeRef => resolveTypeRef(tr)
     case _ => ???
   }
 
-  def resolveTypeRef(typ: ResolvedTypeRef)(using ctxt: Context): ResolveResult[Type] =
+  def resolveTypeRef(typ: UnresolvedTypeRef)(using ctxt: Context): ResolveResult[Type] =
     resolveTypeRef(typ, ctxt.typeDefs, ctxt.pkgDefs)
 
-  def resolveTypeRef(typ: ResolvedTypeRef, typeDefs: Defs[TypeDef], pkgDefs: Defs[Pkg]): ResolveResult[Type] = {
+  def resolveTypeRef(typ: UnresolvedTypeRef, typeDefs: Defs[TypeDef], pkgDefs: Defs[Pkg]): ResolveResult[Type] = {
     ???
   }
 
@@ -38,7 +38,7 @@ private[verity] object ReferenceResolve {
       case None =>
         ctxt.typeDefs.find(_._1 == head.text) match {
           case Some((_, cls: Classlike)) =>
-            resolveExprOrCls(ClassRef(cls, None, head.textRange), tail)
+            resolveExprOrCls(ClassRef(List(head), Some(cls)), tail)
           case _ =>
             ctxt.pkgDefs.find(_._1 == head.text) match {
               case Some(pkg) => resolveExprOrCls(pkg._2, head :: Nil, tail)
@@ -57,7 +57,7 @@ private[verity] object ReferenceResolve {
     case head +: tail =>
       prev.classlikes.find(_.name == head.text) match {
         case Some(cls) =>
-          resolveExprOrCls(ClassRef(cls, Some(PkgRef(prevPath, prev)), head.textRange), tail)
+          resolveExprOrCls(ClassRef(prevPath.reverse ++ path, cls), tail)
         case None =>
           prev.subPkgs.find(_.name == head.text) match {
             case Some(pkg) => resolveExprOrCls(pkg, head :: prevPath, tail)

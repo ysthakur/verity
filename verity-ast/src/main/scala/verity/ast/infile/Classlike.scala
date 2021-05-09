@@ -1,6 +1,7 @@
 package verity.ast.infile
 
 import verity.ast._
+import verity.ast.infile.{unresolved => ur}
 
 import scala.collection.mutable.ListBuffer
 
@@ -85,8 +86,8 @@ case class ClassDef(
     modifiers: ListBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
-    superClass: ClassRef,
-    superInterfaces: Iterable[ClassRef],
+    superClass: ur.UnresolvedTypeRef,
+    superInterfaces: Iterable[ur.UnresolvedTypeRef],
     fields: ListBuffer[Field],
     ctors: ListBuffer[Constructor],
     normMethods: ListBuffer[NormMethod],
@@ -98,7 +99,8 @@ case class ClassDef(
   override def methods = ctors ++ normMethods
   def children = fields ++ methods
 
-  override def superTypes: Iterable[Type] = (superInterfaces.toSeq :+ superClass).map(_.cls.makeRef)
+  override def superTypes: Iterable[Type] =
+    (superInterfaces.toSeq :+ superClass).map(_.resolved.get.makeRef)
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 
@@ -112,14 +114,14 @@ case class InterfaceDef(
     modifiers: ListBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
-    superInterfaces: Iterable[ClassRef],
+    superInterfaces: Iterable[ur.UnresolvedTypeRef],
     fields: ListBuffer[Field],
     methods: ListBuffer[Method],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.INTERFACE) {
   def children = fields ++ methods
-  override def superTypes: Iterable[Type] = superInterfaces.map(_.cls.makeRef)
+  override def superTypes: Iterable[Type] = superInterfaces.map(_.resolved.get.makeRef)
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} interface $name { ${methods.mkString(" ")}}"
 }
@@ -130,7 +132,7 @@ case class EnumDef(
     modifiers: ListBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
-    superInterfaces: Iterable[ClassRef],
+    superInterfaces: Seq[ur.UnresolvedTypeRef],
     constants: List[EnumConstant],
     fields: ListBuffer[Field],
     ctors: ListBuffer[Constructor],
@@ -141,7 +143,8 @@ case class EnumDef(
       HasCtors {
   def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
 
-  override def superTypes: Iterable[Type] = superInterfaces.map(_.cls.makeRef)
+  override def superTypes: Iterable[Type] =
+    BuiltinTypes.objectType +: superInterfaces.map(_.resolved.get.makeRef)
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 

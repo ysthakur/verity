@@ -85,10 +85,11 @@ case class VarRef(varName: Text, decl: VariableDecl) extends Expr {
 }
 
 /**
+ * TODO figure out a way to avoid the var
  * Used for referring to classes when calling static methods or accessing static
- * fields, NOT used like TypeRef
+ * fields, NOT used like ResolvedTypeRef or UnresolvedTypeRef
  */
-case class ClassRef(cls: Classlike, pkgRef: Option[PkgRef], clsNameRange: TextRange) extends HasText {
+case class ClassRef(cls: Classlike, pkgRef: Option[PkgRef], clsNameRange: TextRange) extends Tree, HasText {
   override def text: String = cls.name
   override def textRange: TextRange = TextRange(pkgRef.fold(clsNameRange)(_.textRange).start, clsNameRange.end)
 }

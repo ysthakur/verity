@@ -1,6 +1,6 @@
 package verity.ast.infile.unresolved
 
-import verity.ast.{Text, TextRange, HasText}
+import verity.ast.{Tree, Text, TextRange, HasText}
 import verity.ast.infile.{Statement, ResolvedOrUnresolvedExpr}
 
 /**
@@ -19,3 +19,4 @@ case class MultiDotRef(path: Seq[Text]) extends HasText {
   override def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
 }
 
+class UnresolvedError(elem: Tree, msg: String) extends Exception(msg)

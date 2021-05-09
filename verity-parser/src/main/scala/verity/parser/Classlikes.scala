@@ -1,7 +1,6 @@
 package verity.parser
 
-import verity.ast._
-import infile._
+import verity.ast._, infile._
 import Core._
 import Exprs._
 import Methods._
@@ -51,7 +50,7 @@ private object Classlikes {
           modifiers.to(ListBuffer),
           name,
           typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
-          null, //todo
+          null, //todo superclass
           null, //todo
           fields.to(ListBuffer).asInstanceOf[ListBuffer[Field]],
           ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ListBuffer),
