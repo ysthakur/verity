@@ -20,7 +20,7 @@ private object Methods {
           typ,
           name,
           isGiven = false,
-          isErased = false,
+          isProof = false,
           TextRange(typ.textRange.start, name.textRange.end)
       )
   }

@@ -3,7 +3,7 @@ package verity.ast
 //TODO Replace with a typeclass?
 trait HasText {
   def text: String
-  def textRange: TextRange
+  def textRange: TextRange = TextRange.synthetic
   def isSynthetic: Boolean = this.textRange.isSynthetic
 }
 

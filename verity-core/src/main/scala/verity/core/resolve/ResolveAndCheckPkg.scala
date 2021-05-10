@@ -3,14 +3,17 @@ package verity.core.resolve
 import verity.ast._
 import verity.ast.Pkg.Importable
 import verity.ast.infile._
-import verity.util._
 import verity.checks.InitialPass
 import verity.core.Context.Defs
-import verity.core.{Compiler, Context, Keywords, CompilerMsg, LogUtils}
+import verity.core._
+import verity.util._
 
+import cats.implicits._
+import cats.catsInstancesForId
 import com.typesafe.scalalogging.Logger
 
-import scala.collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.ListBuffer
 
 /** Resolve all references to classes and type parameters in a package
   * @param pkg The package to work on
@@ -36,11 +39,18 @@ private def resolveAndCheckFile(
 
   val resolvedImports = file.resolvedImports
 
+  val clsDefs =
+    (file.classlikes ++ resolvedImports.collect { case c: Classlike => c })
+      .view.map(c => c.name -> c )
+      .toMap
+  val pkgDefs = 
+    resolvedImports.collect { case p: Pkg => p.name -> p }.toMap + (rootPkg.name -> rootPkg)
+
   file.classlikes.foreach(c =>
     resolveAndCheckCls(
         c,
-        resolvedImports.collect { case p: Pkg => p.name -> p }.toMap,
-        resolvedImports.collect { case c: Classlike => c.name -> c }.toMap,
+        pkgDefs,
+        clsDefs,
         resolvedImports.collect { case m: MethodGroup => m.name -> m }.toMap,
         file
     ).foreach(LogUtils.log(_, file))
@@ -70,15 +80,27 @@ private[resolve] def resolveAndCheckCls(
   }
 
   val newMthdRefs: Defs[MethodGroup] = mthdRefs ++ cls.methodGroups.view.map(m => m.name -> m)
-  logger.debug("emthodgroups" + cls.methodGroups.map(_.name).mkString(","))
+//  logger.debug("emthodgroups" + cls.methodGroups.map(_.name).mkString(","))
 
   val givenDefs = cls.methods.filter(_.isGiven).toList
   val proofDefs = cls.methods.filter(_.isProof).toList
 
-  cls.methods.flatMap { mthd =>
+  val mthdLogs = cls.methods.flatMap { mthd =>
 //    logger.debug(s"Working on method ${mthd.name}!!")
-    resolveAndCheckMthd(
-      mthd,
+    resolve.resolveAndCheckMthd(
+        mthd,
+        fieldDefs,
+        newMthdRefs,
+        givenDefs,
+        proofDefs,
+        typeDefs,
+        pkgDefs,
+        cls,
+        file
+    )
+  }
+
+  given Context = Context(
       fieldDefs,
       newMthdRefs,
       givenDefs,
@@ -87,8 +109,23 @@ private[resolve] def resolveAndCheckCls(
       pkgDefs,
       cls,
       file
-    )
+  )
+  val fieldLogs: Iterable[CompilerMsg] = cls.fields.view.flatMap { field =>
+    val resolvedTyp = ReferenceResolve.resolveTypeIfNeeded(field.typ)
+    val resolvedExpr = field.initExpr.map { e =>
+      val resolved: ResultWithLogs[Option[Expr]] =
+        resolvedTyp.getOrElse(UnknownType).flatMap(resolveAndCheckExpr(e, _).value)
+      resolved.map {
+        case None =>
+        case s    => field.initExpr = s
+      }
+      resolved
+    }
+    resolvedTyp.map { t => field.typ = t }
+    resolvedExpr.fold(resolvedTyp.value.written)(_.written)
   }
+
+  fieldLogs ++ mthdLogs
 }
 
 private def resolveAndCheckMthd(
@@ -102,7 +139,7 @@ private def resolveAndCheckMthd(
     cls: Classlike,
     file: FileNode
 )(using RootPkg, Logger): List[CompilerMsg] = {
-  println(s"Resolving method ${mthd.name},returntype=${mthd.returnType.text}")
+//  println(s"Resolving method ${mthd.name},returntype=${mthd.returnType.text}")
   val isCtor = mthd.isInstanceOf[Constructor]
 
   mthd.body match {
@@ -118,13 +155,16 @@ private def resolveAndCheckMthd(
             cls,
             file
         )
-        resolveStmt(block, mthd.returnType)(using ctxt).map { newBlock =>
-          block.stmts.clear()
-          newBlock match {
-            case b: Block => block.stmts.addAll(b.stmts)
-            case s => block.stmts += s
+        resolveStmt(block, mthd.returnType)(using ctxt)
+          .map { newBlock =>
+            block.stmts.clear()
+            newBlock match {
+              case b: Block => block.stmts.addAll(b.stmts)
+              case s        => block.stmts += s
+            }
           }
-        }.getOrElse(block).written
+          .getOrElse(block)
+          .written
       } else {
         Nil
       }

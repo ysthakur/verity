@@ -57,7 +57,7 @@ case class UnresolvedAssignmentExpr(lhs: RoUExpr, rhs: RoUExpr, extraOp: Option[
 class UnresolvedInstanceOf(
     val expr: RoUExpr,
     val typeRef: UnresolvedTypeRef,
-    val textRange: TextRange
+    val instanceofTokRange: TextRange
 ) extends UnresolvedExpr {
   override val typ: Type = PrimitiveType.BooleanType
   override def text = s"${expr.text} instanceof ${typ.text}"
@@ -89,10 +89,14 @@ case class UnresolvedMethodCall(
     + valArgs.text
     + HasText.optText(givenArgs)
     + HasText.optText(proofArgs)
-  override def textRange: TextRange = ???
+  // override def textRange = ???
 }
 
-case class UnresolvedArgList(args: List[RoUExpr], argsKind: ArgsKind, textRange: TextRange) extends HasText {
+case class UnresolvedArgList(
+  args: List[RoUExpr],
+  argsKind: ArgsKind,
+  override val textRange: TextRange
+) extends HasText {
   override def text: String = args.view.map(_.text).mkString("(", ",", ")")
 }
 

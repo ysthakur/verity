@@ -4,15 +4,16 @@ package com;
 // import java.util.*;
 
 class Test2 {
-  boolean baz = 5;
+  boolean foobar = 5;
 
   public Test2(int foo) {
     int bar = foo;
     boolean baz = isEven(bar);
+    Test2 blah = Test2(bar);
   }
 
   public boolean isEven(int x) {
-    return (x % 2 < 0); //operators aren't checked yet
+    return x % 2 < 0; //operators aren't checked yet
   }
 
   public static void main() {

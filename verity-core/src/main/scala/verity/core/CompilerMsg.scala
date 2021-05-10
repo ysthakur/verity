@@ -4,12 +4,12 @@ import verity.ast.{TextRange, HasText}
 
 import cats.data.{OptionT, Writer}
 
-type ResolveResult[T] = OptionT[[T] =>> Writer[List[CompilerMsg], T], T]
-// Writer[List[CompilerMsg], Option[T]]
-// Option[T]
-// Either[ErrorMsg, T]
+type ResultWithLogs[T] = Writer[List[CompilerMsg], T]
+type ResolveResult[T] = OptionT[ResultWithLogs, T]
 
-case class CompilerMsg(msg: String, textRangeOrTree: TextRange | HasText, msgType: MsgType)
+case class CompilerMsg(msg: String, textRangeOrTree: TextRange | HasText, msgType: MsgType) {
+  override def toString = s"$msgType: $msg"
+}
 
 enum MsgType {
   case ERROR, WARNING, WEAK_WARNING, INFO

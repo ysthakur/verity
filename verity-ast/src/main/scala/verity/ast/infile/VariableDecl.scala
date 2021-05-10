@@ -28,9 +28,10 @@ class Field(
     var typ: Type,
     var initExpr: Option[ResolvedOrUnresolvedExpr] = None
 ) extends VariableDecl, ClassChild, HasModifiers, HasType {
-  override def name: String = fieldName.text
-  override def text: String = ???
-  override def textRange = ???
+  override def name = fieldName.text
+  override def text =
+    s"${Modifier.modifiersText(modifiers)} ${typ.text} ${fieldName.text}${initExpr.fold("")("=" + _.text)};"
+  // override def textRange = ???
 }
 
 class LocalVar(
@@ -46,9 +47,9 @@ class LocalVar(
   }
   override def name: String = varName.text
   override def text: String = {
-    val sb = StringBuilder(HasText.seqText(modifiers)).append(typ.text).append(name)
+    val sb = StringBuilder(HasText.seqText(modifiers)).append(" ").append(typ.text).append(name)
     if (initExpr != None) sb.append('=').append(initExpr.get.text).append(';')
     sb.toString
   }
-  override def textRange = ???
+  // override def textRange = ???
 }

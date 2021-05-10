@@ -15,7 +15,7 @@ import scala.collection.mutable.ListBuffer
 
 object Compiler {
   def compile(pkgs: Iterable[File], files: Iterable[File], options: Options): Unit = {
-    given logger: Logger = Logger("thelogger")
+    given logger: Logger = Logger(".")
     given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
 
     parsePkg(pkgs, files, rootPkg)

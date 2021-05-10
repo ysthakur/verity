@@ -54,7 +54,7 @@ object InitialPass {
       imported match {
         case pkg: Pkg =>
           if pkgMap.contains(name) then {
-            LogUtils.logError(
+            LogUtils.logMsg(
                 s"Cannot import package $name: Pkg of same name already in scope",
                 imptStmt,
                 file
@@ -64,7 +64,7 @@ object InitialPass {
           }
         case cls: Classlike =>
           if clsMap.contains(name) then {
-            LogUtils.logError(
+            LogUtils.logMsg(
                 s"Cannot import class ${name}: class of same name already in scope",
                 imptStmt,
                 file
@@ -115,7 +115,7 @@ object InitialPass {
         case c: Constructor =>
           val mthdName = mthd.name
           if mthdName != cls.name && mthdName != Keywords.constructorName then {
-            LogUtils.logError(s"Wrong constructor name: $mthdName", mthd, file)
+            LogUtils.logMsg(s"Wrong constructor name: $mthdName", mthd, file)
           }
         case m: NormMethod => //TODO!!!!!!!!!!!!!!!!!!!1
 //          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using dummyCtxt)
@@ -131,7 +131,7 @@ object InitialPass {
       pkgRefs: Defs[Pkg],
       cls: Classlike,
       file: FileNode
-  )(using logger: Logger): Iterable[CompilerMsg] = {
+  )(using Logger): Iterable[CompilerMsg] = {
     val isCtor = mthd.isInstanceOf[Constructor]
     given Context = Context(
         cls.fields.view.map(f => f.name -> f).toMap,
@@ -210,7 +210,7 @@ object InitialPass {
               case cls: Classlike =>
                 cls.importableChildren.map(c => (c.name, c, imptStmt))
               case _ =>
-                LogUtils.logError(s"Cannot import members of ${impt.name}", imptStmt, file)
+                LogUtils.logMsg(s"Cannot import members of ${impt.name}", imptStmt, file)
                 Nil
             }
           }

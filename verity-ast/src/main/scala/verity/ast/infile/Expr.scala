@@ -89,9 +89,8 @@ case class VarRef(varName: Text, decl: VariableDecl) extends Expr {
  * Used for referring to classes when calling static methods or accessing static
  * fields, NOT used like ResolvedTypeRef or UnresolvedTypeRef
  */
-case class ClassRef(cls: Classlike, pkgRef: Option[PkgRef], clsNameRange: TextRange) extends Tree, HasText {
-  override def text: String = cls.name
-  override def textRange: TextRange = TextRange(pkgRef.fold(clsNameRange)(_.textRange).start, clsNameRange.end)
+case class ClassRef(cls: Classlike, path: Iterable[Text]) extends Tree, HasText {
+  override def text: String = HasText.seqText(path, ".", "", "")
 }
 
 /**
@@ -141,7 +140,7 @@ case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Option[Token]) extends 
   override def textRange: TextRange = TextRange(lhs.textRange.start, rhs.textRange.end)
 }
 
-class InstanceOf(val expr: Expr, val textRange: TextRange) extends Expr {
+class InstanceOf(val expr: Expr, override val textRange: TextRange) extends Expr {
   override val typ: Type = PrimitiveType.BooleanType
   override def text = s"${expr.text} instanceof ${typ.text}"
 }
@@ -151,8 +150,7 @@ class InstanceOf(val expr: Expr, val textRange: TextRange) extends Expr {
   * @param startOffset
   * @param endOffset
   */
-case class Op(opType: OpType, textRange: TextRange) extends Tree, HasText {
-  def isBinary: Boolean = ???
+case class Op(opType: OpType, override val textRange: TextRange) extends Tree, HasText {
   override def text: String = opType.text
 }
 enum OpType(val text: String) {
@@ -180,7 +178,7 @@ object OpType {
   def findBySymbol(symbol: String): Option[OpType] = OpType.values.find(_.text == symbol)
 }
 
-class Block(val stmts: ListBuffer[Statement], val textRange: TextRange, private[this] var _typ: Type) extends Expr, Statement {
+class Block(val stmts: ListBuffer[Statement], override val textRange: TextRange, private[this] var _typ: Type) extends Expr, Statement {
   override def typ: Type = _typ
   private[verity] def typ_=(newTyp: Type): Unit = _typ = newTyp
   override def text: String = stmts.map(_.text).mkString("{", "", "}")
@@ -206,10 +204,10 @@ case class MethodCall (
     + valArgs.text
     + HasText.optText(givenArgs)
     + HasText.optText(proofArgs)
-  override def textRange: TextRange = ???
+  // override def textRange = ???
 }
 
-case class ArgList(args: List[Expr], argsKind: ArgsKind, textRange: TextRange) extends HasText {
+case class ArgList(args: List[Expr], argsKind: ArgsKind, override val textRange: TextRange) extends HasText {
   override def text: String = args.view.map(_.text).mkString("(", ",", ")")
 }
 

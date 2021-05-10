@@ -38,7 +38,7 @@ class NormMethod(
     val givenParams: Option[ParamList],
     val proofParams: Option[ParamList],
     val body: Option[Block],
-    val textRange: TextRange
+    override val textRange: TextRange
 ) extends Method {
   override def returnType: Type = _returnType
   private[verity] def returnType_=(typ: Type): Unit = _returnType = typ
@@ -56,7 +56,7 @@ class Constructor(
     val givenParams: Option[ParamList],
     val proofParams: Option[ParamList],
     _body: Block,
-    val textRange: TextRange,
+    override val textRange: TextRange,
     private[this] var _cls: () => HasCtors
 ) extends Method {
   lazy val cls: HasCtors = _cls()
@@ -94,24 +94,24 @@ case class Parameter(
     typ: Type,
     paramName: Text,
     override val isGiven: Boolean,
-    isErased: Boolean,
+    override val isProof: Boolean,
     override val textRange: TextRange
 ) extends VariableDecl,
       HasText,
       HasAnnotations,
       NamedTree {
-  def modifiers: Iterable[Modifier] = ???
-//    if (isGiven) if (isErased) List(Modifier(ModifierType.GIVEN))
+  def modifiers: Iterable[Modifier] =
+    if (isProof) List(Modifier(ModifierType.PROOF, TextRange.synthetic))
+    else if (isGiven) List(Modifier(ModifierType.GIVEN, TextRange.synthetic))
+    else Nil
   def initExpr: None.type = None
   override def text: String =
-    (if (isGiven) "given " else "") +
-      (if (isErased) "erased " else "") +
-      s"${annotations.map(_.text).mkString(" ")} ${typ.text} $name"
+    s"${annotations.map(_.text).mkString(" ")} ${typ.text} $name"
 
   def name: String = paramName.text
 }
 
-case class ParamList(params: List[Parameter], textRange: TextRange) extends Tree, HasText {
+case class ParamList(params: List[Parameter], override val textRange: TextRange) extends Tree, HasText {
   override def text: String = HasText.seqText(params, ",", "(", ")")
 }
 

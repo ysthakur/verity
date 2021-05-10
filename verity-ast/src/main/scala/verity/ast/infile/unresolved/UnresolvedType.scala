@@ -9,7 +9,7 @@ case class UnresolvedTypeRef(
     path: Seq[Text],
     args: TypeArgList,
     private[this] var _resolved: Option[TypeDef] = None
-) extends Type {
+) extends Type, ResolvedOrUnresolvedTypeRef {
   def resolved: Option[TypeDef] = _resolved
   private[verity] def resolved_=(typeDef: TypeDef): Unit = _resolved = Some(typeDef)
 
@@ -48,8 +48,8 @@ case class UnresolvedWildcard(upper: Option[UnresolvedTypeRef], lower: Option[Un
 
   override def superTypes: Iterable[Type] = upper.fold(Nil)(_.superTypes)
 
-  override def text: Nothing = ???
-  override def textRange: TextRange = ???
+  override def text = ???
+  // override def textRange = ???
 }
 
 case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type {
@@ -62,5 +62,5 @@ case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type 
   override def superTypes: Iterable[Type] = upper.superTypes.toSeq :+ upper
 
   override def text = "NOT INFERRED AAA!!!"
-  override def textRange: TextRange = ???
+  // override def textRange = ???
 }
