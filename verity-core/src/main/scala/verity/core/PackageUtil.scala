@@ -8,7 +8,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object PackageUtil {
   def walk(pkg: Pkg, f: FileNode => (RootPkg, Logger) ?=> Unit)(using RootPkg, Logger): Unit = {
-    pkg.subPkgs.foreach { p => Future(walk(p, f))(ExecutionContext.global) }
+    pkg.subPkgs.foreach { p => walk(p, f) }
 
     pkg.files.foreach(f)
   }
@@ -37,10 +37,13 @@ object PackageUtil {
     val newParents = pkg :: parents
     val newPath = path + pkg.name
     pkg.subPkgs.foreach { p =>
-      Future(PackageUtil.walkWithPath(p, newParents, newPath, f)(using root, logger))(ExecutionContext.global)
+      PackageUtil.walkWithPath(p, newParents, newPath, f)(using root, logger)
     }
-
-    pkg.files.foreach(f(_, newParents, newPath))
+    try {
+      pkg.files.foreach(f(_, newParents, newPath))
+    } catch {
+      case x => x.printStackTrace; throw x
+    }
   }
 
   private def canonicalName(pkgName: String, parents: Iterable[Pkg]) =

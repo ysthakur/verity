@@ -1,0 +1,1 @@
+package com; class Test2 { public Test2 ( int foo) {()intbar=foo;()booleanbaz=<>isEven(bar);} public boolean isEven ( int x) {return ((x % 2) < 0);} public static void main () {} private static void foo ( int bar) ;}
