@@ -39,12 +39,12 @@ sealed trait Classlike(val defType: ClasslikeType)
       .filter(!_.isInstanceOf[Method])
       .asInstanceOf[Iterable[Field | EnumConstant]] ++ this.methodGroups
 
-  override def textRange = TextRange(
+  /*override def textRange = TextRange(
       if (annotations.nonEmpty) annotations.head.textRange.start
       else if (modifiers.nonEmpty) modifiers.head.textRange.start
       else metaclassTokTR.start,
       bodyRange.end
-  )
+  )*/
 
   /** Find members inside a class given by a path, e.g. List("foo") to access field foo
     * @param cls The class inside which the fields/methods/classes to be found lie

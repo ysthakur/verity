@@ -61,6 +61,7 @@ class UnresolvedInstanceOf(
 ) extends UnresolvedExpr {
   override val typ: Type = PrimitiveType.BooleanType
   override def text = s"${expr.text} instanceof ${typ.text}"
+  override def textRange: TextRange = ???
 }
 
 case class UnresolvedFieldAccess(obj: RoUExpr, fieldName: Text) extends UnresolvedTypeExpr, HasText {
@@ -74,29 +75,33 @@ case class UnresolvedFieldAccess(obj: RoUExpr, fieldName: Text) extends Unresolv
   *   `Some` containing either a [[MultiDotRef]] or [[Expr]].
   */
 case class UnresolvedMethodCall(
-    objOrCls: Option[HasText],
+    objOrCls: Option[HasTextRange],
     methodName: Text,
     valArgs: UnresolvedArgList,
-    typeArgs: TypeArgList,
+    typeArgs: Option[TypeArgList],
     givenArgs: Option[UnresolvedArgList], //TODO do givenArgs!!
     proofArgs: Option[UnresolvedArgList] //TODO do proofArgs!!
 ) extends UnresolvedTypeExpr {
   private[verity] var resolved: Option[Method] = None
 
-  override def text: String = objOrCls.fold("")(_.toString)
-    + typeArgs.text
+  override def text: String = objOrCls.fold("")(_.text + ".")
+    + typeArgs.fold("")(_.text)
     + methodName.text
     + valArgs.text
     + HasText.optText(givenArgs)
     + HasText.optText(proofArgs)
-  // override def textRange = ???
+
+  override def textRange = TextRange(
+    objOrCls.orElse(typeArgs).getOrElse(methodName).textRange.start,
+    proofArgs.orElse(givenArgs).getOrElse(valArgs).textRange.end
+  )
 }
 
 case class UnresolvedArgList(
   args: List[RoUExpr],
   argsKind: ArgsKind,
   override val textRange: TextRange
-) extends HasText {
+) extends HasTextRange {
   override def text: String = args.view.map(_.text).mkString("(", ",", ")")
 }
 

@@ -71,7 +71,7 @@ private[resolve] def resolveAndCheckCls(
     typeDefs: Defs[TypeDef],
     mthdRefs: Defs[MethodGroup],
     file: FileNode
-)(using rootPkg: RootPkg, logger: Logger): Iterable[CompilerMsg] = {
+): Iterable[CompilerMsg] = {
   val fieldDefs: Defs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
 
   cls match {
@@ -100,7 +100,7 @@ private[resolve] def resolveAndCheckCls(
     )
   }
 
-  given Context = Context(
+  val ctxt = Context(
       fieldDefs,
       newMthdRefs,
       givenDefs,
@@ -111,10 +111,10 @@ private[resolve] def resolveAndCheckCls(
       file
   )
   val fieldLogs: Iterable[CompilerMsg] = cls.fields.view.flatMap { field =>
-    val resolvedTyp = ReferenceResolve.resolveTypeIfNeeded(field.typ)
+    val resolvedTyp = ReferenceResolve.resolveTypeIfNeeded(field.typ)(using ctxt)
     val resolvedExpr = field.initExpr.map { e =>
       val resolved: ResultWithLogs[Option[Expr]] =
-        resolvedTyp.getOrElse(UnknownType).flatMap(resolveAndCheckExpr(e, _).value)
+        resolvedTyp.getOrElse(UnknownType).flatMap(resolveAndCheckExpr(e, _)(using ctxt).value)
       resolved.map {
         case None =>
         case s    => field.initExpr = s
@@ -132,13 +132,13 @@ private def resolveAndCheckMthd(
     mthd: Method,
     fieldDefs: Defs[VariableDecl],
     mthdRefs: Defs[MethodGroup],
-    givenDefs: Iterable[verity.core.ImplicitDef],
-    proofDefs: Iterable[verity.core.ImplicitDef],
+    givenDefs: Iterable[GivenDef],
+    proofDefs: Iterable[GivenDef],
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg],
     cls: Classlike,
     file: FileNode
-)(using RootPkg, Logger): List[CompilerMsg] = {
+): List[CompilerMsg] = {
 //  println(s"Resolving method ${mthd.name},returntype=${mthd.returnType.text}")
   val isCtor = mthd.isInstanceOf[Constructor]
 

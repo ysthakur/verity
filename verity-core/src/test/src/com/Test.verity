@@ -4,10 +4,10 @@ package com;
 // import java.util.*;
 
 class Test2 {
-  boolean foobar = 5;
+  int foobar = 5;
 
   public Test2(int foo) {
-    int bar = foo;
+    short bar = foo;
     boolean baz = isEven(bar);
     Test2 blah = Test2(bar);
   }
@@ -20,5 +20,5 @@ class Test2 {
     // System.out.println("Hello world!");
   }
 
-  private static void foo(int bar); //no checking of most modifiers yet
+  private static void foo(int bar);
 }

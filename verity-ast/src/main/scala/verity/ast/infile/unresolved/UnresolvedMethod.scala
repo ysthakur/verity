@@ -13,8 +13,7 @@ class UnresolvedConstructor(
     val params: ParamList,
     val givenParams: Option[ParamList],
     val proofParams: Option[ParamList],
-    private val _body: Block,
-    val textRange: TextRange
+    private val _body: Block
 ) extends UnresolvedMethod {
   def typeParams: TypeParamList = ???
   def returnType: Type = ???
@@ -25,6 +24,7 @@ class UnresolvedConstructor(
     s"${modifiers.map(_.text).mkString(" ")} $name ${params.text} ${body.fold(";")(_.text)}"
 
   def name: String = ctorName.text
+  def nameRange = ctorName.textRange
 }
 
 class UnresolvedNormMethod(
@@ -35,8 +35,7 @@ class UnresolvedNormMethod(
     val params: ParamList,
     val givenParams: Option[ParamList],
     val proofParams: Option[ParamList],
-    val body: Option[Block],
-    val textRange: TextRange
+    val body: Option[Block]
 ) extends UnresolvedMethod {
   override def text = s"${modifiers.map(_.text).mkString(" ")} ${returnType.text} $name ${params.text} ${body
     .fold(";")(_.text)}"
@@ -46,4 +45,5 @@ class UnresolvedNormMethod(
   private[verity] def returnType_=(typ: Type): Unit = _returnType = typ
 
   def name: String = methodName.text
+  def nameRange = methodName.textRange
 }

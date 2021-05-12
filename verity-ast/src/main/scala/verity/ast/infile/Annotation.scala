@@ -5,7 +5,7 @@ import verity.ast._
 
 case class Annotation(name: String, args: ArgList, appliedTo: Tree, startOffset: Int) extends HasText {
   override def text: String = s"@$name$args"
-  override def textRange = TextRange(startOffset, args.textRange.end)
+//  override def textRange = TextRange(startOffset, args.textRange.end)
 }
 
 object Annotation {

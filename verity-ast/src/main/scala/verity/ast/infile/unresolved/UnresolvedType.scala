@@ -22,10 +22,10 @@ case class UnresolvedTypeRef(
 
   override def text: String = HasText.seqText(path, ".") + args.text
 
-  override def textRange: TextRange =
+  /*override def textRange: TextRange =
     if args.isEmpty || args.textRange.isSynthetic then
       TextRange(path.head.textRange.start, path.last.textRange.end)
-    else TextRange(path.head.textRange.start, args.textRange.end)
+    else TextRange(path.head.textRange.start, args.textRange.end)*/
 
   override def equals(other: Any): Boolean = other match {
     case tr: UnresolvedTypeRef =>

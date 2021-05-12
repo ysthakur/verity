@@ -20,8 +20,7 @@ private object Methods {
           typ,
           name,
           isGiven = false,
-          isProof = false,
-          TextRange(typ.textRange.start, name.textRange.end)
+          isProof = false
       )
   }
   //TODO make separate givenParamList pattern
@@ -29,8 +28,8 @@ private object Methods {
     ParamList(params.toList, TextRange(start, end))
   }
 
-  def exprStmt[_: P]: P[UnresolvedExprStmt] = P(expr ~ ";" ~ Index).map { case (expr, end) =>
-    new UnresolvedExprStmt(expr, end)
+  def exprStmt[_: P]: P[UnresolvedExprStmt] = P(expr ~ ";").map { expr =>
+    new UnresolvedExprStmt(expr)
   }
 
   //todo allow final modifier
@@ -66,16 +65,17 @@ private object Methods {
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def ctor[_: P]: P[Seq[Modifier] => (() => HasCtors) => Constructor] =
-    P(identifierText ~ &("(") ~/ paramList ~ block).map {
-      case (name, params, body) =>
+    P(identifierWithTextRange ~ &("(") ~/ paramList ~ block).map {
+      case (name, nameRange, params, body) =>
         modifiers => cls => new Constructor(
             modifiers.to(ListBuffer),
             name,
+            nameRange,
             params,
             None, //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
             None,
+            Nil,
             body,
-            TextRange((if (modifiers.isEmpty) name else modifiers.head).textRange.start, body.textRange.end),
             cls
         )
     }
@@ -117,11 +117,8 @@ private object Methods {
       params,
       givenParams, //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
       proofParams,
-      body,
-      TextRange(
-        (if (modifiers.isEmpty) returnType else modifiers.head).textRange.start,
-        end
-      )
+      Nil,
+      body
     )
   }
 }

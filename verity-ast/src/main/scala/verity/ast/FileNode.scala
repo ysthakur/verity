@@ -1,17 +1,18 @@
 package verity.ast
 
-import verity.ast._
 import verity.ast.infile._
 
 import java.io.File
+import scala.collection.mutable
 
 case class FileNode(
-    name: String,
-    packageRef: Option[PackageStmt],
-    imports: Seq[ImportStmt],
-    classlikes: Seq[Classlike],
-    origFile: File
+  name: String,
+  packageRef: Option[PackageStmt],
+  imports: Seq[ImportStmt],
+  classlikes: Seq[Classlike],
+  origFile: File
 ) {
+  val textRanges: mutable.Map[Tree, TextRange] = mutable.HashMap()
   private[verity] var pkg: Pkg | Null = null
   private[verity] var resolvedImports: Iterable[Pkg.Importable] = List.empty
   def text =
@@ -24,19 +25,17 @@ case class FileNode(
   */
 case class PackageStmt(val path: DotPath, val pkgTokStartOffset: Int) extends Tree, HasText {
   override def text: String = s"package ${path.text};"
-  override def textRange = TextRange(pkgTokStartOffset, path.textRange.end)
 }
 
 /** @param path The path of the import (excluding the wildcard)
   * @param pkgTokStartOffset The start offset of the "import" token
   */
 case class ImportStmt(path: DotPath, override val textRange: TextRange, wildCard: Boolean = false)
-    extends Tree,
-      HasText {
+    extends Tree, HasText, HasTextRange {
   override def text = s"import ${path.text}${if (wildCard) ".*" else ""};"
 }
 
-case class DotPath(path: Iterable[(String, TextRange)]) extends Tree, HasText {
+case class DotPath(path: Iterable[(String, TextRange)]) extends Tree, HasTextRange {
   override def text = path.view.map(_._1).mkString(".")
   override def textRange = TextRange(path.head._2.start, path.last._2.end)
 }

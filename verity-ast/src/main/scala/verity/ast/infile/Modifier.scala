@@ -19,7 +19,7 @@ trait HasModifiers extends Tree {
   def isStatic: Boolean = this.hasModifier(ModifierType.STATIC)
 }
 
-case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasText {
+case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasTextRange {
   override def text: String = modType.toString.toLowerCase.nn
 }
 object Modifier {

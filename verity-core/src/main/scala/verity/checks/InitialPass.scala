@@ -115,7 +115,7 @@ object InitialPass {
         case c: Constructor =>
           val mthdName = mthd.name
           if mthdName != cls.name && mthdName != Keywords.constructorName then {
-            LogUtils.logMsg(s"Wrong constructor name: $mthdName", mthd, file)
+            LogUtils.logMsg(s"Wrong constructor name: $mthdName", mthd.nameRange, file)
           }
         case m: NormMethod => //TODO!!!!!!!!!!!!!!!!!!!1
 //          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using dummyCtxt)
@@ -160,7 +160,7 @@ object InitialPass {
             Nil
         }
       case None =>
-        if (!mthd.isAbstract) errorMsg("Method requires abstract modifier or implementation", mthd) :: Nil
+        if (!mthd.isAbstract) errorMsg("Method requires abstract modifier or implementation", mthd.nameRange) :: Nil
         else Nil
     }
     //TODO resolve return type

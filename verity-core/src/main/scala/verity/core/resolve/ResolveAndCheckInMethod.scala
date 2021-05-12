@@ -4,8 +4,6 @@ import verity.ast._
 import verity.ast.infile.{unresolved => ur, _}
 import verity.core._
 import verity.core.Context.Defs
-import verity.ast.infile.unresolved.UnresolvedArgList
-import verity.ast.infile.UnknownType
 
 import cats.data.OptionT
 import cats.data.Writer
@@ -18,11 +16,11 @@ import scala.collection.mutable
 private def resolveStmt(
     stmt: Statement,
     mthdReturnType: Type
-)(using ctxt: Context, rootPkg: RootPkg, logger: Logger): ResolveResult[Statement] = {
+)(using ctxt: Context): ResolveResult[Statement] = {
 //  logger.debug(s"Resolving statement ${stmt.text}, ${stmt.getClass}")
   stmt match {
     case ues: ur.UnresolvedExprStmt =>
-      resolveAndCheckExpr(ues.expr, UnknownType).map(e => new ExprStmt(e, ues.end))
+      resolveAndCheckExpr(ues.expr, UnknownType).map(e => new ExprStmt(e))
     case rs: ReturnStmt =>
       resolveAndCheckExpr(rs.expr, mthdReturnType).map { expr => ReturnStmt(expr, rs.textRange) }
     case lv: LocalVar =>
@@ -121,6 +119,7 @@ private def resolveAndCheckExpr(
     if (
         expectedType != UnknownType && expr.typ != UnknownType && !expr.typ.subTypeOf(expectedType)
     ) {
+      println(s"${expr.typ == expectedType}, ${expr.typ}, $expectedType, ${expectedType.getClass}, ${expr.typ.getClass}")
       singleMsg(
           errorMsg(
               s"${expr.text} is of wrong type: found ${expr.typ.text}, expected ${expectedType.text}",
@@ -153,7 +152,7 @@ private def resolveUnresolvedMethodCall(
         mthd.name == mthdName
           && mthd.params.params.size == mthdCall.valArgs.args.size
           && (mthdCall.typeArgs.isEmpty
-            || mthdCall.typeArgs.args.size == mthd.typeParams.params.size)
+            || mthdCall.typeArgs.get.args.size == mthd.typeParams.params.size)
           && (mthdCall.givenArgs.isEmpty
             || mthd.givenParams.isEmpty
             || mthdCall.givenArgs.get.args.size == mthd.givenParams.get.params.size)
@@ -209,7 +208,7 @@ private def resolveUnresolvedMethodCall(
 }
 
 private def resolveImplicitArgList(
-    argList: Option[UnresolvedArgList],
+    argList: Option[ur.UnresolvedArgList],
     params: Option[ParamList]
 )(using Context): ResolveResult[Option[ArgList]] = {
   argList match {
@@ -228,7 +227,7 @@ private def resolveImplicitArgList(
 }
 
 private def resolveArgList(
-    origArgs: UnresolvedArgList,
+    origArgs: ur.UnresolvedArgList,
     expectedTypes: Iterable[Type]
 )(using Context): ResolveResult[ArgList] = {
 //  println(s"resolving arglist ${origArgs.text}, ${expectedTypes.map(_.text)}")
@@ -252,8 +251,8 @@ private def resolveBinaryExpr(
   op.opType match {
     case SUBTRACT | MULTIPLY | DIVIDE =>
       for {
-        newLhs <- resolveAndCheckExpr(lhs, PrimitiveTypeDef.numericTypes)
-        newRhs <- resolveAndCheckExpr(rhs, PrimitiveTypeDef.numericTypes)
+        newLhs <- resolveAndCheckExpr(lhs, PrimitiveTypeDef.numericType)
+        newRhs <- resolveAndCheckExpr(rhs, PrimitiveTypeDef.numericType)
       } yield BinaryExpr(newLhs, op, newRhs, ???)
     case _ => OptionT(Writer(errorMsg("Operator not implemented", op) :: Nil, None))
   }

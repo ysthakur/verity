@@ -1,23 +1,28 @@
 package verity.readbytecode
 
 import scala.language.unsafeNulls
-
 import verity.util._
-import verity.ast.{RootPkg, Pkg, PkgNode}
+import verity.ast.Pkg
+import verity.ast.PkgNode
+import verity.ast.RootPkg
 import verity.ast.infile
+import org.objectweb.asm.ClassReader
 
-import org.objectweb.asm.{ClassReader}
-
-import java.io.{File, IOException}
-import java.util.jar.{JarFile, JarEntry}
-import scala.collection.mutable.HashMap
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.concurrent.atomic.AtomicInteger
+import scala.collection.mutable
 
 object ReadBytecode {
   def readJar(jarFile: File): Option[Pkg] = {
     try {
       val jar = new JarFile(jarFile)
-      val classMap = HashMap[String, infile.Classlike]()
-      jar.stream().map(jarEntry => readEntry(jar, jarEntry, classMap))
+      val classMap = mutable.HashMap[String, infile.Classlike]()
+      val counter = AtomicInteger(0)
+      jar.stream().map(jarEntry => readEntry(jar, jarEntry, classMap, counter))
       ???
     } catch {
       case (_: IOException) | (_: SecurityException) =>
@@ -25,17 +30,39 @@ object ReadBytecode {
     }
   }
 
-  def readEntry(jar: JarFile, entry: JarEntry, classMap: HashMap[String, infile.Classlike]) = {
+  def readClassFile(classFile: File): Option[infile.Classlike] = {
     try {
-      val entryName = entry.getName
-      Option.when(entryName.endsWith(".class")) {
-        val jis = jar.getInputStream(entry)
-        val reader = ClassReader(jis)
-        reader.accept(VerityClassVisitor(classMap), ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES)
-      }
+      val classMap = mutable.HashMap[String, infile.Classlike]()
+      val counter = AtomicInteger(0)
+      readInputStream(new FileInputStream(classFile), classMap, counter)
+      ???
     } catch {
-      case (_: IOException) =>
+      case (_: IOException) | (_: SecurityException) =>
         None
+    }
+  }
+
+  private def readEntry(
+    jar: JarFile,
+    entry: JarEntry,
+    classMap: mutable.HashMap[String, infile.Classlike],
+    counter: AtomicInteger
+  ) = {
+    if (entry.getName.endsWith(".class")) {
+      readInputStream(jar.getInputStream(entry), classMap, counter)
+    }
+  }
+
+  private def readInputStream(
+    input: java.io.InputStream,
+    classMap: mutable.HashMap[String, infile.Classlike],
+    counter: AtomicInteger
+  ) = {
+    try {
+      val reader = ClassReader(input)
+      reader.accept(VerityClassVisitor(classMap, counter), ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES)
+    } catch {
+      case e: IOException => e.printStackTrace
     }
   }
 }

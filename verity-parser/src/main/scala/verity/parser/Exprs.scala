@@ -22,19 +22,19 @@ private object Exprs {
   def intLiteral[_: P]: P[IntegerLiteral] =
     P(Index ~ CharsWhileIn("0-9").! ~ CharIn("bBsSlL").?.! ~ Index).map {
       case (start, num, suffix, end) =>
-        val literal = Text(num, TextRange(start, end))
+        val range = TextRange(start, end)
         import IntegerLiteral._
         suffix match {
-          case "l" | "L" => LongLiteral(literal)
-          case "s" | "S" => ShortLiteral(literal)
-          case "b" | "B" => ByteLiteral(literal)
-          case _         => IntLiteral(literal)
+          case "l" | "L" => LongLiteral(num, range)
+          case "s" | "S" => ShortLiteral(num, range)
+          case "b" | "B" => ByteLiteral(num, range)
+          case _         => IntLiteral(num, range)
         }
     }
   def numLiteral[_: P]: P[IntegerLiteral] = P(intLiteral)
   def stringLiteral[_: P]: P[StringLiteral] =
     P("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
-      case (start, text, end) => new StringLiteral(Text("\"" + text + "\"", TextRange(start, end)))
+      case (start, text, end) => StringLiteral("\"" + text + "\"", TextRange(start, end))
     }
   def thisRef[_: P]: P[UnresolvedThisRef] = P(Index ~ "this" ~ Index).map { case (start, end) =>
     new UnresolvedThisRef(TextRange(start, end))
@@ -54,7 +54,7 @@ private object Exprs {
   //TODO parse given and proof arguments!!!
   def noObjMethodCall[_: P]: P[UnresolvedMethodCall] =
     P(typeArgList ~ identifierText ~ methodArgList).map { case (typeArgs, name, args) =>
-      UnresolvedMethodCall(None, name, args, typeArgs, None, None)
+      UnresolvedMethodCall(None, name, args, Some(typeArgs), None, None)
     }
 
   def varRefOrMethodCall[_: P]: P[RoUExpr] =
@@ -63,12 +63,12 @@ private object Exprs {
     ).map {
       case (first, rest, Some((typeArgs, name, valArgs))) =>
         UnresolvedMethodCall(
-            Some(MultiDotRef(first +: rest)),
-            name,
-            valArgs,
-            typeArgs,
-            None,
-            None
+          Some(MultiDotRef(first +: rest)),
+          name,
+          valArgs,
+          Some(typeArgs),
+          None,
+          None
         )
       case (first, rest, None) => MultiDotRefExpr(first +: rest)
     }
@@ -88,28 +88,28 @@ private object Exprs {
       case (name, Some(args)) =>
         obj =>
           new UnresolvedMethodCall(
-              Some(obj),
-              name,
-              args,
-              TypeArgList(Nil, TextRange.synthetic),
-              None,
-              None
+            Some(obj),
+            name,
+            args,
+            None,
+            None,
+            None
           )
       case (name, _) =>
         prev => UnresolvedFieldAccess(prev, name)
     }
 
-  def typeParamsFirstMethodCall[_: P]: P[HasText => RoUExpr] = P(
+  def typeParamsFirstMethodCall[_: P]: P[HasTextRange => RoUExpr] = P(
       "." ~ typeArgList ~ identifierText ~ methodArgList
   ).map { case (typeArgs, name, valArgs /*, givenArgs*/ ) =>
-    (caller: HasText) =>
+    caller =>
       UnresolvedMethodCall(
-          Some(caller),
-          name,
-          valArgs,
-          typeArgs,
-          None,
-          None
+        Some(caller),
+        name,
+        valArgs,
+        Some(typeArgs),
+        None,
+        None
       )
   }
   def arrayAccess[_: P]: P[RoUExpr => RoUExpr] = P("[" ~/ Index ~ expr ~ "]" ~ Index).map {
