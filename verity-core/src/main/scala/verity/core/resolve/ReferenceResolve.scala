@@ -87,7 +87,9 @@ private[verity] object ReferenceResolve {
       case _ =>
         pkgDefs.find(_._1 == head.text) match {
           case Some(_ -> pkg) => resolveClsInPkg(pkg, head :: Nil, tail)
-          case None           => singleMsg(errorMsg(s"Symboll ${head.text} not found", head.textRange))
+          case None           =>
+//            println(s"${head.text},typedefs=${typeDefs.map(_._1)},pkgdefs=${pkgDefs.map(_._1)}")
+            singleMsg(errorMsg(s"Symboll ${head.text} not found", head.textRange))
         }
     }
   }

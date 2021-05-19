@@ -20,6 +20,8 @@ object Compiler {
 
     //Load JDK classes such as java.lang.Object
     ReadBytecode.readJdk(rootPkg, Paths.get(options.jdkDir).unsafeNN, options.modulesToRead)
+    //Set the Object and String builtins
+    infile.BuiltinTypes.refreshBuiltins(rootPkg)
 
     //Parse Verity sources
     parsePkg(pkgs, files, rootPkg)

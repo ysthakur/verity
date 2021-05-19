@@ -52,10 +52,12 @@ object InitialPass {
     pkgMap.addAll(rootPkg.subPkgs.view.map(p => p.name -> p))
     clsMap.addAll(currPkg.classlikes.map(c => c.name -> c))
 
+    println(s"imports = ${resolvedImports.toList.map(_._1)}, clsMap=${clsMap.keys}")
+
     file.resolvedImports = resolvedImports.map { case (name, imported, imptStmt) =>
       imported match {
         case pkg: Pkg =>
-          if pkgMap.contains(name) then {
+          if (pkgMap.contains(name)) {
             LogUtils.logMsg(
               s"Cannot import package $name: Pkg of same name already in scope",
               imptStmt,
@@ -65,13 +67,14 @@ object InitialPass {
             pkgMap += name -> pkg
           }
         case cls: Classlike =>
-          if clsMap.contains(name) then {
+          if (clsMap.contains(name)) {
             LogUtils.logMsg(
-              s"Cannot import class ${name}: class of same name already in scope",
+              s"Cannot import class ${name}: class of same name already in scope, clsMap=${clsMap.keys}, ${clsMap.size}",
               imptStmt,
               file
             )
           } else {
+            println(s"Can import cls $name")
             clsMap += name -> cls
           }
       }

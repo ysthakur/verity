@@ -42,7 +42,7 @@ private def resolveAndCheckFile(
       .map(c => c.name -> c)
       .toMap
   val pkgDefs =
-    resolvedImports.collect { case p: Pkg => p.name -> p }.toMap + (rootPkg.name -> rootPkg)
+    (resolvedImports.collect { case p: Pkg => p }.view ++ rootPkg.subPkgs).map(p => p.name -> p).toMap
 
   file.classlikes.foreach(c =>
     resolveAndCheckCls(

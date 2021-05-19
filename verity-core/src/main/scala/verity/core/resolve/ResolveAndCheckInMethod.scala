@@ -118,12 +118,12 @@ private def resolveAndCheckExpr(
     if (
       expectedType != UnknownType && expr.typ != UnknownType && !expr.typ.subTypeOf(expectedType)
     ) {
-      println(
+      /*println(
         s"${expr.typ == expectedType}, ${expr.typ}, $expectedType, ${expectedType.getClass}, ${expr.typ.getClass}"
-      )
+      )*/
       singleMsg(
         errorMsg(
-          s"${expr.text} is of wrong type: found ${expr.typ.text}, expected ${expectedType.text}",
+          s"${expr.text} is of wrong type: found ${expr.typ.text} (${expr.typ.getClass}), expected ${expectedType.text} (${expectedType.getClass})",
           expr
         )
       )

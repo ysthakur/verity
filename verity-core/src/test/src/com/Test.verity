@@ -3,13 +3,14 @@ package com;
 // import java.util.ArrayList;
 // import java.util.*;
 
-class Test2 {
+class Test {
   int foobar = 5;
 
   public Test2(int foo) {
     short bar = foo;
     boolean baz = isEven(bar);
     Test2 blah = Test2(bar);
+    java.lang.String foo = "foo";
   }
 
   public boolean isEven(int x) {

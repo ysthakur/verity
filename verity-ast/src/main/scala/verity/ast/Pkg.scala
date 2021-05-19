@@ -81,8 +81,9 @@ object Pkg {
         .flatMap(findImptableRel(_, rest))
         .asInstanceOf[Option[Pkg.Importable]]
         .orElse(
-          findCls(pkg, subName).flatMap(
-            _.findMember(rest).asInstanceOf[Option[Pkg.Importable]]: Option[Pkg.Importable]
+          findCls(pkg, subName).flatMap(cls =>
+            if (rest.isEmpty) Some(cls)
+            else cls.findMember(rest).asInstanceOf[Option[Pkg.Importable]]
           ): Option[Pkg.Importable]
         ): Option[Pkg.Importable]
     }

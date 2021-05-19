@@ -44,6 +44,24 @@ object Type {
 object BuiltinTypes {
   private[verity] var objectType: Type = Type.placeholder
   private[verity] var stringType: Type = Type.placeholder
+
+  def refreshBuiltins(rootPkg: RootPkg): Unit = {
+    for {
+      java <- rootPkg.subPkgs.find(_.name == "java")
+      lang <- java.subPkgs.find(_.name == "lang")
+    } {
+      println("found package java.lang!")
+      lang.classlikes.find(_.name == "Object").foreach { objectClsDef =>
+        this.objectType = objectClsDef.makeRef
+        println("reset java.lang.Object!")
+      }
+
+      lang.classlikes.find(_.name == "String").foreach { stringClsDef =>
+        this.stringType = stringClsDef.makeRef
+        println("reset String!")
+      }
+    }
+  }
 }
 
 // given ToJava[ObjectType.type] = _ => "Type Object"
@@ -89,7 +107,7 @@ case class PrimitiveType(typ: PrimitiveTypeDef, override val textRange: TextRang
   override def equals(other: Any): Boolean =
     other match {
       case PrimitiveType(t, _) =>
-        println(s"${this.typ == t}, this=$this, ${this.getClass}, other=$other, ${other.getClass}")
+//        println(s"${this.typ == t}, this=$this, ${this.getClass}, other=$other, ${other.getClass}")
         this.typ == t
       case _ => false
     }
