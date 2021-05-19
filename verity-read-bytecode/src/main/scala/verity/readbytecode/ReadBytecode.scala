@@ -12,13 +12,24 @@ import java.util.jar.{JarEntry, JarFile}
 import scala.collection.mutable
 
 object ReadBytecode {
+  def readClassFile(rootPkg: RootPkg, classFile: File): Option[infile.Classlike] = {
+//    try {
+      readClass(rootPkg, new FileInputStream(classFile))
+      println(s"read classfile $classFile")
+      None
+//    } catch {
+//      case (_: IOException) | (_: SecurityException) =>
+//        None
+//    }
+  }
+
   def readJar(rootPkg: RootPkg, jarFile: File): Option[Pkg] = {
     try {
       val jar = new JarFile(jarFile)
-      val classMap = mutable.HashMap[String, infile.Classlike]()
-      jar.stream().map(jarEntry => readEntry(rootPkg, jar, jarEntry, classMap))
-      ???
+      jar.stream().forEach(jarEntry => readEntry(rootPkg, jar, jarEntry))
+      None
     } catch {
+      case e => throw e
       case (_: IOException) | (_: SecurityException) =>
         None
     }
@@ -27,35 +38,23 @@ object ReadBytecode {
   private def readEntry(
     rootPkg: RootPkg,
     jar: JarFile,
-    entry: JarEntry,
-    classMap: mutable.HashMap[String, infile.Classlike]
-  ) = {
+    entry: JarEntry
+  ): Unit = {
+    println(s"reading entry ${entry.getName}")
     if (entry.getName.endsWith(".class")) {
-      readInputStream(rootPkg, jar.getInputStream(entry), classMap)
+      readClass(rootPkg, jar.getInputStream(entry))
     }
   }
 
-  def readClassFile(rootPkg: RootPkg, classFile: File): Option[infile.Classlike] = {
-    try {
-      val classMap = mutable.HashMap[String, infile.Classlike]()
-      readInputStream(rootPkg, new FileInputStream(classFile), classMap)
-      None
-    } catch {
-      case (_: IOException) | (_: SecurityException) =>
-        None
-    }
-  }
-
-  private def readInputStream(
+  def readClass(
     rootPkg: RootPkg,
-    input: java.io.InputStream,
-    classMap: mutable.HashMap[String, infile.Classlike]
-  ) = {
+    input: java.io.InputStream
+  ): Unit = {
     try {
       val reader = ClassReader(input)
       reader.accept(VerityClassVisitor(rootPkg), ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES)
     } catch {
-      case e: IOException => e.printStackTrace
+      case (_: IllegalArgumentException) | (_: ArrayIndexOutOfBoundsException) =>
     }
   }
 }

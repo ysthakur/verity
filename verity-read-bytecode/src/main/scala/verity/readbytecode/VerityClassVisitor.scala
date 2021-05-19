@@ -38,9 +38,9 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
     this.superClass = superName
     this.interfaces = interfaces
 
-    println(
-      s"In class! name=$name, superName=$superName, interfaces=${interfaces.mkString(",")}, sign=$signature"
-    )
+//    println(
+//      s"In class! name=$name, superName=$superName, interfaces=${interfaces.mkString(",")}, sign=$signature"
+//    )
 
     if (signature != null) {
       val signReader = asm.signature.SignatureReader(signature)
@@ -55,11 +55,11 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
     signature: String,
     value: Object
   ) = {
-    println(s"In field! name=$fieldName, desc=$descriptor, sign=$signature")
+//    println(s"In field! name=$fieldName, desc=$descriptor, sign=$signature")
     val signReader = asm.signature.SignatureReader(signature)
     var fieldType: infile.Type = null
 
-    if (signature == null) {
+    if (signature != null) {
       signReader.acceptType(typeSignatureVisitor { typ =>
         fieldType = typ
       })
@@ -75,7 +75,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
           fieldType,
           None //TODO constants
         )//(access, descriptor, signature, value)
-        println(s"created field ${fields.last.text}!")
+//        println(s"created field ${fields.last.text}!")
       }
     }
   }
@@ -88,7 +88,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
     signature: String,
     exceptions: Array[String]
   ) = {
-    println(s"In method! name=$methodName, desc=$descriptor, sign=$signature")
+//    println(s"In method! name=$methodName, desc=$descriptor, sign=$signature")
     val methodType = asm.Type.getMethodType(descriptor)
     //TODO get type arguments of the return type using the method signature
     var returnType = asmTypeToVType(methodType.getReturnType)
@@ -99,8 +99,9 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
     if (signature != null) {
       val signReader = asm.signature.SignatureReader(signature)
       signReader.accept(new asm.signature.SignatureVisitor(asmApi) {
-        override def visitTypeVariable(name: String) =
-          println(s"methodvisitor typevar=$name")
+        override def visitTypeVariable(name: String) = {
+//          println(s"methodvisitor typevar=$name")
+        }
         override def visitParameterType(): SignatureVisitor = typeSignatureVisitor { typ =>
 //          println(s"param type is $typ")
           sigParamTypes += typ
@@ -138,7 +139,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
               .toList,
             TextRange.synthetic
           )
-        println(s"paramlist=$paramList, sigparamtypes=$sigParamTypes,paramnames=$paramNamesAndMods")
+//        println(s"paramlist=$paramList, sigparamtypes=$sigParamTypes,paramnames=$paramNamesAndMods")
         methods += new infile.NormMethod(
             ArrayBuffer(),
             infile.TypeParamList(Nil, TextRange.synthetic),
@@ -172,15 +173,15 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
               ArrayBuffer.empty,
               simpleName,
               TypeParamList(Nil, TextRange.synthetic), //todo
-              ???,
-              ???,
+              null,
+              null,
               fields,
               ctors.asInstanceOf[ArrayBuffer[Constructor]],
               methods,
               TextRange.synthetic,
               TextRange.synthetic
             )
-          case _ => ???
+          case _ => null
         }
 
         parentPkg.files += FileNode(s"$simpleName.class", None, Nil, Seq(classDef), java.io.File(""))
@@ -221,7 +222,7 @@ private def typeSignatureVisitor(onFind: infile.Type => Unit): SignatureVisitor 
     val typeArgs = ArrayBuffer[infile.Type]()
 
     override def visitArrayType(): SignatureVisitor = {
-      println("In array type!")
+//      println("In array type!")
       this.isArrayType = true
       typeSignatureVisitor { typ => this.arrayType = typ }
     }
@@ -244,15 +245,16 @@ private def typeSignatureVisitor(onFind: infile.Type => Unit): SignatureVisitor 
       )
     }
 
-    override def visitTypeVariable(name: String): Unit =
-      println(s"typesigvisitor typevar=$name")
+    override def visitTypeVariable(name: String): Unit = {
+//      println(s"typesigvisitor typevar=$name")
+    }
 
     /** Visit an unbounded wildcard type argument
       */
     override def visitTypeArgument(): Unit = {
       this.isTypeRef = true
       this.typeArgs += ur.UnresolvedWildcard(None, None)
-      println(s"typesigvisitor typearg")
+//      println(s"typesigvisitor typearg")
     }
 
     /** Visit a type argument that may or may not be a wildcard
@@ -275,11 +277,6 @@ private def typeSignatureVisitor(onFind: infile.Type => Unit): SignatureVisitor 
       this.typePath = name
     }
 
-    override def visitParameterType(): SignatureVisitor = {
-      println("uh-oh, visiting a parameter type inside typesigvis")
-      null
-    }
-
     override def visitEnd(): Unit = {
       if (this.isArrayType) {
         onFind(infile.ArrayType(this.arrayType, TextRange.synthetic))
@@ -294,7 +291,7 @@ private def typeSignatureVisitor(onFind: infile.Type => Unit): SignatureVisitor 
           )
         )
       } else {
-        println("uh-oh")
+        throw new Error("uh-oh, new kind of type?")
       }
     }
   }

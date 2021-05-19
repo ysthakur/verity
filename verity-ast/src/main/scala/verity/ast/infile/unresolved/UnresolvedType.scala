@@ -48,7 +48,7 @@ case class UnresolvedWildcard(upper: Option[Type], lower: Option[Type])
 
   override def superTypes: Iterable[Type] = upper.fold(Nil)(_.superTypes)
 
-  override def text = ???
+  override def text = s"? extends $upper super $lower"
   // override def textRange = ???
 }
 
