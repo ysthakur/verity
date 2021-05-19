@@ -4,9 +4,58 @@ trait Tree {
   def synthetic: Boolean = false
 }
 
-object Tree {}
+object Tree {
+  val hardKeywords = Array(
+    "class",
+    "interface",
+    "enum",
+    "object",
+    "extension",
+    "final",
+    "const",
+    "goto",
+    "public",
+    "protected",
+    "private",
+    "synchronized",
+    "transient",
+    "volatile",
+    "native",
+    "if",
+    "else",
+    "for",
+    "while",
+    "do",
+    "switch",
+    "case",
+    "default",
+    "break",
+    "continue",
+    "throw",
+    "return",
+    "new",
+    "instanceof",
+    "null",
+    "true",
+    "false",
+    "this",
+    "super",
+    "import",
+    "package",
+    "void",
+    "boolean",
+    "byte",
+    "short",
+    "char",
+    "int",
+    "long",
+    "float",
+    "double",
+    "_"
+  )
+}
 
-trait Synthetic extends Tree, HasText {
+trait Synthetic extends Tree, HasTextRange {
   override def textRange = TextRange(-1, -1)
   override def synthetic = true
 }

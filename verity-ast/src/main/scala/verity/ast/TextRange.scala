@@ -17,7 +17,7 @@ object TextRange {
   //def toEnd(startInt)(toks: Iterable[Token[_]]): TextRange = TextRange(start, toks.last.pos)
 }
 
-class Text(val text: String, val textRange: TextRange) extends HasText {
+case class Text(text: String, textRange: TextRange) extends HasTextRange {
   override def toString = text
 }
 object Text {

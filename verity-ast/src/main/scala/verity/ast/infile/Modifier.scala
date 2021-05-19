@@ -2,7 +2,7 @@ package verity.ast.infile
 
 import verity.ast._
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 trait HasModifiers extends Tree {
   def modifiers: Iterable[Modifier]
@@ -19,7 +19,7 @@ trait HasModifiers extends Tree {
   def isStatic: Boolean = this.hasModifier(ModifierType.STATIC)
 }
 
-case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasText {
+case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasTextRange {
   override def text: String = modType.toString.toLowerCase.nn
 }
 object Modifier {

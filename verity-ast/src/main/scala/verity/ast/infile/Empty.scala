@@ -2,7 +2,7 @@ package verity.ast.infile
 
 import verity.ast.TextRange
 
-import collection.mutable.ListBuffer
+import collection.mutable.ArrayBuffer
 
 trait Empty[T] {
   def empty: T

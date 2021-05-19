@@ -3,7 +3,7 @@ package verity.ast.infile.unresolved
 import verity.ast._
 import verity.ast.infile.{ResolvedOrUnresolvedExpr => RoUExpr, _}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 sealed trait UnresolvedExpr extends HasText, HasType, RoUExpr
 
@@ -57,10 +57,11 @@ case class UnresolvedAssignmentExpr(lhs: RoUExpr, rhs: RoUExpr, extraOp: Option[
 class UnresolvedInstanceOf(
     val expr: RoUExpr,
     val typeRef: UnresolvedTypeRef,
-    val textRange: TextRange
+    val instanceofTokRange: TextRange
 ) extends UnresolvedExpr {
   override val typ: Type = PrimitiveType.BooleanType
   override def text = s"${expr.text} instanceof ${typ.text}"
+  override def textRange: TextRange = ???
 }
 
 case class UnresolvedFieldAccess(obj: RoUExpr, fieldName: Text) extends UnresolvedTypeExpr, HasText {
@@ -74,25 +75,33 @@ case class UnresolvedFieldAccess(obj: RoUExpr, fieldName: Text) extends Unresolv
   *   `Some` containing either a [[MultiDotRef]] or [[Expr]].
   */
 case class UnresolvedMethodCall(
-    objOrCls: Option[HasText],
+    objOrCls: Option[HasTextRange],
     methodName: Text,
     valArgs: UnresolvedArgList,
-    typeArgs: TypeArgList,
+    typeArgs: Option[TypeArgList],
     givenArgs: Option[UnresolvedArgList], //TODO do givenArgs!!
     proofArgs: Option[UnresolvedArgList] //TODO do proofArgs!!
 ) extends UnresolvedTypeExpr {
   private[verity] var resolved: Option[Method] = None
 
-  override def text: String = objOrCls.fold("")(_.toString)
-    + typeArgs.text
+  override def text: String = objOrCls.fold("")(_.text + ".")
+    + typeArgs.fold("")(_.text)
     + methodName.text
     + valArgs.text
     + HasText.optText(givenArgs)
     + HasText.optText(proofArgs)
-  override def textRange: TextRange = ???
+
+  override def textRange = TextRange(
+    objOrCls.orElse(typeArgs).getOrElse(methodName).textRange.start,
+    proofArgs.orElse(givenArgs).getOrElse(valArgs).textRange.end
+  )
 }
 
-case class UnresolvedArgList(args: List[RoUExpr], argsKind: ArgsKind, textRange: TextRange) extends HasText {
+case class UnresolvedArgList(
+  args: List[RoUExpr],
+  argsKind: ArgsKind,
+  override val textRange: TextRange
+) extends HasTextRange {
   override def text: String = args.view.map(_.text).mkString("(", ",", ")")
 }
 

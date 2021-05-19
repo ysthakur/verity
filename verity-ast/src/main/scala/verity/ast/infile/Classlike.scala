@@ -1,8 +1,9 @@
 package verity.ast.infile
 
 import verity.ast._
+import verity.ast.infile.{unresolved => ur}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 /** Base trait for classes, interfaces, enums, and annotations
   */
@@ -12,7 +13,7 @@ sealed trait Classlike(val defType: ClasslikeType)
       HasText,
       HasModifiers,
       HasAnnotations {
-  def modifiers: ListBuffer[Modifier]
+  def modifiers: ArrayBuffer[Modifier]
   def typeParams: TypeParamList
   override def fields: Iterable[Field]
   override def methods: Iterable[Method]
@@ -38,12 +39,12 @@ sealed trait Classlike(val defType: ClasslikeType)
       .filter(!_.isInstanceOf[Method])
       .asInstanceOf[Iterable[Field | EnumConstant]] ++ this.methodGroups
 
-  override def textRange = TextRange(
+  /*override def textRange = TextRange(
       if (annotations.nonEmpty) annotations.head.textRange.start
       else if (modifiers.nonEmpty) modifiers.head.textRange.start
       else metaclassTokTR.start,
       bodyRange.end
-  )
+  )*/
 
   /** Find members inside a class given by a path, e.g. List("foo") to access field foo
     * @param cls The class inside which the fields/methods/classes to be found lie
@@ -81,15 +82,15 @@ enum ClasslikeType(val text: String) extends Tree {
   * @param bodyRange The `TextRange` of the braces
   */
 case class ClassDef(
-    annotations: ListBuffer[Annotation],
-    modifiers: ListBuffer[Modifier],
+    annotations: ArrayBuffer[Annotation],
+    modifiers: ArrayBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
-    superClass: ClassRef,
-    superInterfaces: Iterable[ClassRef],
-    fields: ListBuffer[Field],
-    ctors: ListBuffer[Constructor],
-    normMethods: ListBuffer[NormMethod],
+    superClass: ur.UnresolvedTypeRef,
+    superInterfaces: Iterable[ur.UnresolvedTypeRef],
+    fields: ArrayBuffer[Field],
+    ctors: ArrayBuffer[Constructor],
+    normMethods: ArrayBuffer[NormMethod],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.CLASS),
@@ -98,7 +99,8 @@ case class ClassDef(
   override def methods = ctors ++ normMethods
   def children = fields ++ methods
 
-  override def superTypes: Iterable[Type] = (superInterfaces.toSeq :+ superClass).map(_.cls.makeRef)
+  override def superTypes: Iterable[Type] =
+    (superInterfaces.toSeq :+ superClass).map(_.resolved.get.makeRef)
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 
@@ -108,40 +110,41 @@ case class ClassDef(
 }
 
 case class InterfaceDef(
-    annotations: ListBuffer[Annotation],
-    modifiers: ListBuffer[Modifier],
+    annotations: ArrayBuffer[Annotation],
+    modifiers: ArrayBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
-    superInterfaces: Iterable[ClassRef],
-    fields: ListBuffer[Field],
-    methods: ListBuffer[Method],
+    superInterfaces: Iterable[ur.UnresolvedTypeRef],
+    fields: ArrayBuffer[Field],
+    methods: ArrayBuffer[Method],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.INTERFACE) {
   def children = fields ++ methods
-  override def superTypes: Iterable[Type] = superInterfaces.map(_.cls.makeRef)
+  override def superTypes: Iterable[Type] = superInterfaces.map(_.resolved.get.makeRef)
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} interface $name { ${methods.mkString(" ")}}"
 }
 
 //TODO parse enums
 case class EnumDef(
-    annotations: ListBuffer[Annotation],
-    modifiers: ListBuffer[Modifier],
+    annotations: ArrayBuffer[Annotation],
+    modifiers: ArrayBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
-    superInterfaces: Iterable[ClassRef],
+    superInterfaces: Seq[ur.UnresolvedTypeRef],
     constants: List[EnumConstant],
-    fields: ListBuffer[Field],
-    ctors: ListBuffer[Constructor],
-    methods: ListBuffer[Method],
+    fields: ArrayBuffer[Field],
+    ctors: ArrayBuffer[Constructor],
+    methods: ArrayBuffer[Method],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.ENUM),
       HasCtors {
   def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
 
-  override def superTypes: Iterable[Type] = superInterfaces.map(_.cls.makeRef)
+  override def superTypes: Iterable[Type] =
+    BuiltinTypes.objectType +: superInterfaces.map(_.resolved.get.makeRef)
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 

@@ -3,13 +3,16 @@ package verity.ast.infile.unresolved
 import verity.ast._
 import verity.ast.infile.{ResolvedOrUnresolvedExpr => RoUExpr, _}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 case class UnresolvedTypeRef(
     path: Seq[Text],
     args: TypeArgList,
     private[this] var _resolved: Option[TypeDef] = None
-) extends Type {
+) extends Type, ResolvedOrUnresolvedTypeRef {
+  def resolved: Option[TypeDef] = _resolved
+  private[verity] def resolved_=(typeDef: TypeDef): Unit = _resolved = Some(typeDef)
+
   override def fields: Iterable[Field] = resolved.fold(Nil)(_.fields)
   override def methods: Iterable[Method] = resolved.fold(Nil)(_.methods)
 
@@ -17,12 +20,12 @@ case class UnresolvedTypeRef(
   override def strictSubTypeOf(sup: Type): Boolean = ??? //resolved.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = ??? //resolved.fold(false){td => td.strictSuperTypeOf(sub)}
 
-  override def text: String = HasText.seqText(path, ".") + args.text
+  override def text: String = HasText.seqText(path, ".", "", "") + args.text
 
-  override def textRange: TextRange =
+  /*override def textRange: TextRange =
     if args.isEmpty || args.textRange.isSynthetic then
       TextRange(path.head.textRange.start, path.last.textRange.end)
-    else TextRange(path.head.textRange.start, args.textRange.end)
+    else TextRange(path.head.textRange.start, args.textRange.end)*/
 
   override def equals(other: Any): Boolean = other match {
     case tr: UnresolvedTypeRef =>
@@ -33,13 +36,9 @@ case class UnresolvedTypeRef(
         .forall(_ == _)
     case _ => false
   }
-
-  def resolved: Option[TypeDef] = _resolved
-
-  private[verity] def resolved_=(typeDef: TypeDef): Unit = _resolved = Some(typeDef)
 }
 
-case class UnresolvedWildcard(upper: Option[UnresolvedTypeRef], lower: Option[UnresolvedTypeRef])
+case class UnresolvedWildcard(upper: Option[Type], lower: Option[Type])
     extends Type {
   override def strictSubTypeOf(sup: Type): Boolean = upper.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = lower.fold(false)(_.strictSuperTypeOf(sub))
@@ -49,8 +48,8 @@ case class UnresolvedWildcard(upper: Option[UnresolvedTypeRef], lower: Option[Un
 
   override def superTypes: Iterable[Type] = upper.fold(Nil)(_.superTypes)
 
-  override def text: Nothing = ???
-  override def textRange: TextRange = ???
+  override def text = s"? extends $upper super $lower"
+  // override def textRange = ???
 }
 
 case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type {
@@ -63,5 +62,5 @@ case class ToBeInferred(upper: Type, lower: Type, not: List[Type]) extends Type 
   override def superTypes: Iterable[Type] = upper.superTypes.toSeq :+ upper
 
   override def text = "NOT INFERRED AAA!!!"
-  override def textRange: TextRange = ???
+  // override def textRange = ???
 }

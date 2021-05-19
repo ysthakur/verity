@@ -10,7 +10,7 @@ import Types._
 import fastparse._
 import JavaWhitespace._
 
-import collection.mutable.ListBuffer
+import collection.mutable.ArrayBuffer
 
 private object Methods {
   def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map {
@@ -20,8 +20,7 @@ private object Methods {
           typ,
           name,
           isGiven = false,
-          isErased = false,
-          TextRange(typ.textRange.start, name.textRange.end)
+          isProof = false
       )
   }
   //TODO make separate givenParamList pattern
@@ -29,8 +28,8 @@ private object Methods {
     ParamList(params.toList, TextRange(start, end))
   }
 
-  def exprStmt[_: P]: P[UnresolvedExprStmt] = P(expr ~ ";" ~ Index).map { case (expr, end) =>
-    new UnresolvedExprStmt(expr, end)
+  def exprStmt[_: P]: P[UnresolvedExprStmt] = P(expr ~ ";").map { expr =>
+    new UnresolvedExprStmt(expr)
   }
 
   //todo allow final modifier
@@ -50,7 +49,7 @@ private object Methods {
   def block[_: P]: P[Block] = P(Index ~ "{" ~/ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
     case (start, stmts, end) =>
       new Block(
-        stmts.to(ListBuffer),
+        stmts.to(ArrayBuffer),
         TextRange(start, end),
         ToBeInferred(UnknownType, UnknownType, Nil)
       )
@@ -66,16 +65,17 @@ private object Methods {
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def ctor[_: P]: P[Seq[Modifier] => (() => HasCtors) => Constructor] =
-    P(identifierText ~ &("(") ~/ paramList ~ block).map {
-      case (name, params, body) =>
+    P(identifierWithTextRange ~ &("(") ~/ paramList ~ block).map {
+      case (name, nameRange, params, body) =>
         modifiers => cls => new Constructor(
-            modifiers.to(ListBuffer),
+            modifiers.to(ArrayBuffer),
             name,
+            nameRange,
             params,
             None, //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
             None,
+            Nil,
             body,
-            TextRange((if (modifiers.isEmpty) name else modifiers.head).textRange.start, body.textRange.end),
             cls
         )
     }
@@ -110,18 +110,15 @@ private object Methods {
       case e: Int => None -> e
     }
     new NormMethod(
-      modifiers.to(ListBuffer),
+      modifiers.to(ArrayBuffer),
       typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
       returnType,
       name,
       params,
       givenParams, //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
       proofParams,
-      body,
-      TextRange(
-        (if (modifiers.isEmpty) returnType else modifiers.head).textRange.start,
-        end
-      )
+      Nil,
+      body
     )
   }
 }

@@ -5,14 +5,14 @@ import verity.util._
 
 import cats.data.{Writer, OptionT}
 import cats.implicits._
-import org.junit.Assert
-import org.junit.Test
-import org.junit.Before
+import org.junit.{Assert, Test, Before}
+
 import java.io.File
 
 class ParsePkgTest {
   val testDir = raw"C:\Users\yasht\verity\verity-core\src\test\"
   val srcDir = File(testDir + "src")
+  val jdkPath = System.getProperty("JAVA_HOME", raw"C:\Program Files\Java\jdk-11.0.5").unsafeNN
 
   @Before def setup() = {
     assert(srcDir.exists)
@@ -20,6 +20,8 @@ class ParsePkgTest {
 
   @Test def parsePackageTest() = {
     val options = Options(
+      jdkDir = jdkPath,
+      modulesToRead = Seq("java.base"),
       javaOutputDir = File(testDir + "javaOutput")
     )
     // val srcDirChildren = srcDir.listFiles.asInstanceOf[Array[File]]
