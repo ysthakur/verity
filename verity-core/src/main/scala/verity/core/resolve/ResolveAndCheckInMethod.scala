@@ -5,8 +5,7 @@ import verity.ast.infile.{unresolved => ur, _}
 import verity.core._
 import verity.core.Context.Defs
 
-import cats.data.OptionT
-import cats.data.Writer
+import cats.data.{OptionT, Writer}
 import cats.implicits._
 import com.typesafe.scalalogging.Logger
 
@@ -14,8 +13,8 @@ import scala.collection.mutable
 
 //todo make a proper solver for this stuff
 private def resolveStmt(
-    stmt: Statement,
-    mthdReturnType: Type
+  stmt: Statement,
+  mthdReturnType: Type
 )(using ctxt: Context): ResolveResult[Statement] = {
 //  logger.debug(s"Resolving statement ${stmt.text}, ${stmt.getClass}")
   stmt match {
@@ -33,13 +32,13 @@ private def resolveStmt(
           case None =>
             println("No initExpr for local var")
             OptionT.some(
-                LocalVar(
-                    lv.modifiers,
-                    lv.varName,
-                    newType,
-                    None,
-                    lv.endInd
-                )
+              LocalVar(
+                lv.modifiers,
+                lv.varName,
+                newType,
+                None,
+                lv.endInd
+              )
             )
         }
       }
@@ -48,9 +47,9 @@ private def resolveStmt(
       //and a ArrayBuffer containing resolved statements
       val ctxtAndNewStmts: ResolveResult[(Context, mutable.ArrayBuffer[Statement])] =
         block.stmts.foldLeft(
-            OptionT.some(ctxt -> mutable.ArrayBuffer()): ResolveResult[
-                (Context, mutable.ArrayBuffer[Statement])
-            ]
+          OptionT.some(ctxt -> mutable.ArrayBuffer()): ResolveResult[
+            (Context, mutable.ArrayBuffer[Statement])
+          ]
         ) { case (acc, stmt) =>
           acc.flatMap { case context -> prev =>
             resolveStmt(stmt, mthdReturnType)(using context)
@@ -59,14 +58,14 @@ private def resolveStmt(
                 val newCtxt = stmt match {
                   case vd: LocalVar => //Add a new variable to _varRefs
                     Context(
-                        context.varDefs + (vd.name -> vd),
-                        context.mthdDefs,
-                        context.givenDefs,
-                        context.proofDefs,
-                        context.typeDefs,
-                        context.pkgDefs,
-                        context.cls,
-                        context.file
+                      context.varDefs + (vd.name -> vd),
+                      context.mthdDefs,
+                      context.givenDefs,
+                      context.proofDefs,
+                      context.typeDefs,
+                      context.pkgDefs,
+                      context.cls,
+                      context.file
                     )
                   case _ => context
                 }
@@ -77,9 +76,9 @@ private def resolveStmt(
 
       ctxtAndNewStmts.map((_, stmts) =>
         Block(
-            stmts,
-            block.textRange,
-            if (stmts.isEmpty) VoidTypeRef(TextRange.synthetic) else statementType(stmts.last)
+          stmts,
+          block.textRange,
+          if (stmts.isEmpty) VoidTypeRef(TextRange.synthetic) else statementType(stmts.last)
         )
       )
     case x => println("Did not resolve statement!"); OptionT.none
@@ -117,14 +116,16 @@ private def resolveAndCheckExpr(
 
   resolved.flatMap { expr =>
     if (
-        expectedType != UnknownType && expr.typ != UnknownType && !expr.typ.subTypeOf(expectedType)
+      expectedType != UnknownType && expr.typ != UnknownType && !expr.typ.subTypeOf(expectedType)
     ) {
-      println(s"${expr.typ == expectedType}, ${expr.typ}, $expectedType, ${expectedType.getClass}, ${expr.typ.getClass}")
+      println(
+        s"${expr.typ == expectedType}, ${expr.typ}, $expectedType, ${expectedType.getClass}, ${expr.typ.getClass}"
+      )
       singleMsg(
-          errorMsg(
-              s"${expr.text} is of wrong type: found ${expr.typ.text}, expected ${expectedType.text}",
-              expr
-          )
+        errorMsg(
+          s"${expr.text} is of wrong type: found ${expr.typ.text}, expected ${expectedType.text}",
+          expr
+        )
       )
     } else {
       println(s"Type matched for ${expr.text}: ${expr.typ.text}!")
@@ -135,10 +136,16 @@ private def resolveAndCheckExpr(
 
 //TODO Deal with overloading first!!!
 private def resolveUnresolvedMethodCall(
-    mthdCall: ur.UnresolvedMethodCall
+  mthdCall: ur.UnresolvedMethodCall
 )(using ctxt: Context): ResolveResult[Expr] = {
-  val ur
-    .UnresolvedMethodCall(_, nameText @ Text(mthdName), valArgs, typeArgs, givenArgs, proofArgs) =
+  val ur.UnresolvedMethodCall(
+    _,
+    nameText @ Text(mthdName),
+    valArgs,
+    typeArgs,
+    givenArgs,
+    proofArgs
+  ) =
     mthdCall
 
   def resolveHelper(caller: Option[Expr | ClassRef]): ResolveResult[Expr] = {
@@ -175,13 +182,19 @@ private def resolveUnresolvedMethodCall(
 }
 
 private def resolveUnresolvedMethodCall(
-    mthdCall: ur.UnresolvedMethodCall,
-    caller: Option[Expr | ClassRef],
-    possibleMthds: Iterable[Method]
+  mthdCall: ur.UnresolvedMethodCall,
+  caller: Option[Expr | ClassRef],
+  possibleMthds: Iterable[Method]
 )(using Context): ResolveResult[Expr] = {
 //  println(s"resolving method call ${mthdCall.text}, ${possibleMthds.map(_.name)}")
-  val ur
-    .UnresolvedMethodCall(_, nameText @ Text(mthdName), valArgs, typeArgs, givenArgs, proofArgs) =
+  val ur.UnresolvedMethodCall(
+    _,
+    nameText @ Text(mthdName),
+    valArgs,
+    typeArgs,
+    givenArgs,
+    proofArgs
+  ) =
     mthdCall
 
   if (possibleMthds.isEmpty) {
@@ -195,21 +208,21 @@ private def resolveUnresolvedMethodCall(
       newGivenArgs <- resolveImplicitArgList(mthdCall.givenArgs, resolvedMthd.givenParams)
       newProofArgs <- resolveImplicitArgList(mthdCall.proofArgs, resolvedMthd.proofParams)
     } yield MethodCall(
-        caller,
-        nameText,
-        newValArgs,
-        typeArgs,
-        newGivenArgs,
-        newProofArgs,
-        resolvedMthd.returnType,
-        resolvedMthd
+      caller,
+      nameText,
+      newValArgs,
+      typeArgs,
+      newGivenArgs,
+      newProofArgs,
+      resolvedMthd.returnType,
+      resolvedMthd
     )
   }
 }
 
 private def resolveImplicitArgList(
-    argList: Option[ur.UnresolvedArgList],
-    params: Option[ParamList]
+  argList: Option[ur.UnresolvedArgList],
+  params: Option[ParamList]
 )(using Context): ResolveResult[Option[ArgList]] = {
   argList match {
     case Some(origArgs) =>
@@ -227,8 +240,8 @@ private def resolveImplicitArgList(
 }
 
 private def resolveArgList(
-    origArgs: ur.UnresolvedArgList,
-    expectedTypes: Iterable[Type]
+  origArgs: ur.UnresolvedArgList,
+  expectedTypes: Iterable[Type]
 )(using Context): ResolveResult[ArgList] = {
 //  println(s"resolving arglist ${origArgs.text}, ${expectedTypes.map(_.text)}")
   origArgs.args
@@ -244,7 +257,7 @@ private def resolveArgList(
 }
 
 private def resolveBinaryExpr(
-    expr: ur.UnresolvedBinaryExpr
+  expr: ur.UnresolvedBinaryExpr
 )(using Context): ResolveResult[Expr] = {
   val ur.UnresolvedBinaryExpr(lhs, op, rhs) = expr
   import OpType._

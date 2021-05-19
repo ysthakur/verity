@@ -1,7 +1,6 @@
 package verity.core
 
 import verity.ast.{FileNode, Pkg, RootPkg}
-
 import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,18 +20,18 @@ object PackageUtil {
     *   file's path
     */
   def walkWithPath(
-      pkg: Pkg,
-      f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
+    pkg: Pkg,
+    f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
   )(using root: RootPkg, logger: Logger): Unit = {
     val parents = pkg.parents
     walkWithPath(pkg, parents, canonicalName(pkg.name, parents), f)(using root, logger)
   }
 
   private def walkWithPath(
-      pkg: Pkg,
-      parents: List[Pkg],
-      path: String,
-      f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
+    pkg: Pkg,
+    parents: List[Pkg],
+    path: String,
+    f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
   )(using root: RootPkg, logger: Logger): Unit = {
     val newParents = pkg :: parents
     val newPath = path + pkg.name

@@ -5,6 +5,7 @@ import verity.ast.infile._
 import verity.core._
 
 object CheckTypes {
+
   /** Check type arguments and return compiler messages where there are problems.
     */
   def checkTypeArgs(

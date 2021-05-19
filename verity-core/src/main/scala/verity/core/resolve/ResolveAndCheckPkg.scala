@@ -7,13 +7,11 @@ import verity.checks.InitialPass
 import verity.core.Context.Defs
 import verity.core._
 import verity.util._
-
 import cats.implicits._
 import cats.catsInstancesForId
 import com.typesafe.scalalogging.Logger
 
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, HashMap}
 
 /** Resolve all references to classes and type parameters in a package
   * @param pkg The package to work on
@@ -30,9 +28,9 @@ def resolveAndCheck(root: RootPkg)(using logger: Logger): Unit =
   * @param logger The logger to use
   */
 private def resolveAndCheckFile(
-    file: FileNode,
-    parentPkgs: List[Pkg],
-    pkgName: String
+  file: FileNode,
+  parentPkgs: List[Pkg],
+  pkgName: String
 )(using rootPkg: RootPkg, logger: Logger): Unit = {
   val currPkg = parentPkgs.head
   val FileNode(name, pkgRef, imports, classlikes, jFile) = file
@@ -40,19 +38,19 @@ private def resolveAndCheckFile(
   val resolvedImports = file.resolvedImports
 
   val clsDefs =
-    (file.classlikes ++ resolvedImports.collect { case c: Classlike => c })
-      .view.map(c => c.name -> c )
+    (file.classlikes ++ resolvedImports.collect { case c: Classlike => c }).view
+      .map(c => c.name -> c)
       .toMap
-  val pkgDefs = 
+  val pkgDefs =
     resolvedImports.collect { case p: Pkg => p.name -> p }.toMap + (rootPkg.name -> rootPkg)
 
   file.classlikes.foreach(c =>
     resolveAndCheckCls(
-        c,
-        pkgDefs,
-        clsDefs,
-        resolvedImports.collect { case m: MethodGroup => m.name -> m }.toMap,
-        file
+      c,
+      pkgDefs,
+      clsDefs,
+      resolvedImports.collect { case m: MethodGroup => m.name -> m }.toMap,
+      file
     ).foreach(LogUtils.log(_, file))
   )
 }
@@ -66,11 +64,11 @@ private def resolveAndCheckFile(
   * @param file The current file
   */
 private[resolve] def resolveAndCheckCls(
-    cls: Classlike,
-    pkgDefs: Defs[Pkg],
-    typeDefs: Defs[TypeDef],
-    mthdRefs: Defs[MethodGroup],
-    file: FileNode
+  cls: Classlike,
+  pkgDefs: Defs[Pkg],
+  typeDefs: Defs[TypeDef],
+  mthdRefs: Defs[MethodGroup],
+  file: FileNode
 ): Iterable[CompilerMsg] = {
   val fieldDefs: Defs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
 
@@ -90,19 +88,7 @@ private[resolve] def resolveAndCheckCls(
   val mthdLogs = cls.methods.flatMap { mthd =>
 //    logger.debug(s"Working on method ${mthd.name}!!")
     resolve.resolveAndCheckMthd(
-        mthd,
-        fieldDefs,
-        newMthdRefs,
-        givenDefs,
-        proofDefs,
-        typeDefs,
-        pkgDefs,
-        cls,
-        file
-    )
-  }
-
-  val ctxt = Context(
+      mthd,
       fieldDefs,
       newMthdRefs,
       givenDefs,
@@ -111,6 +97,18 @@ private[resolve] def resolveAndCheckCls(
       pkgDefs,
       cls,
       file
+    )
+  }
+
+  val ctxt = Context(
+    fieldDefs,
+    newMthdRefs,
+    givenDefs,
+    proofDefs,
+    typeDefs,
+    pkgDefs,
+    cls,
+    file
   )
   val fieldLogs: Iterable[CompilerMsg] = cls.fields.view.flatMap { field =>
     val resolvedTyp = ReferenceResolve.resolveTypeIfNeeded(field.typ)(using ctxt)
@@ -135,15 +133,15 @@ private[resolve] def resolveAndCheckCls(
 }
 
 private def resolveAndCheckMthd(
-    mthd: Method,
-    fieldDefs: Defs[VariableDecl],
-    mthdRefs: Defs[MethodGroup],
-    givenDefs: Iterable[GivenDef],
-    proofDefs: Iterable[GivenDef],
-    typeDefs: Defs[TypeDef],
-    pkgDefs: Defs[Pkg],
-    cls: Classlike,
-    file: FileNode
+  mthd: Method,
+  fieldDefs: Defs[VariableDecl],
+  mthdRefs: Defs[MethodGroup],
+  givenDefs: Iterable[GivenDef],
+  proofDefs: Iterable[GivenDef],
+  typeDefs: Defs[TypeDef],
+  pkgDefs: Defs[Pkg],
+  cls: Classlike,
+  file: FileNode
 ): List[CompilerMsg] = {
 //  println(s"Resolving method ${mthd.name},returntype=${mthd.returnType.text}")
   val isCtor = mthd.isInstanceOf[Constructor]
@@ -153,14 +151,14 @@ private def resolveAndCheckMthd(
       case Some(block) =>
         if (!mthd.isAbstract) {
           val ctxt = Context(
-              fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),
-              mthdRefs,
-              givenDefs,
-              proofDefs,
-              typeDefs,
-              pkgDefs,
-              cls,
-              file
+            fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),
+            mthdRefs,
+            givenDefs,
+            proofDefs,
+            typeDefs,
+            pkgDefs,
+            cls,
+            file
           )
           resolveStmt(block, mthd.returnType)(using ctxt)
             .map { newBlock =>

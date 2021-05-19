@@ -25,22 +25,22 @@ sealed trait Pkg extends NamedTree {
 }
 
 case class RootPkg(subPkgs: ArrayBuffer[PkgNode], files: ArrayBuffer[FileNode]) extends Pkg {
-  def name    = ""
+  def name = ""
   def parents = Nil
 }
 
 //TODO does the parent have to be stored?
 case class PkgNode(
-    name: String,
-    subPkgs: ArrayBuffer[PkgNode],
-    files: ArrayBuffer[FileNode],
-    parent: Pkg
+  name: String,
+  subPkgs: ArrayBuffer[PkgNode],
+  files: ArrayBuffer[FileNode],
+  parent: Pkg
 ) extends Pkg {
   def parents = parent :: parent.parents
 }
 
 object Pkg {
-  type Importable   = (Pkg | Classlike | Field | MethodGroup | EnumConstant) & NamedTree
+  type Importable = (Pkg | Classlike | Field | MethodGroup | EnumConstant) & NamedTree
   type ImportParent = Pkg | Classlike
 
   /** Find a subpackage given the relative path of the package. The last found subpackage and the
@@ -50,8 +50,8 @@ object Pkg {
     *   is *not* in reverse order.
     */
   @tailrec def findPkgRel(
-      pkg: Pkg,
-      pkgPath: Iterable[String]
+    pkg: Pkg,
+    pkgPath: Iterable[String]
   ): (Pkg, Iterable[String]) =
     if pkgPath.isEmpty then {
       (pkg, pkgPath)
@@ -74,17 +74,16 @@ object Pkg {
       Some(pkg)
     } else {
       val subName = path.head
-      val rest    = path.tail
+      val rest = path.tail
 
       pkg.subPkgs.view
         .find(_.name == subName)
         .flatMap(findImptableRel(_, rest))
         .asInstanceOf[Option[Pkg.Importable]]
         .orElse(
-          findCls(pkg, subName)
-            .flatMap(
-              _.findMember(rest).asInstanceOf[Option[Pkg.Importable]]: Option[Pkg.Importable]
-            ): Option[Pkg.Importable]
+          findCls(pkg, subName).flatMap(
+            _.findMember(rest).asInstanceOf[Option[Pkg.Importable]]: Option[Pkg.Importable]
+          ): Option[Pkg.Importable]
         ): Option[Pkg.Importable]
     }
 

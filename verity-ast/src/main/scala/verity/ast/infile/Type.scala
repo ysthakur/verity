@@ -73,7 +73,9 @@ class VoidTypeRef(override val textRange: TextRange) extends Type, HasTextRange 
 
 // given ToJava[NothingType.type] = _ => "Type Nothing"
 
-case class PrimitiveType(typ: PrimitiveTypeDef, override val textRange: TextRange) extends Type, HasTextRange {
+case class PrimitiveType(typ: PrimitiveTypeDef, override val textRange: TextRange)
+    extends Type,
+      HasTextRange {
   override def fields: Iterable[Field] = Nil
   override def methods: Iterable[Method] = Nil
 
@@ -217,7 +219,9 @@ case class Wildcard(upper: Option[ResolvedTypeRef], lower: Option[ResolvedTypeRe
 
 //TODO arrays
 case class ArrayType(elemType: Type, private[this] val bracketRange: TextRange) extends Type {
-  val fields: Iterable[Field] = List(Field(Text("length"), ArrayBuffer.empty, PrimitiveType.IntType))
+  val fields: Iterable[Field] = List(
+    Field(Text("length"), ArrayBuffer.empty, PrimitiveType.IntType)
+  )
   override def methods: Iterable[Method] = List()
 
   override def superTypes: Iterable[Type] = BuiltinTypes.objectType :: Nil
@@ -241,7 +245,8 @@ object UnknownType extends Type {
 }
 
 case class TypeParamList(params: Iterable[TypeParam], override val textRange: TextRange)
-    extends Tree, HasTextRange {
+    extends Tree,
+      HasTextRange {
   override def text: String = HasText.seqText(params, ",", "<", ">")
 }
 

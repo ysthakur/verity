@@ -21,7 +21,8 @@ class UnresolvedSuperRef(override val textRange: TextRange) extends UnresolvedTy
   override def text: String = "super"
 }
 
-case class UnresolvedParenExpr(expr: RoUExpr, override val textRange: TextRange) extends UnresolvedExpr {
+case class UnresolvedParenExpr(expr: RoUExpr, override val textRange: TextRange)
+    extends UnresolvedExpr {
   def typ: Type = expr.typ
   override def text = s"(${expr.text})"
 }
@@ -55,16 +56,18 @@ case class UnresolvedAssignmentExpr(lhs: RoUExpr, rhs: RoUExpr, extraOp: Option[
 }
 
 class UnresolvedInstanceOf(
-    val expr: RoUExpr,
-    val typeRef: UnresolvedTypeRef,
-    val instanceofTokRange: TextRange
+  val expr: RoUExpr,
+  val typeRef: UnresolvedTypeRef,
+  val instanceofTokRange: TextRange
 ) extends UnresolvedExpr {
   override val typ: Type = PrimitiveType.BooleanType
   override def text = s"${expr.text} instanceof ${typ.text}"
   override def textRange: TextRange = ???
 }
 
-case class UnresolvedFieldAccess(obj: RoUExpr, fieldName: Text) extends UnresolvedTypeExpr, HasText {
+case class UnresolvedFieldAccess(obj: RoUExpr, fieldName: Text)
+    extends UnresolvedTypeExpr,
+      HasText {
   override def textRange: TextRange = TextRange(obj.textRange.start, fieldName.textRange.end)
   override def text = s"${obj.text}.${fieldName.text}"
 }
@@ -75,12 +78,12 @@ case class UnresolvedFieldAccess(obj: RoUExpr, fieldName: Text) extends Unresolv
   *   `Some` containing either a [[MultiDotRef]] or [[Expr]].
   */
 case class UnresolvedMethodCall(
-    objOrCls: Option[HasTextRange],
-    methodName: Text,
-    valArgs: UnresolvedArgList,
-    typeArgs: Option[TypeArgList],
-    givenArgs: Option[UnresolvedArgList], //TODO do givenArgs!!
-    proofArgs: Option[UnresolvedArgList] //TODO do proofArgs!!
+  objOrCls: Option[HasTextRange],
+  methodName: Text,
+  valArgs: UnresolvedArgList,
+  typeArgs: Option[TypeArgList],
+  givenArgs: Option[UnresolvedArgList], //TODO do givenArgs!!
+  proofArgs: Option[UnresolvedArgList] //TODO do proofArgs!!
 ) extends UnresolvedTypeExpr {
   private[verity] var resolved: Option[Method] = None
 

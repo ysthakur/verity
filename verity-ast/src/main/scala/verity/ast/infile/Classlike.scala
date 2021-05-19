@@ -46,6 +46,9 @@ sealed trait Classlike(val defType: ClasslikeType)
       bodyRange.end
   )*/
 
+  def methodGroups: Iterable[MethodGroup] =
+    methods.groupBy(_.name).map(MethodGroup(_, _))
+
   /** Find members inside a class given by a path, e.g. List("foo") to access field foo
     * @param cls The class inside which the fields/methods/classes to be found lie
     * @param path A nonempty Iterable denoting the path of the member
@@ -59,9 +62,6 @@ sealed trait Classlike(val defType: ClasslikeType)
     if (rest.isEmpty) child
     else child.collect { case c: Classlike => c.findMember(rest) }.flatten
   }
-
-  def methodGroups: Iterable[MethodGroup] =
-    methods.groupBy(_.name).map(MethodGroup(_, _))
 }
 
 trait ClassChild extends NamedTree
@@ -82,43 +82,44 @@ enum ClasslikeType(val text: String) extends Tree {
   * @param bodyRange The `TextRange` of the braces
   */
 case class ClassDef(
-    annotations: ArrayBuffer[Annotation],
-    modifiers: ArrayBuffer[Modifier],
-    name: String,
-    typeParams: TypeParamList,
-    superClass: ur.UnresolvedTypeRef,
-    superInterfaces: Iterable[ur.UnresolvedTypeRef],
-    fields: ArrayBuffer[Field],
-    ctors: ArrayBuffer[Constructor],
-    normMethods: ArrayBuffer[NormMethod],
-    metaclassTokTR: TextRange,
-    bodyRange: TextRange
+  annotations: ArrayBuffer[Annotation],
+  modifiers: ArrayBuffer[Modifier],
+  name: String,
+  typeParams: TypeParamList,
+  superClass: ur.UnresolvedTypeRef,
+  superInterfaces: Iterable[ur.UnresolvedTypeRef],
+  fields: ArrayBuffer[Field],
+  ctors: ArrayBuffer[Constructor],
+  normMethods: ArrayBuffer[NormMethod],
+  metaclassTokTR: TextRange,
+  bodyRange: TextRange
 ) extends Classlike(ClasslikeType.CLASS),
       HasCtors {
 
-  override def methods = ctors ++ normMethods
   def children = fields ++ methods
+
+  override def methods = ctors ++ normMethods
 
   override def superTypes: Iterable[Type] =
     (superInterfaces.toSeq :+ superClass).map(_.resolved.get.makeRef)
 
-  private[verity] def addCtor(ctor: Constructor) = ctors += ctor
-
   //todo also add fields (no need to preserve order)
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} class $name { ${methods.view.map(_.text).mkString(" ")}}"
+
+  private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 }
 
 case class InterfaceDef(
-    annotations: ArrayBuffer[Annotation],
-    modifiers: ArrayBuffer[Modifier],
-    name: String,
-    typeParams: TypeParamList,
-    superInterfaces: Iterable[ur.UnresolvedTypeRef],
-    fields: ArrayBuffer[Field],
-    methods: ArrayBuffer[Method],
-    metaclassTokTR: TextRange,
-    bodyRange: TextRange
+  annotations: ArrayBuffer[Annotation],
+  modifiers: ArrayBuffer[Modifier],
+  name: String,
+  typeParams: TypeParamList,
+  superInterfaces: Iterable[ur.UnresolvedTypeRef],
+  fields: ArrayBuffer[Field],
+  methods: ArrayBuffer[Method],
+  metaclassTokTR: TextRange,
+  bodyRange: TextRange
 ) extends Classlike(ClasslikeType.INTERFACE) {
   def children = fields ++ methods
   override def superTypes: Iterable[Type] = superInterfaces.map(_.resolved.get.makeRef)
@@ -128,17 +129,17 @@ case class InterfaceDef(
 
 //TODO parse enums
 case class EnumDef(
-    annotations: ArrayBuffer[Annotation],
-    modifiers: ArrayBuffer[Modifier],
-    name: String,
-    typeParams: TypeParamList,
-    superInterfaces: Seq[ur.UnresolvedTypeRef],
-    constants: List[EnumConstant],
-    fields: ArrayBuffer[Field],
-    ctors: ArrayBuffer[Constructor],
-    methods: ArrayBuffer[Method],
-    metaclassTokTR: TextRange,
-    bodyRange: TextRange
+  annotations: ArrayBuffer[Annotation],
+  modifiers: ArrayBuffer[Modifier],
+  name: String,
+  typeParams: TypeParamList,
+  superInterfaces: Seq[ur.UnresolvedTypeRef],
+  constants: List[EnumConstant],
+  fields: ArrayBuffer[Field],
+  ctors: ArrayBuffer[Constructor],
+  methods: ArrayBuffer[Method],
+  metaclassTokTR: TextRange,
+  bodyRange: TextRange
 ) extends Classlike(ClasslikeType.ENUM),
       HasCtors {
   def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
@@ -146,10 +147,10 @@ case class EnumDef(
   override def superTypes: Iterable[Type] =
     BuiltinTypes.objectType +: superInterfaces.map(_.resolved.get.makeRef)
 
-  private[verity] def addCtor(ctor: Constructor) = ctors += ctor
-
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} enum $name { ${methods.mkString(" ")}}"
+
+  private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 }
 
 case class EnumConstant(name: String) extends ClassChild

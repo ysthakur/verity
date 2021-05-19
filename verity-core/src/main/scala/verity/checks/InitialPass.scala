@@ -5,9 +5,8 @@ import verity.ast.infile._
 import verity.util._
 import verity.core.Context.Defs
 import verity.core.resolve.ReferenceResolve
-import verity.core.{errorMsg, singleMsg, Compiler, CompilerMsg, Context, Keywords, LogUtils}
+import verity.core._
 import verity.ast.Pkg.Importable
-
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
@@ -35,9 +34,9 @@ object InitialPass {
     * @param logger The logger to use
     */
   private def initialPassFile(
-      file: FileNode,
-      parentPkgs: List[Pkg],
-      pkgName: String
+    file: FileNode,
+    parentPkgs: List[Pkg],
+    pkgName: String
   )(using rootPkg: RootPkg, logger: Logger): Unit = {
     val currPkg = parentPkgs.head
     val FileNode(name, pkgRef, imports, _, _) = file
@@ -58,9 +57,9 @@ object InitialPass {
         case pkg: Pkg =>
           if pkgMap.contains(name) then {
             LogUtils.logMsg(
-                s"Cannot import package $name: Pkg of same name already in scope",
-                imptStmt,
-                file
+              s"Cannot import package $name: Pkg of same name already in scope",
+              imptStmt,
+              file
             )
           } else {
             pkgMap += name -> pkg
@@ -68,9 +67,9 @@ object InitialPass {
         case cls: Classlike =>
           if clsMap.contains(name) then {
             LogUtils.logMsg(
-                s"Cannot import class ${name}: class of same name already in scope",
-                imptStmt,
-                file
+              s"Cannot import class ${name}: class of same name already in scope",
+              imptStmt,
+              file
             )
           } else {
             clsMap += name -> cls
@@ -83,7 +82,9 @@ object InitialPass {
     val pkgIMap = pkgMap.toMap
     val clsIMap = clsMap.toMap
 
-    file.classlikes.foreach(c => initialPassCls(c, clsIMap, pkgIMap, file).foreach(LogUtils.log(_, file)))
+    file.classlikes.foreach(c =>
+      initialPassCls(c, clsIMap, pkgIMap, file).foreach(LogUtils.log(_, file))
+    )
   }
 
   //todo check modifiers and stuff
@@ -100,10 +101,10 @@ object InitialPass {
     *   The current file
     */
   private def initialPassCls(
-      cls: Classlike,
-      clsRefs: Defs[Classlike],
-      pkgRefs: Defs[Pkg],
-      file: FileNode
+    cls: Classlike,
+    clsRefs: Defs[Classlike],
+    pkgRefs: Defs[Pkg],
+    file: FileNode
   )(using logger: Logger): Iterable[CompilerMsg] = {
     cls match {
       case c: HasCtors if c.ctors.isEmpty => c.addCtor(Constructor.defaultCtor(c))
@@ -129,26 +130,26 @@ object InitialPass {
   }
 
   private def initialPassMthd(
-      mthd: Method,
-      clsRefs: Defs[Classlike],
-      pkgRefs: Defs[Pkg],
-      cls: Classlike,
-      file: FileNode
+    mthd: Method,
+    clsRefs: Defs[Classlike],
+    pkgRefs: Defs[Pkg],
+    cls: Classlike,
+    file: FileNode
   )(using Logger): Iterable[CompilerMsg] = {
     val isCtor = mthd.isInstanceOf[Constructor]
     given Context = Context(
-        cls.fields.view.map(f => f.name -> f).toMap,
-        cls.methods
-          .groupBy(_.name)
-          .view
-          .mapValues(mthds => MethodGroup(mthds.head.name, mthds))
-          .toMap,
-        cls.givenChildren,
-        cls.proofChildren,
-        clsRefs,
-        pkgRefs,
-        cls,
-        file
+      cls.fields.view.map(f => f.name -> f).toMap,
+      cls.methods
+        .groupBy(_.name)
+        .view
+        .mapValues(mthds => MethodGroup(mthds.head.name, mthds))
+        .toMap,
+      cls.givenChildren,
+      cls.proofChildren,
+      clsRefs,
+      pkgRefs,
+      cls,
+      file
     )
     val bodyRes = mthd.body match {
       case Some(_) =>
@@ -163,38 +164,47 @@ object InitialPass {
             Nil
         }
       case None =>
-        if (!mthd.isAbstract) errorMsg("Method requires abstract modifier or implementation", mthd.nameRange) :: Nil
+        if (!mthd.isAbstract)
+          errorMsg("Method requires abstract modifier or implementation", mthd.nameRange) :: Nil
         else Nil
     }
     //TODO resolve return type
     mthd match {
       case nm: NormMethod =>
-        bodyRes ::: ReferenceResolve.resolveTypeIfNeeded(mthd.returnType).map { typ =>
-          nm.returnType = typ
-        }.value.written
+        bodyRes ::: ReferenceResolve
+          .resolveTypeIfNeeded(mthd.returnType)
+          .map { typ =>
+            nm.returnType = typ
+          }
+          .value
+          .written
       case _ => bodyRes
     }
   }
 
-  private def verifyPkgStmt(pkgRef: Option[PackageStmt], pkgName: String, fileName: String): Option[String] =
+  private def verifyPkgStmt(
+    pkgRef: Option[PackageStmt],
+    pkgName: String,
+    fileName: String
+  ): Option[String] =
     pkgRef match {
       case Some(pkgStmt) =>
         val foundText = pkgStmt.path.text
         Option.when(foundText != pkgName && pkgName.nonEmpty)(
-            s"Wrong package statement in file ${fileName}, should be $pkgName, found $foundText"
+          s"Wrong package statement in file ${fileName}, should be $pkgName, found $foundText"
         )
       case None =>
         Option.when(pkgName.nonEmpty)(
-            s"No package statement in file ${fileName} in package $pkgName"
+          s"No package statement in file ${fileName} in package $pkgName"
         )
     }
 
   /** Resolve imports and return a list of `(<name of pkg or cls, pkg or cls, import stmt it came from>)`
     */
   private[verity] def resolveImports(
-                                      imports: Iterable[ImportStmt],
-                                      file: FileNode
-                                    )(using rootPkg: RootPkg, logger: Logger): Iterable[(String, Importable, ImportStmt)] =
+    imports: Iterable[ImportStmt],
+    file: FileNode
+  )(using rootPkg: RootPkg, logger: Logger): Iterable[(String, Importable, ImportStmt)] =
     imports.view.flatMap { case imptStmt @ ImportStmt(DotPath(dotPath), _, wildcard) =>
       val path = dotPath.view.map(_._1)
       Pkg

@@ -8,18 +8,22 @@ trait HasModifiers extends Tree {
   def modifiers: Iterable[Modifier]
   def modifiersText: String = modifiers.mkString(" ")
 
-  def hasModifier(modType: ModifierType) = this.modifiers.exists(_.modType == modType)
-
   def accessModifier: Option[ModifierType] =
     this.modifiers.view.map(_.modType).find(ModifierType.accessModifiers)
 
   def isGiven: Boolean = this.hasModifier(ModifierType.GIVEN)
+
   def isProof: Boolean = this.hasModifier(ModifierType.PROOF)
+
+  def hasModifier(modType: ModifierType) = this.modifiers.exists(_.modType == modType)
+
   def isAbstract: Boolean = this.hasModifier(ModifierType.ABSTRACT)
   def isStatic: Boolean = this.hasModifier(ModifierType.STATIC)
 }
 
-case class Modifier(modType: ModifierType, override val textRange: TextRange) extends Tree, HasTextRange {
+case class Modifier(modType: ModifierType, override val textRange: TextRange)
+    extends Tree,
+      HasTextRange {
   override def text: String = modType.toString.toLowerCase.nn
 }
 object Modifier {
@@ -27,21 +31,8 @@ object Modifier {
 }
 
 enum ModifierType extends Tree {
-  case
-    PUBLIC,
-    PRIVATE,
-    PROTECTED,
-    DEFAULT,
-    STATIC,
-    ABSTRACT,
-    FINAL,
-    NATIVE,
-    TRANSIENT,
-    VOLATILE,
-    SYNCHRONIZED,
-    CONST,
-    GIVEN,
-    PROOF
+  case PUBLIC, PRIVATE, PROTECTED, DEFAULT, STATIC, ABSTRACT, FINAL, NATIVE, TRANSIENT, VOLATILE,
+  SYNCHRONIZED, CONST, GIVEN, PROOF
 }
 
 object ModifierType {

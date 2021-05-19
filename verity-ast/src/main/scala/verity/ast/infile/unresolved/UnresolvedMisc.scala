@@ -1,11 +1,10 @@
 package verity.ast.infile.unresolved
 
-import verity.ast.{Tree, Text, TextRange, HasText, HasTextRange}
-import verity.ast.infile.{Statement, ResolvedOrUnresolvedExpr}
+import verity.ast.{HasText, HasTextRange, Text, TextRange, Tree}
+import verity.ast.infile.{ResolvedOrUnresolvedExpr, Statement}
 
-/**
- * An unresolved expression with a semicolon after it
- */
+/** An unresolved expression with a semicolon after it
+  */
 class UnresolvedExprStmt(val expr: ResolvedOrUnresolvedExpr) extends Statement {
   override def text = s"${expr.text};"
   override def textRange: TextRange = expr.textRange

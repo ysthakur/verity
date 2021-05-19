@@ -1,13 +1,11 @@
 package verity.readbytecode
 
 import verity.ast._
-import verity.ast.infile._
-import verity.ast.infile.{unresolved => ur}
+import verity.ast.infile.{unresolved => ur, _}
 import org.objectweb.asm
 import org.objectweb.asm.signature.SignatureVisitor
 
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import scala.collection.mutable.ArrayBuffer
 
 private inline val asmApi = asm.Opcodes.ASM9

@@ -1,7 +1,5 @@
 package verity.ast
 
-class Foo {
-
-}
+class Foo {}
 
 inline def withText(): Unit = {}

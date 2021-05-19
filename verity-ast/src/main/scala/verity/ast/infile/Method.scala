@@ -15,7 +15,8 @@ trait Methodlike extends NamedTree {
   def nameRange: TextRange
   def body: Option[Block] //Option[Block|Expr]
 
-  def isCtor: Boolean = this.isInstanceOf[Constructor] || this.isInstanceOf[unresolved.UnresolvedConstructor]
+  def isCtor: Boolean =
+    this.isInstanceOf[Constructor] || this.isInstanceOf[unresolved.UnresolvedConstructor]
   // def body_=(newBody: Option[Block] /*Option[Block|Expr]*/ ): Unit
 }
 
@@ -117,7 +118,8 @@ case class Parameter(
 }
 
 case class ParamList(params: List[Parameter], override val textRange: TextRange)
-    extends Tree, HasTextRange {
+    extends Tree,
+      HasTextRange {
   override def text: String = HasText.seqText(params, ",", "(", ")")
 }
 

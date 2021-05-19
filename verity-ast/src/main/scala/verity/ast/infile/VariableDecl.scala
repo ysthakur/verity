@@ -1,33 +1,34 @@
 package verity.ast.infile
 
-import verity.ast.*
+import verity.ast._
 
 import scala.collection.mutable.ArrayBuffer
 
-/**
-  * A variable declaration (local variable or field)
+/** A variable declaration (local variable or field)
   */
 trait VariableDecl extends Tree, HasText, HasType, NamedTree, HasModifiers {
   def name: String
-  /**
-    * What it gets initialized to, unless it's just declared
+
+  /** What it gets initialized to, unless it's just declared
     * @return
     */
   def initExpr: Option[ResolvedOrUnresolvedExpr]
 
-  /**
-    * Whether or not this is simply a declaration
+  /** Whether or not this is simply a declaration
     * @return True if only a declaration, false if also intialized
     */
   def declarationOnly: Boolean = initExpr == None
 }
 
 class Field(
-    val fieldName: Text,
-    override val modifiers: ArrayBuffer[Modifier],
-    var typ: Type,
-    var initExpr: Option[ResolvedOrUnresolvedExpr] = None
-) extends VariableDecl, ClassChild, HasModifiers, HasType {
+  val fieldName: Text,
+  override val modifiers: ArrayBuffer[Modifier],
+  var typ: Type,
+  var initExpr: Option[ResolvedOrUnresolvedExpr] = None
+) extends VariableDecl,
+      ClassChild,
+      HasModifiers,
+      HasType {
   override def name = fieldName.text
   override def text =
     s"${Modifier.modifiersText(modifiers)} ${typ.text} ${fieldName.text}${initExpr.fold("")("=" + _.text)};"
@@ -35,14 +36,17 @@ class Field(
 }
 
 class LocalVar(
-    override val modifiers: Iterable[Modifier],
-    val varName: Text,
-    var typ: Type,
-    var initExpr: Option[ResolvedOrUnresolvedExpr] = None,
-    val endInd: Int) extends VariableDecl, Statement {
+  override val modifiers: Iterable[Modifier],
+  val varName: Text,
+  var typ: Type,
+  var initExpr: Option[ResolvedOrUnresolvedExpr] = None,
+  val endInd: Int
+) extends VariableDecl,
+      Statement {
 
   override def equals(obj: Any): Boolean = obj match {
-    case other: LocalVar => name == other.name && typ == other.typ && this.modifiers.toSet == other.modifiers.toSet
+    case other: LocalVar =>
+      name == other.name && typ == other.typ && this.modifiers.toSet == other.modifiers.toSet
     case _ => false
   }
   override def name: String = varName.text
@@ -51,5 +55,5 @@ class LocalVar(
     if (initExpr != None) sb.append('=').append(initExpr.get.text).append(';')
     sb.toString
   }
-   override def textRange = ???
+  override def textRange = ???
 }

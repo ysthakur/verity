@@ -6,19 +6,24 @@ import verity.ast.infile.{ResolvedOrUnresolvedExpr => RoUExpr, _}
 import scala.collection.mutable.ArrayBuffer
 
 case class UnresolvedTypeRef(
-    path: Seq[Text],
-    args: TypeArgList,
-    private[this] var _resolved: Option[TypeDef] = None
-) extends Type, ResolvedOrUnresolvedTypeRef {
+  path: Seq[Text],
+  args: TypeArgList,
+  private[this] var _resolved: Option[TypeDef] = None
+) extends Type,
+      ResolvedOrUnresolvedTypeRef {
+  override def fields: Iterable[Field] = resolved.fold(Nil)(_.fields)
+
   def resolved: Option[TypeDef] = _resolved
+
   private[verity] def resolved_=(typeDef: TypeDef): Unit = _resolved = Some(typeDef)
 
-  override def fields: Iterable[Field] = resolved.fold(Nil)(_.fields)
   override def methods: Iterable[Method] = resolved.fold(Nil)(_.methods)
 
   override def superTypes: Iterable[Type] = resolved.fold(Nil)(_.superTypes)
-  override def strictSubTypeOf(sup: Type): Boolean = ??? //resolved.fold(false)(_.strictSubTypeOf(sup))
-  override def strictSuperTypeOf(sub: Type): Boolean = ??? //resolved.fold(false){td => td.strictSuperTypeOf(sub)}
+  override def strictSubTypeOf(sup: Type): Boolean =
+    ??? //resolved.fold(false)(_.strictSubTypeOf(sup))
+  override def strictSuperTypeOf(sub: Type): Boolean =
+    ??? //resolved.fold(false){td => td.strictSuperTypeOf(sub)}
 
   override def text: String = HasText.seqText(path, ".", "", "") + args.text
 
@@ -38,8 +43,7 @@ case class UnresolvedTypeRef(
   }
 }
 
-case class UnresolvedWildcard(upper: Option[Type], lower: Option[Type])
-    extends Type {
+case class UnresolvedWildcard(upper: Option[Type], lower: Option[Type]) extends Type {
   override def strictSubTypeOf(sup: Type): Boolean = upper.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = lower.fold(false)(_.strictSuperTypeOf(sub))
 

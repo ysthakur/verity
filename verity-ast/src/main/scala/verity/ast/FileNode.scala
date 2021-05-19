@@ -10,15 +10,14 @@ case class FileNode(
   packageRef: Option[PackageStmt],
   imports: Seq[ImportStmt],
   classlikes: Seq[Classlike],
-  origFile: Option[File],
+  origFile: Option[File]
 ) {
   val textRanges: mutable.Map[Tree, TextRange] = mutable.HashMap()
   private[verity] var pkg: Pkg | Null = null
   private[verity] var resolvedImports: Iterable[Pkg.Importable] = List.empty
 
-  /**
-   * Whether or not this is a source file or just a classfile that the project depends on.
-   */
+  /** Whether or not this is a source file or just a classfile that the project depends on.
+    */
   def isSource: Boolean = origFile.nonEmpty
   def text =
     s"${packageRef.fold("")(_.text)}${imports.view.map(_.text).mkString}${classlikes.view.map(_.text).mkString}"
@@ -36,7 +35,9 @@ case class PackageStmt(val path: DotPath, val pkgTokStartOffset: Int) extends Tr
   * @param pkgTokStartOffset The start offset of the "import" token
   */
 case class ImportStmt(path: DotPath, override val textRange: TextRange, wildCard: Boolean = false)
-    extends Tree, HasText, HasTextRange {
+    extends Tree,
+      HasText,
+      HasTextRange {
   override def text = s"import ${path.text}${if (wildCard) ".*" else ""};"
 }
 

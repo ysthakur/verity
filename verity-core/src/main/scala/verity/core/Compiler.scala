@@ -7,7 +7,6 @@ import verity.codegen.OutputJava
 import verity.util._
 import verity.parser.Parser
 import verity.readbytecode.ReadBytecode
-
 import com.typesafe.scalalogging.Logger
 
 import java.io.{File, FileFilter, FileInputStream}

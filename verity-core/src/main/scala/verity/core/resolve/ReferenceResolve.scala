@@ -5,7 +5,6 @@ import verity.ast.infile._
 import verity.ast.infile.unresolved.UnresolvedTypeRef
 import verity.core._
 import verity.core.Context.Defs
-
 import cats.data.{OptionT, Writer}
 import cats.implicits._
 import cats.catsInstancesForId
@@ -57,7 +56,8 @@ private[verity] object ReferenceResolve {
         _ <- Writer.tell(
           //Log errors with the arguments if the class is resolved
           maybeCls.fold(Nil)(cls =>
-            verity.checks.CheckTypes.checkTypeArgs(args, cls.typeDef.typeParams.params, typeArgsRange)
+            verity.checks.CheckTypes
+              .checkTypeArgs(args, cls.typeDef.typeParams.params, typeArgsRange)
           )
         )
         argList = TypeArgList(args, typ.args.textRange)
@@ -74,6 +74,26 @@ private[verity] object ReferenceResolve {
     )
 
   }
+
+  def resolveCls(
+    path: Seq[Text],
+    typeDefs: Defs[TypeDef],
+    pkgDefs: Defs[Pkg]
+  ): ResolveResult[ResolvedTypeRef] = {
+    val head +: tail = path
+    typeDefs.find(_._1 == head.text) match {
+      case Some((_, cls: Classlike)) =>
+        resolveInnerCls(cls, List(head), tail)
+      case _ =>
+        pkgDefs.find(_._1 == head.text) match {
+          case Some(_ -> pkg) => resolveClsInPkg(pkg, head :: Nil, tail)
+          case None           => singleMsg(errorMsg(s"Symboll ${head.text} not found", head.textRange))
+        }
+    }
+  }
+
+  def mergeResults[T](results: List[ResultWithLogs[T]]): ResultWithLogs[List[T]] =
+    results.traverse(Predef.identity)
 
   private[verity] def findField(typ: Type, fieldName: String): Option[Field] =
     typ.fields.find(_.name == fieldName)
@@ -94,23 +114,6 @@ private[verity] object ReferenceResolve {
               case Some(pkg) => resolveExprOrCls(pkg._2, head :: Nil, tail)
               case None      => singleMsg(errorMsg(s"Symbol ${head.text} not found", head.textRange))
             }
-        }
-    }
-  }
-
-  def resolveCls(
-    path: Seq[Text],
-    typeDefs: Defs[TypeDef],
-    pkgDefs: Defs[Pkg]
-  ): ResolveResult[ResolvedTypeRef] = {
-    val head +: tail = path
-    typeDefs.find(_._1 == head.text) match {
-      case Some((_, cls: Classlike)) =>
-        resolveInnerCls(cls, List(head), tail)
-      case _ =>
-        pkgDefs.find(_._1 == head.text) match {
-          case Some(_ -> pkg) => resolveClsInPkg(pkg, head :: Nil, tail)
-          case None           => singleMsg(errorMsg(s"Symboll ${head.text} not found", head.textRange))
         }
     }
   }
@@ -220,7 +223,4 @@ private[verity] object ReferenceResolve {
       }
     case _ => OptionT.some(prev)
   }
-
-  def mergeResults[T](results: List[ResultWithLogs[T]]): ResultWithLogs[List[T]] =
-    results.traverse(Predef.identity)
 }

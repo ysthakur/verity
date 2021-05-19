@@ -1,19 +1,16 @@
 package verity.readbytecode
 
 import scala.language.unsafeNulls
-
 import verity.ast._
 import verity.util._
-
 import org.objectweb.asm.ClassReader
 
 import java.io.{File, FileInputStream, IOException}
 import java.net.{URI, URLClassLoader}
-import java.nio.file.{Path, Files, FileSystems, Paths}
+import java.nio.file.{Files, FileSystems, Path, Paths}
 import java.util.jar.{JarEntry, JarFile}
 import java.util.Collections
 import scala.collection.mutable.ArrayBuffer
-
 
 object ReadBytecode {
   def readClassFile(rootPkg: RootPkg, classFile: File): Unit = {

@@ -1,7 +1,6 @@
 package verity.core
 
-import verity.ast.{FileNode, TextRange, HasText, HasTextRange}
-
+import verity.ast.{FileNode, HasText, HasTextRange, TextRange}
 import com.typesafe.scalalogging.Logger
 
 object LogUtils {
@@ -17,6 +16,9 @@ object LogUtils {
   def logMsg(msg: String, tree: HasTextRange)(using ctxt: Context, logger: Logger): Unit =
     logMsg(msg, tree.textRange, ctxt.file)
 
+  def log(msg: CompilerMsg)(using ctxt: Context, logger: Logger): Unit =
+    log(msg, ctxt.file)
+
   def log(msg: CompilerMsg, file: FileNode)(using Logger): Unit =
     logMsg(
       msg.toString,
@@ -26,7 +28,4 @@ object LogUtils {
       },
       file
     )
-    
-  def log(msg: CompilerMsg)(using ctxt: Context, logger: Logger): Unit =
-    log(msg, ctxt.file)
 }
