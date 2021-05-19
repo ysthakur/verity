@@ -74,9 +74,11 @@ private[resolve] def resolveAndCheckCls(
 ): Iterable[CompilerMsg] = {
   val fieldDefs: Defs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
 
-  cls match {
-    case c: HasCtors if c.ctors.isEmpty => c.addCtor(Constructor.defaultCtor(c))
-    case _                              =>
+  if (file.isSource) {
+    cls match {
+      case c: HasCtors if c.ctors.isEmpty => c.addCtor(Constructor.defaultCtor(c))
+      case _                              =>
+    }
   }
 
   val newMthdRefs: Defs[MethodGroup] = mthdRefs ++ cls.methodGroups.view.map(m => m.name -> m)
@@ -112,17 +114,21 @@ private[resolve] def resolveAndCheckCls(
   )
   val fieldLogs: Iterable[CompilerMsg] = cls.fields.view.flatMap { field =>
     val resolvedTyp = ReferenceResolve.resolveTypeIfNeeded(field.typ)(using ctxt)
-    val resolvedExpr = field.initExpr.map { e =>
-      val resolved: ResultWithLogs[Option[Expr]] =
-        resolvedTyp.getOrElse(UnknownType).flatMap(resolveAndCheckExpr(e, _)(using ctxt).value)
-      resolved.map {
-        case None =>
-        case s    => field.initExpr = s
-      }
-      resolved
-    }
     resolvedTyp.map { t => field.typ = t }
-    resolvedExpr.fold(resolvedTyp.value.written)(_.written)
+
+    if (file.isSource) {
+      val resolvedExpr = field.initExpr.map { e =>
+        val resolved: ResultWithLogs[Option[Expr]] =
+          resolvedTyp.getOrElse(UnknownType).flatMap(resolveAndCheckExpr(e, _)(using ctxt).value)
+        resolved.map {
+          case None =>
+          case s    => field.initExpr = s
+        }
+        resolved
+      }
+
+      resolvedExpr.fold(resolvedTyp.value.written)(_.written)
+    } else List.empty
   }
 
   fieldLogs ++ mthdLogs
@@ -142,32 +148,34 @@ private def resolveAndCheckMthd(
 //  println(s"Resolving method ${mthd.name},returntype=${mthd.returnType.text}")
   val isCtor = mthd.isInstanceOf[Constructor]
 
-  mthd.body match {
-    case Some(block) =>
-      if (!mthd.isAbstract) {
-        val ctxt = Context(
-            fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),
-            mthdRefs,
-            givenDefs,
-            proofDefs,
-            typeDefs,
-            pkgDefs,
-            cls,
-            file
-        )
-        resolveStmt(block, mthd.returnType)(using ctxt)
-          .map { newBlock =>
-            block.stmts.clear()
-            newBlock match {
-              case b: Block => block.stmts.addAll(b.stmts)
-              case s        => block.stmts += s
+  if (file.isSource) {
+    mthd.body match {
+      case Some(block) =>
+        if (!mthd.isAbstract) {
+          val ctxt = Context(
+              fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),
+              mthdRefs,
+              givenDefs,
+              proofDefs,
+              typeDefs,
+              pkgDefs,
+              cls,
+              file
+          )
+          resolveStmt(block, mthd.returnType)(using ctxt)
+            .map { newBlock =>
+              block.stmts.clear()
+              newBlock match {
+                case b: Block => block.stmts.addAll(b.stmts)
+                case s        => block.stmts += s
+              }
             }
-          }
-          .getOrElse(block)
-          .written
-      } else {
-        Nil
-      }
-    case _ => Nil
-  }
+            .getOrElse(block)
+            .written
+        } else {
+          Nil
+        }
+      case _ => Nil
+    }
+  } else Nil
 }

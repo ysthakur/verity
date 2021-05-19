@@ -16,14 +16,14 @@ private[verity] object ReferenceResolve {
   def resolveTypeIfNeeded(typ: Type)(using ctxt: Context): ResolveResult[Type] =
     resolveTypeIfNeeded(typ, ctxt.typeDefs, ctxt.pkgDefs)
 
+  //todo resolve types other unresolvedtyperefs too
   def resolveTypeIfNeeded(
     typ: Type,
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg]
   ): ResolveResult[Type] = typ match {
-    case (_: PrimitiveType) | (_: VoidTypeRef) => OptionT.some(typ)
-    case tr: UnresolvedTypeRef                 => resolveTypeRef(tr, typeDefs, pkgDefs)
-    case _                                     => ???
+    case tr: UnresolvedTypeRef => resolveTypeRef(tr, typeDefs, pkgDefs)
+    case _                     => OptionT.some(typ)
   }
 
   def resolveTypeRef(typ: UnresolvedTypeRef)(using ctxt: Context): ResolveResult[Type] =
@@ -110,7 +110,7 @@ private[verity] object ReferenceResolve {
       case _ =>
         pkgDefs.find(_._1 == head.text) match {
           case Some(_ -> pkg) => resolveClsInPkg(pkg, head :: Nil, tail)
-          case None           => singleMsg(errorMsg(s"Symbol ${head.text} not found", head.textRange))
+          case None           => singleMsg(errorMsg(s"Symboll ${head.text} not found", head.textRange))
         }
     }
   }

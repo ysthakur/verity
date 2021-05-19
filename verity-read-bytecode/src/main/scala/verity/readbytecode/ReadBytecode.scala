@@ -8,45 +8,24 @@ import verity.util._
 import org.objectweb.asm.ClassReader
 
 import java.io.{File, FileInputStream, IOException}
+import java.net.{URI, URLClassLoader}
+import java.nio.file.{Path, Files, FileSystems, Paths}
 import java.util.jar.{JarEntry, JarFile}
-import scala.collection.mutable
+import java.util.Collections
+import scala.collection.mutable.ArrayBuffer
+
 
 object ReadBytecode {
-  def readClassFile(rootPkg: RootPkg, classFile: File): Option[infile.Classlike] = {
+  def readClassFile(rootPkg: RootPkg, classFile: File): Unit = {
 //    try {
-      readClass(rootPkg, new FileInputStream(classFile))
-      println(s"read classfile $classFile")
-      None
+    readClass(rootPkg, new FileInputStream(classFile))
 //    } catch {
 //      case (_: IOException) | (_: SecurityException) =>
 //        None
 //    }
   }
 
-  def readJar(rootPkg: RootPkg, jarFile: File): Option[Pkg] = {
-    try {
-      val jar = new JarFile(jarFile)
-      jar.stream().forEach(jarEntry => readEntry(rootPkg, jar, jarEntry))
-      None
-    } catch {
-      case e => throw e
-      case (_: IOException) | (_: SecurityException) =>
-        None
-    }
-  }
-
-  private def readEntry(
-    rootPkg: RootPkg,
-    jar: JarFile,
-    entry: JarEntry
-  ): Unit = {
-    println(s"reading entry ${entry.getName}")
-    if (entry.getName.endsWith(".class")) {
-      readClass(rootPkg, jar.getInputStream(entry))
-    }
-  }
-
-  def readClass(
+  private def readClass(
     rootPkg: RootPkg,
     input: java.io.InputStream
   ): Unit = {
@@ -55,6 +34,50 @@ object ReadBytecode {
       reader.accept(VerityClassVisitor(rootPkg), ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES)
     } catch {
       case (_: IllegalArgumentException) | (_: ArrayIndexOutOfBoundsException) =>
+    }
+  }
+
+  def readJar(rootPkg: RootPkg, jarFile: File): Unit = {
+    try {
+      val jar = new JarFile(jarFile)
+      jar.stream().forEach(jarEntry => readEntry(rootPkg, jar, jarEntry))
+    } catch {
+      case (_: IOException) | (_: SecurityException) =>
+    }
+  }
+
+  private def readEntry(
+    rootPkg: RootPkg,
+    jar: JarFile,
+    entry: JarEntry
+  ): Unit = {
+    if (entry.getName.endsWith(".class")) {
+      readClass(rootPkg, jar.getInputStream(entry))
+    }
+  }
+
+  /** @param rootPkg The root package to which read packages and classes will be added
+    * @param jdkPath The path to the jdk directory (C:\Program Files\Java\jdk-11.0.5)
+    * @param modules The list of modules to read ("java.base", etc.)
+    */
+  def readJdk(rootPkg: RootPkg, jdkPath: Path, modules: Seq[String]): Unit = {
+    val loader = URLClassLoader(Array(jdkPath.toUri.toURL))
+    val fs = FileSystems.newFileSystem(URI.create("jrt:/"), Collections.emptyMap, loader)
+
+    try {
+      Files.list(fs.getPath("/modules")).forEach { module =>
+        if (modules.contains(module.getFileName.toString)) {
+          Files.walk(module).forEach { classFile =>
+            if (
+              !Files.isDirectory(classFile) && classFile.getFileName.toString != "module-info.class"
+            )
+              ReadBytecode.readClass(rootPkg, Files.newInputStream(classFile))
+          }
+        }
+      }
+    } finally {
+      fs.close()
+      loader.close()
     }
   }
 }

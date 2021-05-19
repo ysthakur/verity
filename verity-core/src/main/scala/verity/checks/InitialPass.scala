@@ -22,7 +22,10 @@ object InitialPass {
     */
   def initialPass(root: RootPkg)(using logger: Logger): Unit = {
     given RootPkg = root
-    verity.core.PackageUtil.walkWithPath(root, initialPassFile)
+    verity.core.PackageUtil.walkWithPath(
+      root,
+      (file, parentPkgs, pkgName) => if (file.isSource) initialPassFile(file, parentPkgs, pkgName)
+    )
   }
 
   /** Resolve all references to classes and type parameters in a file

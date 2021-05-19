@@ -12,8 +12,8 @@ import scala.collection.mutable.ArrayBuffer
 
 private inline val asmApi = asm.Opcodes.ASM9
 
-private type PreField = infile.Field // (Int, String, String, Object)
-private type PreMethod = infile.NormMethod //(Int, String, String, Array[String])
+private type PreField = Field // (Int, String, String, Object)
+private type PreMethod = NormMethod //(Int, String, String, Array[String])
 
 private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmApi) {
   private val fields = ArrayBuffer.empty[PreField]
@@ -57,7 +57,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
   ) = {
 //    println(s"In field! name=$fieldName, desc=$descriptor, sign=$signature")
     val signReader = asm.signature.SignatureReader(signature)
-    var fieldType: infile.Type = null
+    var fieldType: Type = null
 
     if (signature != null) {
       signReader.acceptType(typeSignatureVisitor { typ =>
@@ -69,12 +69,12 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
 
     new asm.FieldVisitor(asmApi) {
       override def visitEnd(): Unit = {
-        fields += infile.Field(
+        fields += Field(
           Text(fieldName),
           ArrayBuffer.empty,
           fieldType,
           None //TODO constants
-        )//(access, descriptor, signature, value)
+        ) //(access, descriptor, signature, value)
 //        println(s"created field ${fields.last.text}!")
       }
     }
@@ -93,8 +93,8 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
     //TODO get type arguments of the return type using the method signature
     var returnType = asmTypeToVType(methodType.getReturnType)
     val paramTypes = methodType.getArgumentTypes.map(asmTypeToVType)
-    val sigParamTypes = ArrayBuffer[infile.Type]()
-    val exceptionTypes = ArrayBuffer[infile.Type]()
+    val sigParamTypes = ArrayBuffer[Type]()
+    val exceptionTypes = ArrayBuffer[Type]()
 
     if (signature != null) {
       val signReader = asm.signature.SignatureReader(signature)
@@ -130,48 +130,47 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
           if (paramNamesAndMods.isEmpty) usedParamTypes.indices.map(i => ("_" + i, false))
           else paramNamesAndMods
         val paramList =
-          infile.ParamList(
+          ParamList(
             usedParamNamesAndMods
               .lazyZip(usedParamTypes)
               .map { case ((name, isFinal), typ) =>
-                infile.Parameter(Nil, typ, Text(name), false, false)
+                Parameter(Nil, typ, Text(name), false, false)
               }
               .toList,
             TextRange.synthetic
           )
 //        println(s"paramlist=$paramList, sigparamtypes=$sigParamTypes,paramnames=$paramNamesAndMods")
-        methods += new infile.NormMethod(
-            ArrayBuffer(),
-            infile.TypeParamList(Nil, TextRange.synthetic),
-            returnType,
-            Text(methodName),
-            paramList,
-            givenParams = None, //todo retrieve given parameters somehow
-            proofParams = None,
-            exceptionTypes,
-            body = Some(infile.Block.empty(returnType))
-          )
+        methods += new NormMethod(
+          ArrayBuffer(),
+          TypeParamList(Nil, TextRange.synthetic),
+          returnType,
+          Text(methodName),
+          paramList,
+          givenParams = None, //todo retrieve given parameters somehow
+          proofParams = None,
+          exceptionTypes,
+          body = Some(Block.empty(returnType))
+        )
 //        println(s"constructed method! ${methodMap(methodName).head.text}")
       }
     }
   }
 
   override def visitEnd(): Unit = {
-    val metaclass = infile.ClasslikeType.CLASS //todo determine metaclass somehow
+    val metaclass = ClasslikeType.CLASS //todo determine metaclass somehow
 
-    val path = name.split("/")
-    val simpleName = path.last
+    val path = name.split("[/.]")
 
     getOrMakePkg(rootPkg, path.iterator) match {
-      case Some(parentPkg) =>
+      case Some(parentPkg -> simpleName) =>
         val (ctors, normMethods) = methods.partition(_.isCtor)
 
         val classDef = metaclass match {
-          case infile.ClasslikeType.CLASS =>
-            infile.ClassDef(
+          case ClasslikeType.CLASS =>
+            ClassDef(
               ArrayBuffer.empty,
               ArrayBuffer.empty,
-              simpleName,
+              simpleName.stripSuffix(".class"),
               TypeParamList(Nil, TextRange.synthetic), //todo
               null,
               null,
@@ -184,18 +183,19 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
           case _ => null
         }
 
-        parentPkg.files += FileNode(s"$simpleName.class", None, Nil, Seq(classDef), java.io.File(""))
+        parentPkg.files += FileNode(s"$simpleName.class", None, Nil, Seq(classDef), None)
       case None => throw Error("foo!@#sadf")
     }
   }
 }
 
 @annotation.tailrec
-def getOrMakePkg(parent: Pkg, path: Iterator[String]): Option[Pkg] = {
+def getOrMakePkg(parent: Pkg, path: Iterator[String]): Option[(Pkg, String)] = {
+  val name = path.next()
   if (path.isEmpty) {
-    Some(parent)
+    //Since the rest of the path is empty, return (<parent package>, <this class's name>)
+    Some(parent -> name)
   } else {
-    val name = path.next()
     val child = parent.subPkgs.find(_.name == name).getOrElse {
       val pkg = PkgNode(name, ArrayBuffer.empty, ArrayBuffer.empty, parent)
       parent.subPkgs += pkg
@@ -206,20 +206,35 @@ def getOrMakePkg(parent: Pkg, path: Iterator[String]): Option[Pkg] = {
   }
 }
 
-def asmTypeToVType(typ: asm.Type): infile.Type =
-  ur.UnresolvedTypeRef(
-    Seq(Text(typ.getClassName)),
-    infile.TypeArgList(ArrayBuffer(), TextRange.synthetic)
-  )
+def asmTypeToVType(typ: asm.Type): Type = {
+  typ.getSort match {
+    case asm.Type.BOOLEAN => PrimitiveType.BooleanType
+    case asm.Type.BYTE    => PrimitiveType.ByteType
+    case asm.Type.CHAR    => PrimitiveType.CharType
+    case asm.Type.SHORT   => PrimitiveType.ShortType
+    case asm.Type.INT     => PrimitiveType.IntType
+    case asm.Type.FLOAT   => PrimitiveType.FloatType
+    case asm.Type.LONG    => PrimitiveType.LongType
+    case asm.Type.DOUBLE  => PrimitiveType.DoubleType
+    case asm.Type.VOID    => VoidTypeRef(TextRange.synthetic)
+    case asm.Type.ARRAY   => ArrayType(asmTypeToVType(typ.getElementType), TextRange.synthetic)
+    case asm.Type.OBJECT =>
+      ur.UnresolvedTypeRef(
+        typ.getClassName.split("[/.]").toSeq.map(Text(_)),
+        TypeArgList(ArrayBuffer(), TextRange.synthetic)
+      )
+    case asm.Type.METHOD => throw new Error("Cannot turn method type to Verity type!")
+  }
+}
 
-private def typeSignatureVisitor(onFind: infile.Type => Unit): SignatureVisitor =
+private def typeSignatureVisitor(onFind: Type => Unit): SignatureVisitor =
   new SignatureVisitor(asmApi) {
     var isArrayType = false
-    var arrayType: infile.Type = _
+    var arrayType: Type = _
 
     var isTypeRef = false
     var typePath: String = _
-    val typeArgs = ArrayBuffer[infile.Type]()
+    val typeArgs = ArrayBuffer[Type]()
 
     override def visitArrayType(): SignatureVisitor = {
 //      println("In array type!")
@@ -229,21 +244,8 @@ private def typeSignatureVisitor(onFind: infile.Type => Unit): SignatureVisitor 
 
     /** Visit primitive or void type
       */
-    override def visitBaseType(descriptor: Char): Unit = {
-      onFind(
-        asm.Type.getType(descriptor.toString).getSort match {
-          case asm.Type.BOOLEAN => infile.PrimitiveType.BooleanType
-          case asm.Type.BYTE    => infile.PrimitiveType.ByteType
-          case asm.Type.CHAR    => infile.PrimitiveType.CharType
-          case asm.Type.SHORT   => infile.PrimitiveType.ShortType
-          case asm.Type.INT     => infile.PrimitiveType.IntType
-          case asm.Type.FLOAT   => infile.PrimitiveType.FloatType
-          case asm.Type.LONG    => infile.PrimitiveType.LongType
-          case asm.Type.DOUBLE  => infile.PrimitiveType.DoubleType
-          case asm.Type.VOID    => infile.VoidTypeRef(TextRange.synthetic)
-        }
-      )
-    }
+    override def visitBaseType(descriptor: Char): Unit =
+      onFind(asmTypeToVType(asm.Type.getType(descriptor.toString)))
 
     override def visitTypeVariable(name: String): Unit = {
 //      println(s"typesigvisitor typevar=$name")
@@ -279,14 +281,14 @@ private def typeSignatureVisitor(onFind: infile.Type => Unit): SignatureVisitor 
 
     override def visitEnd(): Unit = {
       if (this.isArrayType) {
-        onFind(infile.ArrayType(this.arrayType, TextRange.synthetic))
+        onFind(ArrayType(this.arrayType, TextRange.synthetic))
       } else if (this.isTypeRef) {
 //        println(s"returning typeref $typePath")
         onFind(
           ur.UnresolvedTypeRef(
             //Make a path by splitting on '/'
-            this.typePath.split("/").toSeq.map(Text(_)),
-            infile.TypeArgList(this.typeArgs, TextRange.synthetic),
+            this.typePath.split("[/.]").toSeq.map(Text(_)),
+            TypeArgList(this.typeArgs, TextRange.synthetic),
             None
           )
         )
