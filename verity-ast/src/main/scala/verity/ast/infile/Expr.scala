@@ -2,7 +2,7 @@ package verity.ast.infile
 
 import verity.ast._
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 trait ResolvedOrUnresolvedExpr extends HasTextRange, HasType, Tree
 
@@ -155,7 +155,7 @@ object OpType {
 }
 
 class Block(
-  val stmts: ListBuffer[Statement],
+  val stmts: ArrayBuffer[Statement],
   override val textRange: TextRange,
   private[this] var _typ: Type
 ) extends Expr,
@@ -165,7 +165,7 @@ class Block(
   override def text: String = stmts.map(_.text).mkString("{", "", "}")
 }
 object Block {
-  def empty(typ: Type): Block = Block(ListBuffer.empty, TextRange.synthetic, typ)
+  def empty(typ: Type): Block = Block(ArrayBuffer.empty, TextRange.synthetic, typ)
 }
 
 case class MethodCall(

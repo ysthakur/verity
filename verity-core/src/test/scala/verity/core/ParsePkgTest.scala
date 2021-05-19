@@ -5,9 +5,8 @@ import verity.util._
 
 import cats.data.{Writer, OptionT}
 import cats.implicits._
-import org.junit.Assert
-import org.junit.Test
-import org.junit.Before
+import org.junit.{Assert, Test, Before}
+
 import java.io.File
 
 class ParsePkgTest {

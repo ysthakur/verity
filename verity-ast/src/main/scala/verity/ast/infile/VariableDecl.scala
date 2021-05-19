@@ -2,7 +2,7 @@ package verity.ast.infile
 
 import verity.ast.*
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 /**
   * A variable declaration (local variable or field)
@@ -24,7 +24,7 @@ trait VariableDecl extends Tree, HasText, HasType, NamedTree, HasModifiers {
 
 class Field(
     val fieldName: Text,
-    override val modifiers: ListBuffer[Modifier],
+    override val modifiers: ArrayBuffer[Modifier],
     var typ: Type,
     var initExpr: Option[ResolvedOrUnresolvedExpr] = None
 ) extends VariableDecl, ClassChild, HasModifiers, HasType {

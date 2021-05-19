@@ -3,7 +3,7 @@ package verity.ast.infile.unresolved
 import verity.ast._
 import verity.ast.infile.{ResolvedOrUnresolvedExpr => RoUExpr, _}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 case class UnresolvedTypeRef(
     path: Seq[Text],
@@ -20,7 +20,7 @@ case class UnresolvedTypeRef(
   override def strictSubTypeOf(sup: Type): Boolean = ??? //resolved.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = ??? //resolved.fold(false){td => td.strictSuperTypeOf(sub)}
 
-  override def text: String = HasText.seqText(path, ".") + args.text
+  override def text: String = HasText.seqText(path, ".", "", "") + args.text
 
   /*override def textRange: TextRange =
     if args.isEmpty || args.textRange.isSynthetic then
@@ -38,7 +38,7 @@ case class UnresolvedTypeRef(
   }
 }
 
-case class UnresolvedWildcard(upper: Option[UnresolvedTypeRef], lower: Option[UnresolvedTypeRef])
+case class UnresolvedWildcard(upper: Option[Type], lower: Option[Type])
     extends Type {
   override def strictSubTypeOf(sup: Type): Boolean = upper.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = lower.fold(false)(_.strictSuperTypeOf(sub))

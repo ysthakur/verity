@@ -2,7 +2,7 @@ package verity.ast.infile
 
 import verity.ast._
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 trait HasModifiers extends Tree {
   def modifiers: Iterable[Modifier]

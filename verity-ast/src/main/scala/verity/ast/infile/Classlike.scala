@@ -3,7 +3,7 @@ package verity.ast.infile
 import verity.ast._
 import verity.ast.infile.{unresolved => ur}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 /** Base trait for classes, interfaces, enums, and annotations
   */
@@ -13,7 +13,7 @@ sealed trait Classlike(val defType: ClasslikeType)
       HasText,
       HasModifiers,
       HasAnnotations {
-  def modifiers: ListBuffer[Modifier]
+  def modifiers: ArrayBuffer[Modifier]
   def typeParams: TypeParamList
   override def fields: Iterable[Field]
   override def methods: Iterable[Method]
@@ -82,15 +82,15 @@ enum ClasslikeType(val text: String) extends Tree {
   * @param bodyRange The `TextRange` of the braces
   */
 case class ClassDef(
-    annotations: ListBuffer[Annotation],
-    modifiers: ListBuffer[Modifier],
+    annotations: ArrayBuffer[Annotation],
+    modifiers: ArrayBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
     superClass: ur.UnresolvedTypeRef,
     superInterfaces: Iterable[ur.UnresolvedTypeRef],
-    fields: ListBuffer[Field],
-    ctors: ListBuffer[Constructor],
-    normMethods: ListBuffer[NormMethod],
+    fields: ArrayBuffer[Field],
+    ctors: ArrayBuffer[Constructor],
+    normMethods: ArrayBuffer[NormMethod],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.CLASS),
@@ -110,13 +110,13 @@ case class ClassDef(
 }
 
 case class InterfaceDef(
-    annotations: ListBuffer[Annotation],
-    modifiers: ListBuffer[Modifier],
+    annotations: ArrayBuffer[Annotation],
+    modifiers: ArrayBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
     superInterfaces: Iterable[ur.UnresolvedTypeRef],
-    fields: ListBuffer[Field],
-    methods: ListBuffer[Method],
+    fields: ArrayBuffer[Field],
+    methods: ArrayBuffer[Method],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.INTERFACE) {
@@ -128,15 +128,15 @@ case class InterfaceDef(
 
 //TODO parse enums
 case class EnumDef(
-    annotations: ListBuffer[Annotation],
-    modifiers: ListBuffer[Modifier],
+    annotations: ArrayBuffer[Annotation],
+    modifiers: ArrayBuffer[Modifier],
     name: String,
     typeParams: TypeParamList,
     superInterfaces: Seq[ur.UnresolvedTypeRef],
     constants: List[EnumConstant],
-    fields: ListBuffer[Field],
-    ctors: ListBuffer[Constructor],
-    methods: ListBuffer[Method],
+    fields: ArrayBuffer[Field],
+    ctors: ArrayBuffer[Constructor],
+    methods: ArrayBuffer[Method],
     metaclassTokTR: TextRange,
     bodyRange: TextRange
 ) extends Classlike(ClasslikeType.ENUM),

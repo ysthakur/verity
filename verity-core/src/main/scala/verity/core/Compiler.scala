@@ -11,12 +11,12 @@ import com.typesafe.scalalogging.Logger
 
 import java.io.{File, FileInputStream, FileFilter}
 import java.nio.file.{Path, Files}
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 object Compiler {
   def compile(pkgs: Iterable[File], files: Iterable[File], options: Options): Unit = {
     given logger: Logger = Logger(".")
-    given rootPkg: RootPkg = RootPkg(ListBuffer.empty, ListBuffer.empty)
+    given rootPkg: RootPkg = RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
 
     parsePkg(pkgs, files, rootPkg)
     verity.checks.InitialPass.initialPass(rootPkg)
@@ -42,7 +42,7 @@ object Compiler {
       .collect { case Right(file) => file }
 
     pkgs.foreach { pkg =>
-      val pkgNode = PkgNode(pkg.getName.unsafeNN, ListBuffer.empty, ListBuffer.empty, parent)
+      val pkgNode = PkgNode(pkg.getName.unsafeNN, ArrayBuffer.empty, ArrayBuffer.empty, parent)
       parent.subPkgs += pkgNode
 
       val (subPkgs, allFiles) = pkg

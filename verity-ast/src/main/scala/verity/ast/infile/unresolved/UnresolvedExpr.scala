@@ -3,7 +3,7 @@ package verity.ast.infile.unresolved
 import verity.ast._
 import verity.ast.infile.{ResolvedOrUnresolvedExpr => RoUExpr, _}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 sealed trait UnresolvedExpr extends HasText, HasType, RoUExpr
 

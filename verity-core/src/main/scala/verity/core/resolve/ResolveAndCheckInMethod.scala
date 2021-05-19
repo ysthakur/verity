@@ -45,11 +45,11 @@ private def resolveStmt(
       }
     case block: Block =>
       //Traverse the block, keeping track of the a Context holding new variable declarations
-      //and a ListBuffer containing resolved statements
-      val ctxtAndNewStmts: ResolveResult[(Context, mutable.ListBuffer[Statement])] =
+      //and a ArrayBuffer containing resolved statements
+      val ctxtAndNewStmts: ResolveResult[(Context, mutable.ArrayBuffer[Statement])] =
         block.stmts.foldLeft(
-            OptionT.some(ctxt -> mutable.ListBuffer()): ResolveResult[
-                (Context, mutable.ListBuffer[Statement])
+            OptionT.some(ctxt -> mutable.ArrayBuffer()): ResolveResult[
+                (Context, mutable.ArrayBuffer[Statement])
             ]
         ) { case (acc, stmt) =>
           acc.flatMap { case context -> prev =>

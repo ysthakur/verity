@@ -8,13 +8,13 @@ import Types._
 
 import fastparse._, JavaWhitespace._
 
-import collection.mutable.ListBuffer
+import collection.mutable.ArrayBuffer
 
 //TODO add annotations
 private object Classlikes {
 
   // def field[_: P] = P(modifiers ~ nonWildcardType ~ identifierText ~ ("=" ~/ expr).? ~ ";").map {
-  //   case (mods, typ, name, initExpr) => new Field(name, mods.to(ListBuffer), typ, initExpr)
+  //   case (mods, typ, name, initExpr) => new Field(name, mods.to(ArrayBuffer), typ, initExpr)
   // }
 
   def methodOrField[_: P]: P[Seq[Modifier] => Any] =
@@ -24,7 +24,7 @@ private object Classlikes {
 
   def field2[_: P]: P[(Type, Text) => Seq[Modifier] => Any] =
     P(("=" ~/ expr).? ~ ";").map { initExpr =>
-      (typ: Type, name: Text) => (modifiers: Seq[Modifier]) => new Field(name, modifiers.to(ListBuffer), typ, initExpr)
+      (typ: Type, name: Text) => (modifiers: Seq[Modifier]) => new Field(name, modifiers.to(ArrayBuffer), typ, initExpr)
     }
 
   //field or method
@@ -46,15 +46,15 @@ private object Classlikes {
       val (fields, normMethodsAndCtors) = members.partition(_.isInstanceOf[Field])
       val (normMethods, ctors) = normMethodsAndCtors.partition(_.isInstanceOf[NormMethod])
       lazy val cls: ClassDef = new ClassDef(
-          ListBuffer(), //todo annotations
-          modifiers.to(ListBuffer),
+          ArrayBuffer(), //todo annotations
+          modifiers.to(ArrayBuffer),
           name,
           typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
           null, //todo superclass
           null, //todo
-          fields.to(ListBuffer).asInstanceOf[ListBuffer[Field]],
-          ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ListBuffer),
-          normMethods.to(ListBuffer).asInstanceOf[ListBuffer[NormMethod]],
+          fields.to(ArrayBuffer).asInstanceOf[ArrayBuffer[Field]],
+          ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ArrayBuffer),
+          normMethods.to(ArrayBuffer).asInstanceOf[ArrayBuffer[NormMethod]],
           TextRange(classTokEnd - 5, classTokEnd),
           TextRange(braceStart, braceEnd)
       )

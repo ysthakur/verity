@@ -2,7 +2,7 @@ package verity.ast.infile
 
 import verity.ast._
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 trait Methodlike extends NamedTree {
   def returnType: Type
@@ -14,6 +14,8 @@ trait Methodlike extends NamedTree {
 
   def nameRange: TextRange
   def body: Option[Block] //Option[Block|Expr]
+
+  def isCtor: Boolean = this.isInstanceOf[Constructor] || this.isInstanceOf[unresolved.UnresolvedConstructor]
   // def body_=(newBody: Option[Block] /*Option[Block|Expr]*/ ): Unit
 }
 
@@ -31,7 +33,7 @@ object Method {
 
 //TODO look at thrown exceptions
 class NormMethod(
-  val modifiers: ListBuffer[Modifier],
+  val modifiers: ArrayBuffer[Modifier],
   val typeParams: TypeParamList,
   private[this] var _returnType: Type,
   val methodName: Text,
@@ -53,7 +55,7 @@ class NormMethod(
 }
 
 class Constructor(
-  val modifiers: ListBuffer[Modifier],
+  val modifiers: ArrayBuffer[Modifier],
   val name: String,
   val nameRange: TextRange,
   val params: ParamList,
@@ -77,7 +79,7 @@ class Constructor(
 object Constructor {
   def defaultCtor(cls: HasCtors): Constructor =
     Constructor(
-      cls.accessModifier.map(Modifier(_, TextRange.synthetic)).to(ListBuffer),
+      cls.accessModifier.map(Modifier(_, TextRange.synthetic)).to(ArrayBuffer),
       cls.name,
       TextRange.synthetic,
       Empty[ParamList],

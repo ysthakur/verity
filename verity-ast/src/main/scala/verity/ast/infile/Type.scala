@@ -2,7 +2,7 @@ package verity.ast.infile
 
 import verity.ast._
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 trait Type extends Tree, HasText {
 
@@ -29,7 +29,7 @@ object Type {
     override def strictSuperTypeOf(sub: Type): Boolean = ???
 
     override def fields: Iterable[Field] = Nil
-    override def methods: Iterable[Method] = ??? //collection.mutable.ListBuffer()
+    override def methods: Iterable[Method] = ??? //collection.mutable.ArrayBuffer()
 
     override def superTypes: Iterable[Type] = ???
 
@@ -217,7 +217,7 @@ case class Wildcard(upper: Option[ResolvedTypeRef], lower: Option[ResolvedTypeRe
 
 //TODO arrays
 case class ArrayType(elemType: Type, private[this] val bracketRange: TextRange) extends Type {
-  val fields: Iterable[Field] = List(Field(Text("length"), ListBuffer.empty, PrimitiveType.IntType))
+  val fields: Iterable[Field] = List(Field(Text("length"), ArrayBuffer.empty, PrimitiveType.IntType))
   override def methods: Iterable[Method] = List()
 
   override def superTypes: Iterable[Type] = BuiltinTypes.objectType :: Nil
@@ -292,7 +292,7 @@ case class TypeArgList(args: Iterable[Type], override val textRange: TextRange)
     extends Tree,
       HasTextRange {
   def isEmpty: Boolean = args.isEmpty
-  override def text: String = HasText.seqText(args, ",", "<", ">")
+  override def text: String = if (args.isEmpty) "" else HasText.seqText(args, ",", "<", ">")
   override def equals(other: Any): Boolean = other match {
     case TypeArgList(otherArgs, _) =>
       args.size == otherArgs.size && args.lazyZip(otherArgs).forall(_ == _)

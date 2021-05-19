@@ -1,13 +1,10 @@
 package verity.core.resolve
 
-import com.typesafe.scalalogging.Logger
 import verity.ast._
 import verity.ast.infile._
 import verity.ast.infile.unresolved.UnresolvedTypeRef
 import verity.core._
 import verity.core.Context.Defs
-import verity.checks.CheckTypes
-import verity.ast.Pkg.Importable
 
 import cats.data.{OptionT, Writer}
 import cats.implicits._
@@ -60,7 +57,7 @@ private[verity] object ReferenceResolve {
         _ <- Writer.tell(
           //Log errors with the arguments if the class is resolved
           maybeCls.fold(Nil)(cls =>
-            CheckTypes.checkTypeArgs(args, cls.typeDef.typeParams.params, typeArgsRange)
+            verity.checks.CheckTypes.checkTypeArgs(args, cls.typeDef.typeParams.params, typeArgsRange)
           )
         )
         argList = TypeArgList(args, typ.args.textRange)

@@ -10,7 +10,7 @@ import Types._
 import fastparse._
 import JavaWhitespace._
 
-import collection.mutable.ListBuffer
+import collection.mutable.ArrayBuffer
 
 private object Methods {
   def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map {
@@ -49,7 +49,7 @@ private object Methods {
   def block[_: P]: P[Block] = P(Index ~ "{" ~/ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
     case (start, stmts, end) =>
       new Block(
-        stmts.to(ListBuffer),
+        stmts.to(ArrayBuffer),
         TextRange(start, end),
         ToBeInferred(UnknownType, UnknownType, Nil)
       )
@@ -68,7 +68,7 @@ private object Methods {
     P(identifierWithTextRange ~ &("(") ~/ paramList ~ block).map {
       case (name, nameRange, params, body) =>
         modifiers => cls => new Constructor(
-            modifiers.to(ListBuffer),
+            modifiers.to(ArrayBuffer),
             name,
             nameRange,
             params,
@@ -110,7 +110,7 @@ private object Methods {
       case e: Int => None -> e
     }
     new NormMethod(
-      modifiers.to(ListBuffer),
+      modifiers.to(ArrayBuffer),
       typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
       returnType,
       name,

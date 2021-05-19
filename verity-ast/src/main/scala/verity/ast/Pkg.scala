@@ -4,13 +4,13 @@ import verity.ast.infile._
 
 import java.io.File
 import scala.annotation.{tailrec, targetName}
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.{ExecutionContext, Future}
 
 sealed trait Pkg extends NamedTree {
   def name: String
-  def subPkgs: ListBuffer[PkgNode]
-  def files: ListBuffer[FileNode]
+  def subPkgs: ArrayBuffer[PkgNode]
+  def files: ArrayBuffer[FileNode]
 
   /** Find a class directly in this package (not in a subpackage) by the given name.
     */
@@ -24,7 +24,7 @@ sealed trait Pkg extends NamedTree {
   override def toString = s"package $name"
 }
 
-case class RootPkg(subPkgs: ListBuffer[PkgNode], files: ListBuffer[FileNode]) extends Pkg {
+case class RootPkg(subPkgs: ArrayBuffer[PkgNode], files: ArrayBuffer[FileNode]) extends Pkg {
   def name    = ""
   def parents = Nil
 }
@@ -32,8 +32,8 @@ case class RootPkg(subPkgs: ListBuffer[PkgNode], files: ListBuffer[FileNode]) ex
 //TODO does the parent have to be stored?
 case class PkgNode(
     name: String,
-    subPkgs: ListBuffer[PkgNode],
-    files: ListBuffer[FileNode],
+    subPkgs: ArrayBuffer[PkgNode],
+    files: ArrayBuffer[FileNode],
     parent: Pkg
 ) extends Pkg {
   def parents = parent :: parent.parents

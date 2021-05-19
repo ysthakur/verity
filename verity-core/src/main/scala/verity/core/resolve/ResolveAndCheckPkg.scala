@@ -13,7 +13,7 @@ import cats.catsInstancesForId
 import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable.HashMap
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 /** Resolve all references to classes and type parameters in a package
   * @param pkg The package to work on

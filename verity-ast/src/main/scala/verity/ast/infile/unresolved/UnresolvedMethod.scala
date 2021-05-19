@@ -3,12 +3,12 @@ package verity.ast.infile.unresolved
 import verity.ast.infile._
 import verity.ast.{Text, TextRange}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 trait UnresolvedMethod extends Method
 
 class UnresolvedConstructor(
-    val modifiers: ListBuffer[Modifier],
+    val modifiers: ArrayBuffer[Modifier],
     val ctorName: Text,
     val params: ParamList,
     val givenParams: Option[ParamList],
@@ -27,8 +27,8 @@ class UnresolvedConstructor(
   def nameRange = ctorName.textRange
 }
 
-class UnresolvedNormMethod(
-    val modifiers: ListBuffer[Modifier],
+class UnresolvedNormalMethod(
+    val modifiers: ArrayBuffer[Modifier],
     val typeParams: TypeParamList,
     private var _returnType: Type,
     val methodName: Text,
