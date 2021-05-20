@@ -6,10 +6,10 @@ package com;
 class Test {
   int foobar = 5;
 
-  public Test2(int foo) {
+  public Test(int foo) {
     short bar = foo;
     boolean baz = isEven(bar);
-    Test2 blah = new Test2(bar);
+    Test blah = new Test(bar);
     java.lang.String foo = "foo";
   }
 

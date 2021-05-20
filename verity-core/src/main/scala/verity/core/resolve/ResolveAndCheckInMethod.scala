@@ -10,6 +10,7 @@ import cats.implicits._
 //import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
+import verity.ast.infile.unresolved.UnresolvedMethodCall
 
 //todo make a proper solver for this stuff
 private def resolveStmt(
@@ -99,6 +100,7 @@ private def resolveAndCheckExpr(
           case None        => singleMsg(errorMsg(s"No such field ${fieldName.text}", fieldName))
         }
       }
+    case ctorCall: ur.UnresolvedCtorCall => resolveUnresolvedCtorCall(ctorCall)
     case mc: ur.UnresolvedMethodCall => resolveUnresolvedMethodCall(mc)
     case ur.MultiDotRefExpr(path) =>
       ReferenceResolve.resolveDotChainedRef(path).flatMap {
@@ -134,6 +136,19 @@ private def resolveAndCheckExpr(
   }
 }
 
+private def resolveUnresolvedCtorCall(ctorCall: ur.UnresolvedCtorCall)(using ctxt: Context): ResolveResult[Expr] = {
+  ReferenceResolve.resolveCls(ctorCall.cls.path, ctxt.typeDefs, ctxt.pkgDefs).flatMap { cls =>
+    ctorCall.typ = cls
+
+    resolveUnresolvedMethodCall(
+      ctorCall,
+      None,
+      possibleMthdsBasic(ctorCall, cls.methods.filter(_.isCtor))
+    )
+  }
+
+}
+
 //TODO Deal with overloading first!!!
 private def resolveUnresolvedMethodCall(
   mthdCall: ur.UnresolvedMethodCall
@@ -155,18 +170,7 @@ private def resolveUnresolvedMethodCall(
       case Some(c: ClassRef) => OptionT(Writer(Nil, Some(c.cls.methods)))
     }: ResolveResult[Iterable[Method]]).flatMap { allMthds =>
       //Filter based on name and number of parameters
-      val possibleMthds = allMthds.filter(mthd =>
-        mthd.name == mthdName
-          && mthd.params.params.size == mthdCall.valArgs.args.size
-          && (mthdCall.typeArgs.isEmpty
-            || mthdCall.typeArgs.get.args.size == mthd.typeParams.params.size)
-          && (mthdCall.givenArgs.isEmpty
-            || mthd.givenParams.isEmpty
-            || mthdCall.givenArgs.get.args.size == mthd.givenParams.get.params.size)
-          && (mthdCall.proofArgs.isEmpty
-            || mthd.givenParams.isEmpty
-            || mthdCall.proofArgs.get.args.size == mthd.proofParams.get.params.size)
-      )
+      val possibleMthds = possibleMthdsBasic(mthdCall, allMthds.filter(_.name == mthdName))
 
       resolveUnresolvedMethodCall(mthdCall, caller, possibleMthds)
     }
@@ -181,21 +185,30 @@ private def resolveUnresolvedMethodCall(
   }
 }
 
+/**
+ * Filter possible methods that a method call could be referring to (only by number of arguments, not name or types)
+ */
+private def possibleMthdsBasic(mthdCall: UnresolvedMethodCall, allMthds: Iterable[Method]): Iterable[Method] =
+  allMthds.filter(mthd =>
+    mthd.params.params.size == mthdCall.valArgs.args.size
+      && (mthdCall.typeArgs.isEmpty
+        || mthdCall.typeArgs.get.args.size == mthd.typeParams.params.size)
+      && (mthdCall.givenArgs.isEmpty
+        || mthd.givenParams.isEmpty
+        || mthdCall.givenArgs.get.args.size == mthd.givenParams.get.params.size)
+      && (mthdCall.proofArgs.isEmpty
+        || mthd.givenParams.isEmpty
+        || mthdCall.proofArgs.get.args.size == mthd.proofParams.get.params.size)
+  )
+
 private def resolveUnresolvedMethodCall(
   mthdCall: ur.UnresolvedMethodCall,
   caller: Option[Expr | ClassRef],
   possibleMthds: Iterable[Method]
 )(using Context): ResolveResult[Expr] = {
 //  println(s"resolving method call ${mthdCall.text}, ${possibleMthds.map(_.name)}")
-  val ur.UnresolvedMethodCall(
-    _,
-    nameText @ Text(mthdName),
-    valArgs,
-    typeArgs,
-    givenArgs,
-    proofArgs
-  ) =
-    mthdCall
+  val nameText = mthdCall.methodName
+  val mthdName = nameText.text
 
   if (possibleMthds.isEmpty) {
     singleMsg(errorMsg(s"Cannot resolve method $mthdName", mthdCall))
@@ -211,7 +224,7 @@ private def resolveUnresolvedMethodCall(
       caller,
       nameText,
       newValArgs,
-      typeArgs,
+      mthdCall.typeArgs,
       newGivenArgs,
       newProofArgs,
       resolvedMthd.returnType,

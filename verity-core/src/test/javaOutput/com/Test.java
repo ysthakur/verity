@@ -1,1 +1,1 @@
-package com; class Test { public Test2 ( int foo) {() shortbar=foo;() booleanbaz=isEven(bar);() Test2blah=Test2(bar);() (java.lang.String)foo="foo";} public boolean isEven ( int x) {return ((x % 2) < 0);} public static void main () {} private static void foo ( int bar) ;}
+package com; class Test { public Test ( int foo) {() shortbar=foo;() booleanbaz=isEven(bar);() Testblah=Test(bar);() (java.lang.String)foo="foo";} public boolean isEven ( int x) {return ((x % 2) < 0);} public static void main () {} private static void foo ( int bar) ;}

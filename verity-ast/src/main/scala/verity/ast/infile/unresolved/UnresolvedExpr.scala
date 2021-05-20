@@ -103,16 +103,21 @@ case class UnresolvedMethodCall(
 /** A constructor call whose class and arguments have not been resolved.
   * @param cls The class this is trying to construct
   */
-case class UnresolvedCtorCall(
-  cls: MultiDotRef,
+class UnresolvedCtorCall(
+  val cls: MultiDotRef,
   valArgs: UnresolvedArgList,
   typeArgs: Option[TypeArgList],
   givenArgs: Option[UnresolvedArgList],
   proofArgs: Option[UnresolvedArgList],
-  newKeywordInd: Int
-) extends UnresolvedTypeExpr {
-  private[verity] var resolved: Option[Method] = None
-
+  val newKeywordInd: Int
+) extends UnresolvedMethodCall(
+      Some(MultiDotRef(cls.path.init)),
+      cls.path.last,
+      valArgs,
+      typeArgs,
+      givenArgs,
+      proofArgs
+    ) {
   override def text: String = cls.text
     + typeArgs.fold("")(_.text)
     + valArgs.text

@@ -120,9 +120,9 @@ object InitialPass {
     cls.methods.flatMap { mthd =>
       mthd match {
         case c: Constructor =>
-          val mthdName = mthd.name
-          if mthdName != cls.name && mthdName != Keywords.constructorName then {
-            LogUtils.logMsg(s"Wrong constructor name: $mthdName", mthd.nameRange, file)
+          val mthdName = c.name
+          if (mthdName != cls.name && mthdName != Keywords.constructorName) {
+            LogUtils.logMsg(s"Wrong constructor name: $mthdName (expected ${cls.name})", c.nameRange, file)
           }
         case m: NormMethod => //TODO!!!!!!!!!!!!!!!!!!!1
 //          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using dummyCtxt)
