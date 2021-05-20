@@ -100,6 +100,31 @@ case class UnresolvedMethodCall(
   )
 }
 
+/** A constructor call whose class and arguments have not been resolved.
+  * @param cls The class this is trying to construct
+  */
+case class UnresolvedCtorCall(
+  cls: MultiDotRef,
+  valArgs: UnresolvedArgList,
+  typeArgs: Option[TypeArgList],
+  givenArgs: Option[UnresolvedArgList],
+  proofArgs: Option[UnresolvedArgList],
+  newKeywordInd: Int
+) extends UnresolvedTypeExpr {
+  private[verity] var resolved: Option[Method] = None
+
+  override def text: String = cls.text
+    + typeArgs.fold("")(_.text)
+    + valArgs.text
+    + HasText.optText(givenArgs)
+    + HasText.optText(proofArgs)
+
+  override def textRange = TextRange(
+    newKeywordInd,
+    proofArgs.orElse(givenArgs).getOrElse(valArgs).textRange.end
+  )
+}
+
 case class UnresolvedArgList(
   args: List[RoUExpr],
   argsKind: ArgsKind,

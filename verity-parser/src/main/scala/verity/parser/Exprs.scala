@@ -36,10 +36,10 @@ private object Exprs {
     P("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
       case (start, text, end) => StringLiteral("\"" + text + "\"", TextRange(start, end))
     }
-  def thisRef[_: P]: P[UnresolvedThisRef] = P(Index ~ "this" ~ Index).map { case (start, end) =>
+  def thisRef[_: P]: P[UnresolvedThisRef] = P(Index ~ "this" ~ nid ~/ Index).map { case (start, end) =>
     new UnresolvedThisRef(TextRange(start, end))
   }
-  def superRef[_: P]: P[UnresolvedSuperRef] = P(Index ~ "super" ~ Index).map { case (start, end) =>
+  def superRef[_: P]: P[UnresolvedSuperRef] = P(Index ~ "super" ~ nid ~/ Index).map { case (start, end) =>
     new UnresolvedSuperRef(TextRange(start, end))
   }
   def literal[_: P]: P[RoUExpr] = P(numLiteral | boolLiteral | stringLiteral | thisRef | superRef)
@@ -51,30 +51,50 @@ private object Exprs {
       new UnresolvedParenExpr(expr, TextRange(start, end))
   }
 
+  /**
+   * A constructor call in the form `new Foo.Bar<Type, Arguments>(other, arguments)`
+   * TODO use negative lookahead instead of requiring a space after `new`
+   */
+  def ctorCall[_: P]: P[UnresolvedCtorCall] = P("new " ~/ Index ~ multiDotRef ~ typeArgList.? ~ methodArgList).map {
+    case (newTokEnd, classPath, typeArgs, valArgs) => new UnresolvedCtorCall(
+      classPath,
+      valArgs,
+      typeArgs,
+      None,
+      None,
+      newTokEnd - 4
+    )
+  }
+
   //TODO parse given and proof arguments!!!
+  /**
+   * A method call without a caller (method is either in same class or is imported), e.g. `foo(bar, baz)`.
+   */
   def noObjMethodCall[_: P]: P[UnresolvedMethodCall] =
     P(typeArgList ~ identifierText ~ methodArgList).map { case (typeArgs, name, args) =>
       UnresolvedMethodCall(None, name, args, Some(typeArgs), None, None)
     }
 
+  /**
+   * Either a reference to a field/local variable or a method call, e.g. `com.foo.Foo` or `foo` or `foo.bleh.bar(baz, foobar)`.
+   */
   def varRefOrMethodCall[_: P]: P[RoUExpr] =
     P(
-        identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList ~ identifierText ~ methodArgList).?
+        identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList.? ~ identifierText ~ methodArgList).?
     ).map {
       case (first, rest, Some((typeArgs, name, valArgs))) =>
         UnresolvedMethodCall(
           Some(MultiDotRef(first +: rest)),
           name,
           valArgs,
-          Some(typeArgs),
+          typeArgs,
           None,
           None
         )
       case (first, rest, None) => MultiDotRefExpr(first +: rest)
     }
 
-  //todo add constructor call
-  def selectable[_: P]: P[RoUExpr] = P(parenExpr | literal | noObjMethodCall | varRefOrMethodCall)
+  def selectable[_: P]: P[RoUExpr] = P(parenExpr | literal | ctorCall | noObjMethodCall | varRefOrMethodCall | ctorCall)
 
   /** **************************END ATOMS***************************************
     */

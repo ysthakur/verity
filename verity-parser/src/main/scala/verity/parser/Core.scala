@@ -7,6 +7,11 @@ import verity.ast.infile._
 import verity.ast.infile.unresolved._
 
 private object Core {
+  /**
+   * Negative lookahead to ensure that an identifier has ended
+   */
+  def nid[_: P] = P(!CharPred(_.isUnicodeIdentifierPart))
+
   def identifier[_: P]: P[String] =
     P(CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!).map {
       case (first, rest) => first + rest

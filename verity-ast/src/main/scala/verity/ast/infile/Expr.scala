@@ -191,6 +191,31 @@ case class MethodCall(
   )
 }
 
+/** A constructor call that has been resolved
+  * @param cls The class this is trying to construct
+  */
+case class CtorCall(
+  cls: ClassRef,
+  valArgs: ArgList,
+  typeArgs: Option[TypeArgList],
+  givenArgs: Option[ArgList],
+  proofArgs: Option[ArgList],
+  typ: Type,
+  resolved: Method,
+  newKeywordInd: Int
+) extends Expr {
+  override def text: String = cls.text
+    + typeArgs.fold("")(_.text)
+    + valArgs.text
+    + HasText.optText(givenArgs)
+    + HasText.optText(proofArgs)
+
+  override def textRange = TextRange(
+    newKeywordInd,
+    proofArgs.orElse(givenArgs).getOrElse(valArgs).textRange.end
+  )
+}
+
 case class ArgList(args: List[Expr], argsKind: ArgsKind, override val textRange: TextRange)
     extends HasTextRange {
   override def text: String = args.view.map(_.text).mkString("(", ",", ")")

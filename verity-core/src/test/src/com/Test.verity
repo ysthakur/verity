@@ -9,7 +9,7 @@ class Test {
   public Test2(int foo) {
     short bar = foo;
     boolean baz = isEven(bar);
-    Test2 blah = Test2(bar);
+    Test2 blah = new Test2(bar);
     java.lang.String foo = "foo";
   }
 
