@@ -1,12 +1,12 @@
 package verity.core
 
 import verity.ast.{FileNode, Pkg, RootPkg}
-import com.typesafe.scalalogging.Logger
+//import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object PackageUtil {
-  def walk(pkg: Pkg, f: FileNode => (RootPkg, Logger) ?=> Unit)(using RootPkg, Logger): Unit = {
+  def walk(pkg: Pkg, f: FileNode => RootPkg ?=> Unit)(using RootPkg): Unit = {
     pkg.subPkgs.foreach { p => walk(p, f) }
 
     pkg.files.foreach(f)
@@ -21,22 +21,22 @@ object PackageUtil {
     */
   def walkWithPath(
     pkg: Pkg,
-    f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
-  )(using root: RootPkg, logger: Logger): Unit = {
+    f: (FileNode, List[Pkg], String) => RootPkg ?=> Unit
+  )(using root: RootPkg): Unit = {
     val parents = pkg.parents
-    walkWithPath(pkg, parents, canonicalName(pkg.name, parents), f)(using root, logger)
+    walkWithPath(pkg, parents, canonicalName(pkg.name, parents), f)(using root)
   }
 
   private def walkWithPath(
     pkg: Pkg,
     parents: List[Pkg],
     path: String,
-    f: (FileNode, List[Pkg], String) => (RootPkg, Logger) ?=> Unit
-  )(using root: RootPkg, logger: Logger): Unit = {
+    f: (FileNode, List[Pkg], String) => RootPkg ?=> Unit
+  )(using root: RootPkg): Unit = {
     val newParents = pkg :: parents
     val newPath = path + pkg.name
     pkg.subPkgs.foreach { p =>
-      PackageUtil.walkWithPath(p, newParents, newPath, f)(using root, logger)
+      PackageUtil.walkWithPath(p, newParents, newPath, f)(using root)
     }
     try {
       pkg.files.foreach(f(_, newParents, newPath))

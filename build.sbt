@@ -6,7 +6,7 @@ val verityVersion = "0.1.0"
 name := projectName
 ThisBuild / version := verityVersion
 ThisBuild / organization := "com.ysthakur"
-// scalaVersion in ThisBuild := scala3version
+//ThisBuild / scalaVersion := scala3version
 Compile / mainClass := Some("Main")
 // run / mainClass := Some("Main")
 
@@ -43,7 +43,7 @@ lazy val `verity-ast` = project
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= commonLibs3
-  ).dependsOn(`verity-common`)
+  ) //.dependsOn(`verity-common`)
 
 lazy val `verity-parser` =project
   .in(file("verity-parser"))
@@ -89,7 +89,7 @@ lazy val `verity-core` = project
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= (Seq(
       "org.typelevel" %% "cats-core" % "2.5.0",
-      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
+//      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
     ) ++ commonLibs3)
   ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`, `verity-read-bytecode`)
 
@@ -98,6 +98,7 @@ lazy val commonLibs3 = Seq(
   "junit" % "junit" % "4.11" % Test,
   "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
   "com.novocode" % "junit-interface" % "0.11" % "test",
+  "org.scala-lang" %% "scala3-library" % scala3version
 )
 
 val commonScala2Options = Seq(
@@ -119,5 +120,5 @@ val commonScala3Options = Seq(
   "-Xfatal-warnings",
   "-Yexplicit-nulls",
   // "-explain",
-  "-Ycheck-init", //will be "-Ysafe-init"
+  "-Ycheck-init", //"-Ysafe-init"
 )

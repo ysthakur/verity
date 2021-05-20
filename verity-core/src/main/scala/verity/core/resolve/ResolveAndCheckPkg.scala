@@ -9,7 +9,7 @@ import verity.core._
 import verity.util._
 import cats.implicits._
 import cats.catsInstancesForId
-import com.typesafe.scalalogging.Logger
+//import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable.{ArrayBuffer, HashMap}
 
@@ -18,8 +18,8 @@ import scala.collection.mutable.{ArrayBuffer, HashMap}
   * @param parentPkgs A list of this package's parents (topmost packages at the end)
   * @param logger The logger to use
   */
-def resolveAndCheck(root: RootPkg)(using logger: Logger): Unit =
-  verity.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root, logger)
+def resolveAndCheck(root: RootPkg): Unit =
+  verity.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root)
 
 /** Resolve all references to classes and type parameters in a file
   * @param file The file to work on
@@ -31,7 +31,7 @@ private def resolveAndCheckFile(
   file: FileNode,
   parentPkgs: List[Pkg],
   pkgName: String
-)(using rootPkg: RootPkg, logger: Logger): Unit = {
+)(using rootPkg: RootPkg): Unit = {
   val currPkg = parentPkgs.head
   val FileNode(name, pkgRef, imports, classlikes, jFile) = file
 

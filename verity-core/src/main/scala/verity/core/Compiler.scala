@@ -7,7 +7,7 @@ import verity.codegen.OutputJava
 import verity.util._
 import verity.parser.Parser
 import verity.readbytecode.ReadBytecode
-import com.typesafe.scalalogging.Logger
+//import com.typesafe.scalalogging.Logger
 
 import java.io.{File, FileFilter, FileInputStream}
 import java.nio.file.{Files, Path, Paths}
@@ -15,7 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object Compiler {
   def compile(pkgs: Iterable[File], files: Iterable[File], options: Options): Unit = {
-    given Logger = Logger(".")
+//    given Logger = Logger(".")
     given rootPkg: RootPkg = RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
 
     //Load JDK classes such as java.lang.Object
@@ -39,13 +39,13 @@ object Compiler {
     pkgs: Iterable[File],
     files: Iterable[File],
     parent: Pkg
-  )(using logger: Logger): Unit = {
+  ): Unit = {
     parent.files ++= files
       .map { file =>
         Parser.parseFile(file.getName.unsafeNN, file) match {
           case e @ Left((errorMsg, offset)) =>
             //todo
-            logger.error(s"Error while parsing ${file.getName.unsafeNN}: $errorMsg")
+            println(s"Error while parsing ${file.getName.unsafeNN}: $errorMsg")
             e
           case s => s
         }

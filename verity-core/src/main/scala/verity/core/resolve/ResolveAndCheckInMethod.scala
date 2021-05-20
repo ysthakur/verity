@@ -7,7 +7,7 @@ import verity.core.Context.Defs
 
 import cats.data.{OptionT, Writer}
 import cats.implicits._
-import com.typesafe.scalalogging.Logger
+//import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 

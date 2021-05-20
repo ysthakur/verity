@@ -7,7 +7,7 @@ import verity.core.Context.Defs
 import verity.core.resolve.ReferenceResolve
 import verity.core._
 import verity.ast.Pkg.Importable
-import com.typesafe.scalalogging.Logger
+//import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 
@@ -19,7 +19,7 @@ object InitialPass {
     * @param parentPkgs A list of this package's parents (in reverse)
     * @param logger The logger to use
     */
-  def initialPass(root: RootPkg)(using logger: Logger): Unit = {
+  def initialPass(root: RootPkg): Unit = {
     given RootPkg = root
     verity.core.PackageUtil.walkWithPath(
       root,
@@ -37,7 +37,7 @@ object InitialPass {
     file: FileNode,
     parentPkgs: List[Pkg],
     pkgName: String
-  )(using rootPkg: RootPkg, logger: Logger): Unit = {
+  )(using rootPkg: RootPkg): Unit = {
     val currPkg = parentPkgs.head
     val FileNode(name, pkgRef, imports, _, _) = file
 
@@ -108,7 +108,7 @@ object InitialPass {
     clsRefs: Defs[Classlike],
     pkgRefs: Defs[Pkg],
     file: FileNode
-  )(using logger: Logger): Iterable[CompilerMsg] = {
+  ): Iterable[CompilerMsg] = {
     cls match {
       case c: HasCtors if c.ctors.isEmpty => c.addCtor(Constructor.defaultCtor(c))
       case _                              =>
@@ -138,7 +138,7 @@ object InitialPass {
     pkgRefs: Defs[Pkg],
     cls: Classlike,
     file: FileNode
-  )(using Logger): Iterable[CompilerMsg] = {
+  ): Iterable[CompilerMsg] = {
     val isCtor = mthd.isInstanceOf[Constructor]
     given Context = Context(
       cls.fields.view.map(f => f.name -> f).toMap,
@@ -207,13 +207,13 @@ object InitialPass {
   private[verity] def resolveImports(
     imports: Iterable[ImportStmt],
     file: FileNode
-  )(using rootPkg: RootPkg, logger: Logger): Iterable[(String, Importable, ImportStmt)] =
+  )(using rootPkg: RootPkg): Iterable[(String, Importable, ImportStmt)] =
     imports.view.flatMap { case imptStmt @ ImportStmt(DotPath(dotPath), _, wildcard) =>
       val path = dotPath.view.map(_._1)
       Pkg
         .findImptableAbs(path)
         .fold {
-          logger.error(s"Not found $dotPath")
+          LogUtils.log(errorMsg(s"Not found $dotPath", imptStmt), file)
           Nil
         } { impt =>
           if !wildcard then {
@@ -226,7 +226,7 @@ object InitialPass {
               case cls: Classlike =>
                 cls.importableChildren.map(c => (c.name, c, imptStmt))
               case _ =>
-                LogUtils.logMsg(s"Cannot import members of ${impt.name}", imptStmt, file)
+                LogUtils.log(errorMsg(s"Cannot import members of ${impt.name}", imptStmt), file)
                 Nil
             }
           }
