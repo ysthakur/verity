@@ -194,8 +194,8 @@ case class MethodCall(
 /** A constructor call that has been resolved
   * @param cls The class this is trying to construct
   */
-case class CtorCall(
-  cls: ClassRef,
+class CtorCall(
+  val cls: ClassRef,
   valArgs: ArgList,
   typeArgs: Option[TypeArgList],
   givenArgs: Option[ArgList],
@@ -203,7 +203,7 @@ case class CtorCall(
   typ: Type,
   resolved: Method,
   newKeywordInd: Int
-) extends Expr {
+) extends MethodCall(Some(cls), Text("<init>"), valArgs, typeArgs, givenArgs, proofArgs, typ, resolved) {
   override def text: String = cls.text
     + typeArgs.fold("")(_.text)
     + valArgs.text

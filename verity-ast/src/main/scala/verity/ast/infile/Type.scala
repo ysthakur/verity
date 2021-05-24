@@ -37,6 +37,25 @@ object Type {
   }
 
   def equal(t1: Type, t2: Type): Boolean = ???
+
+  /** Fill in type arguments
+    * @param params The type parameters to a class or method
+    * @param typeArgs The values of those type parameters
+    * @param typ A type that uses references to type parameters `params`
+    */
+  def fillArgs(params: Iterable[TypeParam], typeArgs: Iterable[Type])(typ: Type): Type = {
+    //Keys are parameters, values are arguments
+    val argMap = params.lazyZip(typeArgs).toMap
+    def helper(typ: Type): Type = typ match {
+      case typeRef: ResolvedTypeRef =>
+        typeRef.copy(args = typeRef.args.copy(args = typeRef.args.args.map(helper)))
+      case arrayType: ArrayType =>
+        arrayType.copy(elemType = helper(arrayType.elemType))
+      case _ => typ
+    }
+
+    helper(typ)
+  }
 }
 
 // given ToJava[AnyType.type] = _ => "Type Any"
@@ -164,11 +183,18 @@ case class ResolvedTypeRef(
       ResolvedOrUnresolvedTypeRef {
   //todo deal with wildcards
   override def strictSubTypeOf(sup: Type): Boolean = sup match {
-    case ResolvedTypeRef(_, _, typeDef2) => typeDef.strictSubTypeDefOf(typeDef2)
-    case _                               => false
+    case ResolvedTypeRef(_, _, typeDef2) =>
+      // typeDef.strictSubTypeDefOf(typeDef2)
+      typeDef != typeDef2 &&
+        typeDef.superTypes
+          .map(Type.fillArgs(typeDef.typeParams.params, args.args))
+          .exists(_.subTypeOf(sup))
+    case _ => false
   }
   override def strictSuperTypeOf(sub: Type): Boolean = sub match {
-    case ResolvedTypeRef(_, _, typeDef2) => typeDef2.strictSubTypeDefOf(typeDef)
+    case ResolvedTypeRef(_, _, typeDef2) =>
+      // typeDef2.strictSubTypeDefOf(typeDef)
+      sub.strictSubTypeOf(this)
     case _                               => false
   }
 

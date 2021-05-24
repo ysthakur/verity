@@ -138,7 +138,7 @@ private def resolveAndCheckExpr(
 
 private def resolveUnresolvedCtorCall(ctorCall: ur.UnresolvedCtorCall)(using ctxt: Context): ResolveResult[Expr] = {
   ReferenceResolve.resolveCls(ctorCall.cls.path, ctxt.typeDefs, ctxt.pkgDefs).flatMap { cls =>
-    ctorCall.typ = cls
+    ctorCall.typ = cls.makeRef
 
     resolveUnresolvedMethodCall(
       ctorCall,

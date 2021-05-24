@@ -36,15 +36,24 @@ private[verity] object ReferenceResolve {
     val typeArgsRange = typ.args.textRange
     val resolvedCls = resolveCls(typ.path, typeDefs, pkgDefs).value
 
+    var lastAcc = Writer(List.empty[CompilerMsg], true -> List.empty[Type])
+
     //A writer where the value is a tuple (areAllArgsResolved?, resolvedArgsInReverse)
     val resolvedArgs: ResultWithLogs[(Boolean, List[Type])] =
-      typ.args.args.foldLeft(Writer(List.empty[CompilerMsg], true -> List.empty[Type])) {
-        (acc, arg) =>
-          acc.flatMap { case allResolved -> prev =>
-            resolveTypeIfNeeded(arg, typeDefs, pkgDefs)
-              .map(typ => allResolved -> (typ :: prev))
-              .getOrElse(false -> (arg :: prev))
-          }
+      try {
+        typ.args.args.foldLeft(Writer(List.empty[CompilerMsg], true -> List.empty[Type])) {
+          (acc, arg) =>
+            val foo: Writer[List[CompilerMsg], (Boolean, List[Type])] = acc.flatMap {
+              (allResolved, prev) =>
+                resolveTypeIfNeeded(arg, typeDefs, pkgDefs)
+                  .map(typ => allResolved -> (typ :: prev))
+                  .getOrElse(false -> (arg :: prev))
+            }
+            lastAcc = foo
+            foo.asInstanceOf[Writer[List[CompilerMsg], (Boolean, List[Type])]]
+        }
+      } catch {
+        case e => throw new Error(s"lastAcc=$lastAcc,typ=${typ.path.map(_.text)}", e)
       }
 
     OptionT(
@@ -56,8 +65,7 @@ private[verity] object ReferenceResolve {
         _ <- Writer.tell(
           //Log errors with the arguments if the class is resolved
           maybeCls.fold(Nil)(cls =>
-            verity.checks.CheckTypes
-              .checkTypeArgs(args, cls.typeDef.typeParams.params, typeArgsRange)
+            verity.checks.CheckTypes.checkTypeArgs(args, cls.typeParams.params, typeArgsRange)
           )
         )
         argList = TypeArgList(args, typ.args.textRange)
@@ -65,9 +73,9 @@ private[verity] object ReferenceResolve {
           Some(
             //Only return a ResolvedTypeRef if the class and all arguments are resolved
             if (allResolved && maybeCls.nonEmpty)
-              ResolvedTypeRef(typ.path, argList, maybeCls.get.typeDef)
+              ResolvedTypeRef(typ.path, argList, maybeCls.get)
             else
-              UnresolvedTypeRef(typ.path, argList, maybeCls.map(_.typeDef))
+              UnresolvedTypeRef(typ.path, argList, maybeCls)
           )
         )
       } yield res
@@ -75,11 +83,14 @@ private[verity] object ReferenceResolve {
 
   }
 
+  def mergeResults[T](results: List[ResultWithLogs[T]]): ResultWithLogs[List[T]] =
+    results.traverse(Predef.identity)
+
   def resolveCls(
     path: Seq[Text],
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg]
-  ): ResolveResult[ResolvedTypeRef] = {
+  ): ResolveResult[Classlike] = {
     val head +: tail = path
     typeDefs.find(_._1 == head.text) match {
       case Some((_, cls: Classlike)) =>
@@ -93,9 +104,6 @@ private[verity] object ReferenceResolve {
         }
     }
   }
-
-  def mergeResults[T](results: List[ResultWithLogs[T]]): ResultWithLogs[List[T]] =
-    results.traverse(Predef.identity)
 
   private[verity] def findField(typ: Type, fieldName: String): Option[Field] =
     typ.fields.find(_.name == fieldName)
@@ -125,7 +133,7 @@ private[verity] object ReferenceResolve {
     prev: Pkg,
     prevPath: List[Text],
     path: Seq[Text]
-  ): ResolveResult[ResolvedTypeRef] = path match {
+  ): ResolveResult[Classlike] = path match {
     case head +: tail =>
       prev.classlikes.find(_.name == head.text) match {
         case Some(cls) =>
@@ -156,9 +164,9 @@ private[verity] object ReferenceResolve {
     prev: Classlike,
     prevPath: List[Text],
     path: Seq[Text]
-  ): ResolveResult[ResolvedTypeRef] = path match {
+  ): ResolveResult[Classlike] = path match {
     case head +: tail => singleMsg(errorMsg("No inner classes yet", head.textRange))
-    case _            => OptionT(Writer(Nil, Some(prev.makeRef(prevPath.reverse))))
+    case _            => OptionT(Writer(Nil, Some(prev)))
   }
 
   @tailrec

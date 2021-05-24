@@ -1,13 +1,12 @@
 package com;
 
-// import java.util.ArrayList;
-// import java.util.*;
+//import java.lang.*;
 
 class Test {
   int foobar = 5;
 
   public Test(int foo) {
-    short bar = foo;
+    int bar = foo;
     boolean baz = isEven(bar);
     Test blah = new Test(bar);
     java.lang.String foo = "foo";
