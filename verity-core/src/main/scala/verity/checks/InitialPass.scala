@@ -45,6 +45,7 @@ object InitialPass {
 
     val resolvedImports = resolveImports(imports, file)
 
+    println(s"resolvedimports=$resolvedImports")
     val pkgMap = mutable.HashMap[String, Pkg]()
     val clsMap = mutable.HashMap[String, Classlike]()
 

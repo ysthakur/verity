@@ -1,6 +1,6 @@
 val projectName = "verity"
-val scala3version = "3.0.0-RC1"
-val scala2version = "2.13.5"
+val scala3version = "3.0.0"
+val scala2version = "2.13.6"
 val verityVersion = "0.1.0"
 
 name := projectName
@@ -88,7 +88,7 @@ lazy val `verity-core` = project
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= (Seq(
-      "org.typelevel" %% "cats-core" % "2.5.0",
+      "org.typelevel" %% "cats-core" % "2.6.1",
 //      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
     ) ++ commonLibs3)
   ).dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`, `verity-read-bytecode`)
@@ -120,5 +120,5 @@ val commonScala3Options = Seq(
   "-Xfatal-warnings",
   "-Yexplicit-nulls",
   // "-explain",
-  "-Ycheck-init", //"-Ysafe-init"
+  //"-Ycheck-init", //"-Ysafe-init"
 )

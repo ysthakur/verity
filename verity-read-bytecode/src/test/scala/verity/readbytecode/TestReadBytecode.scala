@@ -10,22 +10,34 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 
 class TestReadBytecode {
+  var homePath: String = _
+  var jdkPath: String = _
+  
+
+  @Before def findOS(): Unit = {
+    val os = System.getProperty("os.name")
+    val isWindows = os.startsWith("Windows")
+    homePath = if (isWindows) "C:/Users/yasht" else "~" 
+    jdkPath = if (isWindows) """C:/"Program Files"/Java/jdk-11.0.8""" else "/usr/lib/jvm/default-java"
+  } 
+
+
   @Test def readClassfile(): Unit = {
     val file =
-      java.io.File("C:/Users/yasht/verity/verity-read-bytecode/src/test/resources/TestASM.class")
+      java.io.File(s"$homePath/verity/verity-read-bytecode/src/test/resources/TestASM.class")
     val rootPkg = verity.ast.RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
     ReadBytecode.readClassFile(rootPkg, file)
   }
 
   @Test def readJar(): Unit = {
-    val file = java.io.File(raw"C:\Program Files\Java\jdk-11.0.8\lib\jrt-fs.jar")
+    val file = java.io.File(s"$jdkPath/lib/jrt-fs.jar")
     val rootPkg = verity.ast.RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
     ReadBytecode.readJar(rootPkg, file)
   }
 
   @Test def readJdk(): Unit = {
     val rootPkg = verity.ast.RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
-    val p = Paths.get(raw"C:\Program Files\Java\jdk-11.0.8")
+    val p = Paths.get(jdkPath)
     ReadBytecode.readJdk(rootPkg, p, Seq("java.base"))
     assert(
       rootPkg.subPkgs

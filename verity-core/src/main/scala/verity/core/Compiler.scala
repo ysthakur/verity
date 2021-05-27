@@ -1,5 +1,7 @@
 package verity.core
 
+import scala.language.unsafeNulls
+
 import verity.ast._
 import verity.checks.InitialPass
 import verity.core.resolve
@@ -42,10 +44,10 @@ object Compiler {
   ): Unit = {
     parent.files ++= files
       .map { file =>
-        Parser.parseFile(file.getName.unsafeNN, file) match {
+        Parser.parseFile(file.getName, file) match {
           case e @ Left((errorMsg, offset)) =>
             //todo
-            println(s"Error while parsing ${file.getName.unsafeNN}: $errorMsg")
+            println(s"Error while parsing ${file.getName}: $errorMsg")
             e
           case s => s
         }
@@ -53,20 +55,19 @@ object Compiler {
       .collect { case Right(file) => file }
 
     pkgs.foreach { pkg =>
-      val pkgNode = PkgNode(pkg.getName.unsafeNN, ArrayBuffer.empty, ArrayBuffer.empty, parent)
+      val pkgNode = PkgNode(pkg.getName, ArrayBuffer.empty, ArrayBuffer.empty, parent)
       parent.subPkgs += pkgNode
-
-      val (subPkgs, allFiles) = pkg
-        .listFiles((file => file.isDirectory || file.getName.endsWith(".verity")): FileFilter)
-        .unsafeNN
-        .view
+      
+      val foo  = pkg
+        .listFiles((file => file != null && (file.isDirectory || file.getName.endsWith(".verity"))): FileFilter)
+//        .view
         .partition(_.isDirectory)
 
-      println(s"subPkgs=$subPkgs, allFiles=$allFiles")
+//      println(s"subPkgs=$subPkgs, allFiles=$allFiles")
 
       parsePkg(
-        subPkgs.filterNotNull,
-        allFiles.filter(file => file != null && file.getName.endsWith(".verity")).removeNull,
+ ???,???, //      foo._1.filterNotNull,
+       // foo._2.filter(file => file != null && file.getName.endsWith(".verity")).removeNull,
         pkgNode
       )
     }
