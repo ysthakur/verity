@@ -1,6 +1,6 @@
 package verity.core
 
-import scala.language.unsafeNulls
+//import scala.language.unsafeNulls
 
 import verity.ast._
 import verity.checks.InitialPass
@@ -14,6 +14,7 @@ import verity.readbytecode.ReadBytecode
 import java.io.{File, FileFilter, FileInputStream}
 import java.nio.file.{Files, Path, Paths}
 import scala.collection.mutable.ArrayBuffer
+import java.io.FilenameFilter
 
 object Compiler {
   def compile(pkgs: Iterable[File], files: Iterable[File], options: Options): Unit = {
@@ -44,7 +45,7 @@ object Compiler {
   ): Unit = {
     parent.files ++= files
       .map { file =>
-        Parser.parseFile(file.getName, file) match {
+        Parser.parseFile(file.getName.unsafeNN, file) match {
           case e @ Left((errorMsg, offset)) =>
             //todo
             println(s"Error while parsing ${file.getName}: $errorMsg")
@@ -55,19 +56,24 @@ object Compiler {
       .collect { case Right(file) => file }
 
     pkgs.foreach { pkg =>
-      val pkgNode = PkgNode(pkg.getName, ArrayBuffer.empty, ArrayBuffer.empty, parent)
+      val pkgNode = PkgNode(pkg.getName.unsafeNN, ArrayBuffer.empty, ArrayBuffer.empty, parent)
       parent.subPkgs += pkgNode
-      
-      val foo  = pkg
-        .listFiles((file => file != null && (file.isDirectory || file.getName.endsWith(".verity"))): FileFilter)
-//        .view
-        .partition(_.isDirectory)
+
+      val foobar: File = pkg
+      val (subPkgs, allFiles) = foobar
+        .listFiles(new FilenameFilter {
+          override def accept(file: File, name: String) =
+            name.endsWith(".verity") || file.isDirectory
+        })
+        .unsafeNN
+        .view
+        .partition(_.unsafeNN.isDirectory)
 
 //      println(s"subPkgs=$subPkgs, allFiles=$allFiles")
 
       parsePkg(
- ???,???, //      foo._1.filterNotNull,
-       // foo._2.filter(file => file != null && file.getName.endsWith(".verity")).removeNull,
+        subPkgs.filterNotNull,
+        allFiles.asInstanceOf[Iterable[File]],
         pkgNode
       )
     }
