@@ -43,17 +43,14 @@ object InitialPass {
 
     verifyPkgStmt(pkgRef, pkgName, name)
 
-    val resolvedImports = resolveImports(imports, file)
+    val resolvedImports = resolveImports(imports, file).toSeq
 
-    println(s"resolvedimports=$resolvedImports")
     val pkgMap = mutable.HashMap[String, Pkg]()
     val clsMap = mutable.HashMap[String, Classlike]()
 
     //todo find a way to reduce code duplication
     pkgMap.addAll(rootPkg.subPkgs.view.map(p => p.name -> p))
     clsMap.addAll(currPkg.classlikes.map(c => c.name -> c))
-
-    println(s"imports = ${resolvedImports.toList.map(_._1)}, clsMap=${clsMap.keys}")
 
     file.resolvedImports = resolvedImports.map { case (name, imported, imptStmt) =>
       imported match {
@@ -75,7 +72,6 @@ object InitialPass {
               file
             )
           } else {
-            println(s"Can import cls $name")
             clsMap += name -> cls
           }
       }

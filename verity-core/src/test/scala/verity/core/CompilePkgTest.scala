@@ -9,20 +9,20 @@ import org.junit.{Assert, Test, Before}
 
 import java.io.File
 
-class ParsePkgTest {
-  val testDir = raw"C:\Users\yasht\verity\verity-core\src\test\"
-  val srcDir = File(testDir + "src")
+class CompilePkgTest {
+  val testDir = File(Seq("verity-core", "src", "test").mkString(File.separator.unsafeNN))
+  val srcDir = File(testDir, "resources")
   val jdkPath = System.getProperty("JAVA_HOME", raw"C:\Program Files\Java\jdk-11.0.5").unsafeNN
 
   @Before def setup() = {
     assert(srcDir.exists)
   }
 
-  @Test def parsePackageTest() = {
+  @Test def compilePackageTest() = {
     val options = Options(
       jdkDir = jdkPath,
       modulesToRead = Seq("java.base"),
-      javaOutputDir = File(testDir + "javaOutput")
+      javaOutputDir = File(testDir, "javaOutput")
     )
     // val srcDirChildren = srcDir.listFiles.asInstanceOf[Array[File]]
 
