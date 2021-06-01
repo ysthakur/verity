@@ -55,24 +55,25 @@ private object Exprs {
    * A constructor call in the form `new Foo.Bar<Type, Arguments>(other, arguments)`
    * TODO use negative lookahead instead of requiring a space after `new`
    */
-  def ctorCall[_: P]: P[UnresolvedCtorCall] = P("new " ~/ Index ~ multiDotRef ~ typeArgList.? ~ methodArgList).map {
-    case (newTokEnd, classPath, typeArgs, valArgs) => new UnresolvedCtorCall(
-      classPath,
-      valArgs,
-      typeArgs,
-      None,
-      None,
-      newTokEnd - 4
-    )
-  }
+  def ctorCall[_: P]: P[UnresolvedCtorCall] =
+    P("new " ~/ Index ~ multiDotRef ~ typeArgList.? ~ valArgList ~ givenArgList.? ~ proofArgList.?).map {
+      case (newTokEnd, classPath, typeArgs, valArgs, givenArgs, proofArgs) => new UnresolvedCtorCall(
+        classPath,
+        valArgs,
+        typeArgs,
+        givenArgs,
+        proofArgs,
+        newTokEnd - 4
+      )
+    }
 
   //TODO parse given and proof arguments!!!
   /**
    * A method call without a caller (method is either in same class or is imported), e.g. `foo(bar, baz)`.
    */
   def noObjMethodCall[_: P]: P[UnresolvedMethodCall] =
-    P(typeArgList ~ identifierText ~ methodArgList).map { case (typeArgs, name, args) =>
-      UnresolvedMethodCall(None, name, args, Some(typeArgs), None, None)
+    P(typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).map { case (typeArgs, name, valArgs, givenArgs, proofArgs) =>
+      UnresolvedMethodCall(None, name, valArgs, Some(typeArgs), givenArgs, proofArgs)
     }
 
   /**
@@ -80,16 +81,16 @@ private object Exprs {
    */
   def varRefOrMethodCall[_: P]: P[RoUExpr] =
     P(
-        identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList.? ~ identifierText ~ methodArgList).?
+        identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList.? ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).?
     ).map {
-      case (first, rest, Some((typeArgs, name, valArgs))) =>
+      case (first, rest, Some((typeArgs, name, valArgs, givenArgs, proofArgs))) =>
         UnresolvedMethodCall(
           Some(MultiDotRef(first +: rest)),
           name,
           valArgs,
           typeArgs,
-          None,
-          None
+          givenArgs,
+          proofArgs
         )
       case (first, rest, None) => MultiDotRefExpr(first +: rest)
     }
@@ -103,33 +104,33 @@ private object Exprs {
     */
   def fieldAccessOrMethodCall[_: P]: P[RoUExpr => RoUExpr] =
     P(
-        "." ~ identifierText ~/ methodArgList.?
+        "." ~ identifierText ~/ (valArgList ~/ givenArgList.? ~ proofArgList.?).?
     ).map {
-      case (name, Some(args)) =>
+      case (name, Some((valArgs, givenArgs, proofArgs))) =>
         obj =>
           new UnresolvedMethodCall(
             Some(obj),
             name,
-            args,
+            valArgs,
             None,
-            None,
-            None
+            givenArgs,
+            proofArgs
           )
       case (name, _) =>
         prev => UnresolvedFieldAccess(prev, name)
     }
 
   def typeParamsFirstMethodCall[_: P]: P[HasTextRange => RoUExpr] = P(
-      "." ~ typeArgList ~ identifierText ~ methodArgList
-  ).map { case (typeArgs, name, valArgs /*, givenArgs*/ ) =>
+      "." ~ typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?
+  ).map { case (typeArgs, name, valArgs, givenArgs, proofArgs) =>
     caller =>
       UnresolvedMethodCall(
         Some(caller),
         name,
         valArgs,
         Some(typeArgs),
-        None,
-        None
+        givenArgs,
+        proofArgs
       )
   }
   def arrayAccess[_: P]: P[RoUExpr => RoUExpr] = P("[" ~/ Index ~ expr ~ "]" ~ Index).map {
@@ -200,10 +201,23 @@ private object Exprs {
     }
   }
 
-  def methodArgList[_: P]: P[UnresolvedArgList] =
+  def valArgList[_: P]: P[UnresolvedArgList] =
     P("(" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
       case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Normal, TextRange(start, end))
       case (start, Some((firstArg, args)), end) =>
         UnresolvedArgList(firstArg :: args.toList, ArgsKind.Normal, TextRange(start, end))
+    }
+  //TODO make sure the character after "given" isn't a unicode identifier part
+  def givenArgList[_: P]: P[UnresolvedArgList] =
+    P("(" ~ "given" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
+      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Given, TextRange(start, end))
+      case (start, Some((firstArg, args)), end) =>
+        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Given, TextRange(start, end))
+    }
+  def proofArgList[_: P]: P[UnresolvedArgList] =
+    P("(" ~ "proof" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
+      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Proof, TextRange(start, end))
+      case (start, Some((firstArg, args)), end) =>
+        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Proof, TextRange(start, end))
     }
 }

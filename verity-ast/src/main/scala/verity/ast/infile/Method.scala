@@ -117,10 +117,14 @@ case class Parameter(
   def name: String = paramName.text
 }
 
-case class ParamList(params: List[Parameter], override val textRange: TextRange)
+case class ParamList(params: List[Parameter], override val textRange: TextRange, kind: ParamListKind = ParamListKind.NORMAL)
     extends Tree,
       HasTextRange {
   override def text: String = HasText.seqText(params, ",", "(", ")")
+}
+
+enum ParamListKind {
+  case NORMAL, GIVEN, PROOF
 }
 
 given Empty[ParamList] with

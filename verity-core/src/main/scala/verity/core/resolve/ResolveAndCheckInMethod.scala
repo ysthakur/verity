@@ -114,7 +114,6 @@ private def resolveAndCheckExpr(
     case _ =>
       singleMsg(errorMsg(s"aahh!! $expr wrong type!!! ${expr.getClass}", expr))
   }
-//  logger.debug(s"resolved ${resolved.map(_.text)}, expected: ${expectedType.text}")
 
   resolved.flatMap { expr =>
     if (
@@ -123,12 +122,9 @@ private def resolveAndCheckExpr(
       /*println(
         s"${expr.typ == expectedType}, ${expr.typ}, $expectedType, ${expectedType.getClass}, ${expr.typ.getClass}"
       )*/
-      singleMsg(
-        errorMsg(
-          s"${expr.text} is of wrong type: found ${expr.typ.text} (${expr.typ.getClass}), expected ${expectedType.text} (${expectedType.getClass})",
-          expr
-        )
-      )
+      val msg =
+        s"${expr.text} is of wrong type: found ${expr.typ.text}, expected ${expectedType.text}" 
+      singleMsg(errorMsg(msg, expr))
     } else {
       println(s"Type matched for ${expr.text}: ${expr.typ.text}!")
       OptionT.some(expr)

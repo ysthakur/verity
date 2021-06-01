@@ -143,7 +143,6 @@ private def resolveAndCheckMthd(
   cls: Classlike,
   file: FileNode
 ): List[CompilerMsg] = {
-//  println(s"Resolving method ${mthd.name},returntype=${mthd.returnType.text}")
   val isCtor = mthd.isInstanceOf[Constructor]
 
   if (file.isSource) {

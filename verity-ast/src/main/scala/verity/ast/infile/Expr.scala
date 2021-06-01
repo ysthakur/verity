@@ -223,8 +223,8 @@ case class ArgList(args: List[Expr], argsKind: ArgsKind, override val textRange:
 
 enum ArgsKind {
   case Normal
-  case Given(textRange: TextRange)
-  case Proof(textRange: TextRange)
+  case Given
+  case Proof
 }
 
 class FieldAccess(obj: Expr, field: Field, fieldNameRange: TextRange) extends Expr {

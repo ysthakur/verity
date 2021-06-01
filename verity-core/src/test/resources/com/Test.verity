@@ -1,19 +1,19 @@
 package com;
 
-import java.lang.String;
-//import java.lang.*;
+//import java.lang.String;
+import java.lang.*;
 
 class Test {
   int foobar = 5;
 
   public Test(int foo) {
     int bar = foo;
-    boolean baz = isEven(bar);
+    boolean baz = isEven(bar)(given "barbaz");
     Test blah = new Test(bar);
-    java.lang.String foo = "foo";
+    String foo = "foo";
   }
 
-  public boolean isEven(int x) {
+  public boolean isEven(int x)(given String foo) {
     return x % 2 < 0; //operators aren't checked yet
   }
 
