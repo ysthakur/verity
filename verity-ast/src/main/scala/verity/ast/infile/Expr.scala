@@ -41,7 +41,7 @@ enum FloatingLiteral(typ: PrimitiveType) extends NumLiteral(typ) {
 }
 
 case class StringLiteral(text: String, override val textRange: TextRange) extends Expr {
-  val typ: Type = BuiltinTypes.stringType
+  val typ: Type = BuiltinTypes.stringTypeDef.makeRef
 }
 
 class ThisRef(val cls: Classlike, override val textRange: TextRange) extends Expr {

@@ -7,10 +7,10 @@ import scala.collection.mutable.ArrayBuffer
 trait Methodlike extends NamedTree {
   def returnType: Type
   def name: String
-  def params: ParamList
+  var params: ParamList
   def typeParams: TypeParamList
-  def givenParams: Option[ParamList]
-  def proofParams: Option[ParamList]
+  var givenParams: Option[ParamList]
+  var proofParams: Option[ParamList]
 
   def nameRange: TextRange
   def body: Option[Block] //Option[Block|Expr]
@@ -38,9 +38,9 @@ class NormMethod(
   val typeParams: TypeParamList,
   private[this] var _returnType: Type,
   val methodName: Text,
-  val params: ParamList,
-  val givenParams: Option[ParamList],
-  val proofParams: Option[ParamList],
+  var params: ParamList,
+  var givenParams: Option[ParamList],
+  var proofParams: Option[ParamList],
   val thrownExceptions: Iterable[Type],
   val body: Option[Block]
 ) extends Method {
@@ -59,9 +59,9 @@ class Constructor(
   val modifiers: ArrayBuffer[Modifier],
   val name: String,
   val nameRange: TextRange,
-  val params: ParamList,
-  val givenParams: Option[ParamList],
-  val proofParams: Option[ParamList],
+  var params: ParamList,
+  var givenParams: Option[ParamList],
+  var proofParams: Option[ParamList],
   val thrownExceptions: Iterable[Type],
   _body: Block,
   private[this] var _cls: () => HasCtors

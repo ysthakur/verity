@@ -61,8 +61,8 @@ object Type {
 // given ToJava[AnyType.type] = _ => "Type Any"
 
 object BuiltinTypes {
-  private[verity] var objectType: Type = Type.placeholder
-  private[verity] var stringType: Type = Type.placeholder
+  private[verity] var objectTypeDef: TypeDef = TypeDef.placeholder
+  private[verity] var stringTypeDef: TypeDef = TypeDef.placeholder
 
   def refreshBuiltins(rootPkg: RootPkg): Unit = {
     for {
@@ -71,12 +71,12 @@ object BuiltinTypes {
     } {
       println("found package java.lang!")
       lang.classlikes.find(_.name == "Object").foreach { objectClsDef =>
-        this.objectType = objectClsDef.makeRef
+        this.objectTypeDef = objectClsDef
         println("reset java.lang.Object!")
       }
 
       lang.classlikes.find(_.name == "String").foreach { stringClsDef =>
-        this.stringType = stringClsDef.makeRef
+        this.stringTypeDef = stringClsDef
         println("reset String!")
       }
     }
@@ -87,7 +87,7 @@ object BuiltinTypes {
 
 object NothingType extends Type, Synthetic {
   override def strictSubTypeOf(sup: Type) = false
-  override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectType
+  override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectTypeDef.makeRef
 
   //todo figure out how to deal with this
   override def superTypes: Iterable[Type] = Nil
@@ -252,8 +252,8 @@ case class Wildcard(upper: Option[ResolvedTypeRef], lower: Option[ResolvedTypeRe
   override def strictSubTypeOf(sup: Type): Boolean = upper.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = lower.fold(false)(_.strictSuperTypeOf(sub))
 
-  override def fields: Iterable[Field] = upper.fold(BuiltinTypes.objectType.fields)(_.fields)
-  override def methods: Iterable[Method] = upper.fold(BuiltinTypes.objectType.methods)(_.methods)
+  override def fields: Iterable[Field] = upper.fold(BuiltinTypes.objectTypeDef.makeRef.fields)(_.fields)
+  override def methods: Iterable[Method] = upper.fold(BuiltinTypes.objectTypeDef.makeRef.methods)(_.methods)
 
   override def superTypes: Iterable[Type] = upper.fold(Nil)(_.superTypes)
 
@@ -268,9 +268,9 @@ case class ArrayType(elemType: Type, private[this] val bracketRange: TextRange) 
   )
   override def methods: Iterable[Method] = List()
 
-  override def superTypes: Iterable[Type] = BuiltinTypes.objectType :: Nil
+  override def superTypes: Iterable[Type] = BuiltinTypes.objectTypeDef.makeRef :: Nil
 
-  override def strictSubTypeOf(sup: Type): Boolean = sup == BuiltinTypes.objectType
+  override def strictSubTypeOf(sup: Type): Boolean = sup == BuiltinTypes.objectTypeDef.makeRef
   override def strictSuperTypeOf(sub: Type): Boolean = false
 
   override def text = s"${elemType.text}[]"

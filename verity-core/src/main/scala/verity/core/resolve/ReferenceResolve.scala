@@ -12,6 +12,19 @@ import cats.catsInstancesForId
 import scala.annotation.tailrec
 
 private[verity] object ReferenceResolve {
+  def resolveParamList(paramList: ParamList)(using ctxt: Context): ResultWithLogs[ParamList] =
+    resolveParams(paramList.params).map(newParams => paramList.copy(params=newParams))
+  
+  def resolveParams(params: Iterable[Parameter])(using ctxt: Context): ResultWithLogs[List[Parameter]] =
+    params.foldLeft(Writer(List.empty, List.empty): ResultWithLogs[List[Parameter]]){(acc, origParam) =>
+      for {
+        prevParams <- acc
+        newParam <- resolveTypeIfNeeded(origParam.typ).map(newType => origParam.copy(typ=newType)).getOrElse(origParam)
+      } yield {
+        newParam :: prevParams
+      }
+    }.map(_.reverse)
+  
   def resolveTypeIfNeeded(typ: Type)(using ctxt: Context): ResolveResult[Type] =
     resolveTypeIfNeeded(typ, ctxt.typeDefs, ctxt.pkgDefs)
 

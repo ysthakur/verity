@@ -145,7 +145,7 @@ case class EnumDef(
   def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
 
   override def superTypes: Iterable[Type] =
-    BuiltinTypes.objectType +: superInterfaces.map(_.resolved.get.makeRef)
+    BuiltinTypes.objectTypeDef.makeRef +: superInterfaces.map(_.resolved.get.makeRef)
 
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} enum $name { ${methods.mkString(" ")}}"

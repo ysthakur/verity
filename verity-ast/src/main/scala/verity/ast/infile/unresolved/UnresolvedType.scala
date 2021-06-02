@@ -47,8 +47,8 @@ case class UnresolvedWildcard(upper: Option[Type], lower: Option[Type]) extends 
   override def strictSubTypeOf(sup: Type): Boolean = upper.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = lower.fold(false)(_.strictSuperTypeOf(sub))
 
-  override def fields: Iterable[Field] = upper.fold(BuiltinTypes.objectType.fields)(_.fields)
-  override def methods: Iterable[Method] = upper.fold(BuiltinTypes.objectType.methods)(_.methods)
+  override def fields: Iterable[Field] = upper.fold(BuiltinTypes.objectTypeDef.makeRef.fields)(_.fields)
+  override def methods: Iterable[Method] = upper.fold(BuiltinTypes.objectTypeDef.makeRef.methods)(_.methods)
 
   override def superTypes: Iterable[Type] = upper.fold(Nil)(_.superTypes)
 

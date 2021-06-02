@@ -94,7 +94,7 @@ private def resolveAndCheckExpr(
 
   val resolved: ResolveResult[Expr] = expr match {
     case ur.UnresolvedFieldAccess(obj, fieldName) =>
-      resolveAndCheckExpr(obj, BuiltinTypes.objectType).flatMap { owner =>
+      resolveAndCheckExpr(obj, BuiltinTypes.objectTypeDef.makeRef).flatMap { owner =>
         ReferenceResolve.findField(owner.typ, fieldName.text) match {
           case Some(field) => OptionT.some(FieldAccess(owner, field, fieldName.textRange))
           case None        => singleMsg(errorMsg(s"No such field ${fieldName.text}", fieldName))
@@ -123,7 +123,7 @@ private def resolveAndCheckExpr(
         s"${expr.typ == expectedType}, ${expr.typ}, $expectedType, ${expectedType.getClass}, ${expr.typ.getClass}"
       )*/
       val msg =
-        s"${expr.text} is of wrong type: found ${expr.typ.text}, expected ${expectedType.text}" 
+        s"${expr.text} is of wrong type: found ${expr.typ.text} (${expr.typ.getClass}), expected ${expectedType.text} (${expectedType.getClass})" 
       singleMsg(errorMsg(msg, expr))
     } else {
       println(s"Type matched for ${expr.text}: ${expr.typ.text}!")
@@ -162,7 +162,7 @@ private def resolveUnresolvedMethodCall(
   def resolveHelper(caller: Option[Expr | ClassRef]): ResolveResult[Expr] = {
     (caller match {
       case None              => OptionT(Writer(Nil, Some(ctxt.mthdDefs(mthdName).methods)))
-      case Some(e: Expr)     => resolveAndCheckExpr(e, BuiltinTypes.objectType).map(_.typ.methods)
+      case Some(e: Expr)     => resolveAndCheckExpr(e, BuiltinTypes.objectTypeDef.makeRef).map(_.typ.methods)
       case Some(c: ClassRef) => OptionT(Writer(Nil, Some(c.cls.methods)))
     }: ResolveResult[Iterable[Method]]).flatMap { allMthds =>
       //Filter based on name and number of parameters
@@ -175,7 +175,7 @@ private def resolveUnresolvedMethodCall(
   (mthdCall.objOrCls: @unchecked) match {
     case None => resolveHelper(None)
     case Some(e: Expr) =>
-      resolveAndCheckExpr(e, BuiltinTypes.objectType).flatMap(c => resolveHelper(Some(c)))
+      resolveAndCheckExpr(e, BuiltinTypes.objectTypeDef.makeRef).flatMap(c => resolveHelper(Some(c)))
     case Some(ur.MultiDotRef(path)) =>
       ReferenceResolve.resolveDotChainedRef(path).flatMap { caller => resolveHelper(Some(caller)) }
   }

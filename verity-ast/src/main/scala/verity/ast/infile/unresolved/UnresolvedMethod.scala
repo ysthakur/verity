@@ -10,9 +10,9 @@ trait UnresolvedMethod extends Method
 class UnresolvedConstructor(
   val modifiers: ArrayBuffer[Modifier],
   val ctorName: Text,
-  val params: ParamList,
-  val givenParams: Option[ParamList],
-  val proofParams: Option[ParamList],
+  var params: ParamList,
+  var givenParams: Option[ParamList],
+  var proofParams: Option[ParamList],
   private val _body: Block
 ) extends UnresolvedMethod {
   def typeParams: TypeParamList = ???
@@ -32,9 +32,9 @@ class UnresolvedNormalMethod(
   val typeParams: TypeParamList,
   private var _returnType: Type,
   val methodName: Text,
-  val params: ParamList,
-  val givenParams: Option[ParamList],
-  val proofParams: Option[ParamList],
+  var params: ParamList,
+  var givenParams: Option[ParamList],
+  var proofParams: Option[ParamList],
   val body: Option[Block]
 ) extends UnresolvedMethod {
   override def text =

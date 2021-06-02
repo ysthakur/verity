@@ -168,17 +168,38 @@ object InitialPass {
           errorMsg("Method requires abstract modifier or implementation", mthd.nameRange) :: Nil
         else Nil
     }
+
+    val resolvedParams = ReferenceResolve.resolveParamList(mthd.params)
+    mthd.params = resolvedParams.value
+    val valParamLogs = bodyRes ::: resolvedParams.written
+
+    val givenParamLogs = mthd.givenParams match {
+      case Some(givenParams) =>
+        val resolved = ReferenceResolve.resolveParamList(givenParams)
+        mthd.givenParams = Some(resolved.value)
+        valParamLogs ::: resolved.written
+      case None => valParamLogs
+    }
+
+    val proofParamLogs = mthd.proofParams match {
+      case Some(proofParams) =>
+        val resolved = ReferenceResolve.resolveParamList(proofParams)
+        mthd.proofParams = Some(resolved.value)
+        givenParamLogs ::: resolved.written
+      case None => givenParamLogs
+    }
+
     //TODO resolve return type
     mthd match {
       case nm: NormMethod =>
-        bodyRes ::: ReferenceResolve
+        proofParamLogs ::: ReferenceResolve
           .resolveTypeIfNeeded(mthd.returnType)
           .map { typ =>
             nm.returnType = typ
           }
           .value
           .written
-      case _ => bodyRes
+      case _ => proofParamLogs
     }
   }
 

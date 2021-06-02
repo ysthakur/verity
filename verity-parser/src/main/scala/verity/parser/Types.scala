@@ -51,7 +51,7 @@ object Types {
     case (name, nameRange, upper, lower) =>
       new TypeParam(
         name,
-        upper.getOrElse(BuiltinTypes.objectType),
+        upper.getOrElse(BuiltinTypes.objectTypeDef.makeRef),
         lower.getOrElse(NothingType),
         nameRange
       )
