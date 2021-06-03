@@ -41,7 +41,7 @@ enum FloatingLiteral(typ: PrimitiveType) extends NumLiteral(typ) {
 }
 
 case class StringLiteral(text: String, override val textRange: TextRange) extends Expr {
-  val typ: Type = BuiltinTypes.stringTypeDef.makeRef
+  def typ: Type = BuiltinTypes.stringTypeDef.makeRef
 }
 
 class ThisRef(val cls: Classlike, override val textRange: TextRange) extends Expr {
@@ -216,7 +216,7 @@ class CtorCall(
   )
 }
 
-case class ArgList(args: List[Expr], argsKind: ArgsKind, override val textRange: TextRange)
+case class ArgList(args: List[ResolvedOrUnresolvedExpr], argsKind: ArgsKind, override val textRange: TextRange)
     extends HasTextRange {
   override def text: String = args.view.map(_.text).mkString("(", ",", ")")
 }

@@ -19,8 +19,8 @@ object HasText {
   def seqText(
     iter: Iterable[HasText],
     sep: String = ",",
-    start: String = "(",
-    end: String = ")"
+    start: String = "",
+    end: String = ""
   ): String =
     iter.view.map(_.text).mkString(start, sep, end)
 

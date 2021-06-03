@@ -8,7 +8,8 @@ class Test {
 
   public Test(int foo) {
     int bar = foo;
-    boolean baz = isEven(bar)(given "barbaz");
+    given String xyzzy = "2567";
+    boolean baz = isEven(bar);
     Test blah = new Test(bar);
     String foo = "foo";
   }

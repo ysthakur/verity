@@ -144,3 +144,13 @@ case class MultiDotRefExpr(path: Seq[Text]) extends UnresolvedTypeExpr {
   override def text: String = path.view.map(_.text).mkString(".")
   override def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
 }
+
+/**
+ * A dummy variable declaration for when a given/proof argument can't be found
+ */
+case class UnresolvedImplicit(param: Parameter) extends UnresolvedExpr {
+  override def typ = param.typ
+
+  override def text = "Given/proof not found!"
+  override def textRange = TextRange.synthetic
+}

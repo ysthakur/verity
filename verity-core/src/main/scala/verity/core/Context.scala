@@ -5,13 +5,13 @@ import verity.ast.infile._
 import verity.core.Context.Defs
 
 type GivenDef = VariableDecl | Methodlike
-//type ProofDef = VariableDecl | Methodlike | Expr
+type ProofDef = VariableDecl | Methodlike | Expr
 
 case class Context(
   varDefs: Defs[VariableDecl],
   mthdDefs: Defs[MethodGroup],
-  givenDefs: Iterable[GivenDef],
-  proofDefs: Iterable[GivenDef],
+  givenDefs: List[GivenDef],
+  proofDefs: List[ProofDef],
   typeDefs: Defs[TypeDef],
   pkgDefs: Defs[Pkg],
   cls: Classlike,

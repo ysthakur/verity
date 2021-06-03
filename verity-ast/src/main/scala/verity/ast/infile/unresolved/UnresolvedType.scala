@@ -9,8 +9,7 @@ case class UnresolvedTypeRef(
   path: Seq[Text],
   args: TypeArgList,
   private[this] var _resolved: Option[TypeDef] = None
-) extends Type,
-      ResolvedOrUnresolvedTypeRef {
+) extends Type, ResolvedOrUnresolvedTypeRef, HasText, HasTextRange {
   override def fields: Iterable[Field] = resolved.fold(Nil)(_.fields)
 
   def resolved: Option[TypeDef] = _resolved
@@ -21,16 +20,17 @@ case class UnresolvedTypeRef(
 
   override def superTypes: Iterable[Type] = resolved.fold(Nil)(_.superTypes)
   override def strictSubTypeOf(sup: Type): Boolean =
+    println(s"unresolvedtyp $text")
     ??? //resolved.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean =
+    println(s"unresolvedtyp $text")
     ??? //resolved.fold(false){td => td.strictSuperTypeOf(sub)}
 
-  override def text: String = HasText.seqText(path, ".", "", "") + args.text
-
-  /*override def textRange: TextRange =
+  override def text: String = HasText.seqText(path, ".") + args.text
+  override def textRange: TextRange =
     if args.isEmpty || args.textRange.isSynthetic then
       TextRange(path.head.textRange.start, path.last.textRange.end)
-    else TextRange(path.head.textRange.start, args.textRange.end)*/
+    else TextRange(path.head.textRange.start, args.textRange.end)
 
   override def equals(other: Any): Boolean = other match {
     case tr: UnresolvedTypeRef =>

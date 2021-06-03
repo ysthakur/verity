@@ -13,18 +13,25 @@ import scala.annotation.tailrec
 
 private[verity] object ReferenceResolve {
   def resolveParamList(paramList: ParamList)(using ctxt: Context): ResultWithLogs[ParamList] =
-    resolveParams(paramList.params).map(newParams => paramList.copy(params=newParams))
-  
-  def resolveParams(params: Iterable[Parameter])(using ctxt: Context): ResultWithLogs[List[Parameter]] =
-    params.foldLeft(Writer(List.empty, List.empty): ResultWithLogs[List[Parameter]]){(acc, origParam) =>
-      for {
-        prevParams <- acc
-        newParam <- resolveTypeIfNeeded(origParam.typ).map(newType => origParam.copy(typ=newType)).getOrElse(origParam)
-      } yield {
-        newParam :: prevParams
+    resolveParams(paramList.params).map(newParams => paramList.copy(params = newParams))
+
+  def resolveParams(
+    params: Iterable[Parameter]
+  )(using ctxt: Context): ResultWithLogs[List[Parameter]] =
+    params
+      .foldLeft(Writer(List.empty, List.empty): ResultWithLogs[List[Parameter]]) {
+        (acc, origParam) =>
+          for {
+            prevParams <- acc
+            newParam <- resolveTypeIfNeeded(origParam.typ)
+              .map(newType => origParam.copy(typ = newType))
+              .getOrElse(origParam)
+          } yield {
+            newParam :: prevParams
+          }
       }
-    }.map(_.reverse)
-  
+      .map(_.reverse)
+
   def resolveTypeIfNeeded(typ: Type)(using ctxt: Context): ResolveResult[Type] =
     resolveTypeIfNeeded(typ, ctxt.typeDefs, ctxt.pkgDefs)
 
@@ -46,6 +53,7 @@ private[verity] object ReferenceResolve {
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg]
   ): ResolveResult[Type] = {
+    // println(s"resolving typeref=$typ")
     val typeArgsRange = typ.args.textRange
     val resolvedCls = resolveCls(typ.path, typeDefs, pkgDefs).value
 
@@ -82,15 +90,12 @@ private[verity] object ReferenceResolve {
           )
         )
         argList = TypeArgList(args, typ.args.textRange)
-        res <- Writer.value(
-          Some(
-            //Only return a ResolvedTypeRef if the class and all arguments are resolved
-            if (allResolved && maybeCls.nonEmpty)
-              ResolvedTypeRef(typ.path, argList, maybeCls.get)
-            else
-              UnresolvedTypeRef(typ.path, argList, maybeCls)
-          )
-        )
+        res <-
+          //Only return a ResolvedTypeRef if the class and all arguments are resolved
+          if (allResolved && maybeCls.nonEmpty)
+            Writer(List(warningMsg(s"Resolved type ${typ.path}", typ)), Some(ResolvedTypeRef(typ.path, argList, maybeCls.get)): Option[Type])
+          else
+            Writer(List(errorMsg(s"Could not resolve type ${typ.path}", typ)), Some(UnresolvedTypeRef(typ.path, argList, maybeCls)))
       } yield res
     )
 

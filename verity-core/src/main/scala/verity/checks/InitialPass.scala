@@ -144,8 +144,8 @@ object InitialPass {
         .view
         .mapValues(mthds => MethodGroup(mthds.head.name, mthds))
         .toMap,
-      cls.givenChildren,
-      cls.proofChildren,
+      cls.givenChildren.toList,
+      cls.proofChildren.toList,
       clsRefs,
       pkgRefs,
       cls,
