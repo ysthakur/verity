@@ -18,7 +18,7 @@ private object Classlikes {
   // }
 
   def methodOrField[_: P]: P[Seq[Modifier] => Any] =
-    P(returnType ~ identifierText ~/ (field2 | methodWithoutTypeParams)).map {
+    P(returnType ~ identifierText ~/ (field2 | methodWithoutProofsOrTypeParams)).map {
       case (typ, text, fieldOrMethod) => fieldOrMethod(typ, text)
     }
 
@@ -31,7 +31,7 @@ private object Classlikes {
   // def templateDefMember[_: P]: P[Any] = P((normMethod: P[Any]) | (ctor: P[Any]) | (field: P[Any]))
 
   def templateDefMember2[_: P]: P[Any] =
-    P(modifiers ~ (methodWithTypeParams | ctor | methodOrField : P[Seq[Modifier] => Any])).map { 
+    P(modifiers ~ (methodWithTypeParams | ctor | methodOrField | methodWithProofsWithoutTypeParams : P[Seq[Modifier] => Any])).map { 
       case (mods, astCtor) => astCtor(mods)
     }
 
@@ -39,30 +39,68 @@ private object Classlikes {
 
   //TODO add modifiers and annotations
   //TODO allow extending classes, interfaces
-  def clazz[_: P]: P[ClassDef] = P(
-      modifiers ~ "class" ~/ Index ~ identifier ~ typeParamList.? ~ classOrInterfaceBody
+  def clazz[_: P]: P[Seq[Modifier] => Classlike] = P(
+      "class" ~/ Index ~ identifier ~ typeParamList.? ~
+        ("extends" ~/ typeRef).? ~ //("implements" ~/ typeRef.rep).? ~
+        classOrInterfaceBody
   ).map {
-    case (modifiers, classTokEnd, name, typeParams, (braceStart, members, braceEnd)) =>
-      val (fields, normMethodsAndCtors) = members.partition(_.isInstanceOf[Field])
-      val (normMethods, ctors) = normMethodsAndCtors.partition(_.isInstanceOf[NormMethod])
-      lazy val cls: ClassDef = new ClassDef(
-          ArrayBuffer(), //todo annotations
-          modifiers.to(ArrayBuffer),
-          name,
-          typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
-          null, //todo superclass
-          null, //todo
-          fields.to(ArrayBuffer).asInstanceOf[ArrayBuffer[Field]],
-          ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ArrayBuffer),
-          normMethods.to(ArrayBuffer).asInstanceOf[ArrayBuffer[NormMethod]],
-          TextRange(classTokEnd - 5, classTokEnd),
-          TextRange(braceStart, braceEnd)
-      )
+    case (classTokEnd, name, typeParams, superClass, /*interfaces, */(braceStart, members, braceEnd)) =>
+      modifiers => {
+        val (fields, normMethodsAndCtors) = members.partition(_.isInstanceOf[Field])
+        val (normMethods, ctors) = normMethodsAndCtors.partition(_.isInstanceOf[NormMethod])
+        /*println(s"superinterfaces=$interfaces")
 
-      cls
+        val is = interfaces.getOrElse(Nil)
+        val it = is.iterator
+        val isArr = Array.fill(is.size)(it.next(): Type)*/
+        
+        lazy val cls: ClassDef = new ClassDef(
+            ArrayBuffer(), //todo annotations
+            modifiers.to(ArrayBuffer),
+            name,
+            typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
+            superClass.getOrElse(BuiltinTypes.objectTypeDef.makeRef),
+            Array.empty[Type],//isArr,
+            fields.to(ArrayBuffer).asInstanceOf[ArrayBuffer[Field]],
+            ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ArrayBuffer),
+            normMethods.to(ArrayBuffer).asInstanceOf[ArrayBuffer[NormMethod]],
+            TextRange(classTokEnd - 5, classTokEnd),
+            TextRange(braceStart, braceEnd)
+        )
+
+        cls
+      }
+  }
+
+  //TODO add modifiers and annotations
+  //TODO allow extending classes, interfaces
+  def interface[_: P]: P[Seq[Modifier] => Classlike] = P(
+      "interface" ~/ Index ~ identifier ~ typeParamList.? ~ ("extends" ~/ argList(typeRef)).? ~ classOrInterfaceBody
+  ).map {
+    case (classTokEnd, name, typeParams, superTypes, (braceStart, members, braceEnd)) =>
+      modifiers => {
+        val (fields, methods) = members.partition(_.isInstanceOf[Field])
+        val castMethods = methods.asInstanceOf[Seq[NormMethod]]
+        castMethods.foreach { mthd =>
+          mthd.modifiers += Modifier(ModifierType.ABSTRACT, TextRange.synthetic)
+        }
+        new InterfaceDef(
+            ArrayBuffer(), //todo annotations
+            modifiers.to(ArrayBuffer),
+            name,
+            typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
+            superTypes.getOrElse(Nil),
+            fields.to(ArrayBuffer).asInstanceOf[ArrayBuffer[Field]],
+            castMethods.to(ArrayBuffer),
+            TextRange(classTokEnd - 5, classTokEnd),
+            TextRange(braceStart, braceEnd)
+        )
+      }
   }
 
   //todo enums, interfaces, annotation definitions
-  def classlike[_: P]: P[Classlike] = P(clazz)
+  def classlike[_: P]: P[Classlike] = P(modifiers ~ (clazz | interface)).map {
+    case (modifiers, buildClasslike) => buildClasslike(modifiers)
+  }
 
 }

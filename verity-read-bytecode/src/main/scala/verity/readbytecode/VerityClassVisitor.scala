@@ -142,6 +142,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
           ArrayBuffer(),
           TypeParamList(Nil, TextRange.synthetic),
           returnType,
+          Array(),
           Text(methodName),
           paramList,
           givenParams = None, //todo retrieve given parameters somehow
@@ -181,7 +182,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
           case _ => null
         }
 
-        parentPkg.files += FileNode(s"$simpleName.class", None, Nil, Seq(classDef), None)
+        parentPkg.files += FileNode(s"$simpleName.class", None, Nil, Seq(classDef), None, Nil)
       case None => throw Error("foo!@#sadf")
     }
   }

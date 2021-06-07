@@ -185,9 +185,16 @@ private object Exprs {
   def logicAnd[_: P]: P[RoUExpr] = P(bitOr ~ (Index ~ "&&".! ~/ Index ~ bitOr).rep).map(foldBinExpr)
   def logicOr[_: P]: P[RoUExpr] =
     P(logicAnd ~ (Index ~ "||".! ~/ Index ~ logicAnd).rep).map(foldBinExpr)
+  def assignment[_: P]: P[RoUExpr] = P(logicOr ~ ("=" ~/ assignment).?)/*.filter {
+    case (_, None) => true
+    case (expr, _) => expr.isInstanceOf[UnresolvedArraySelect] || expr.isInstanceOf[UnresolvedFieldAccess]
+  }*/.map {
+    case (expr, None) => expr
+    case (property, Some(value)) => UnresolvedAssignmentExpr(property, value, None) //todo extraOp such as +=, -=
+  }
 
   //TODO add ternary and assignment
-  def expr[_: P]: P[RoUExpr] = P(logicOr)
+  def expr[_: P]: P[RoUExpr] = P(assignment)
 
   /** **************************END OPERATORS***************************************
     */

@@ -1,0 +1,53 @@
+package com;
+
+import java.lang.*;
+
+public class Target {
+  public static void main(String args) {
+
+  }
+}
+
+class Person {
+  final String name;
+  final int age;
+
+  public String Person(String n, int a) {
+    name = n;
+    age = a;
+  }
+}
+
+class SetName {}
+class SetAge {}
+
+class PersonBuilder {
+  private String name;
+  private int age;
+
+  /*public void setName(String n)(proof verity.lang.NotProven[SetName] ev) {
+    name = n;
+  }
+
+  public void setAge(int a)(proof verity.lang.NotProven[SetAge] ev) {
+    age = a;
+  }
+
+  public static Person build(BuildPerson bp) {
+    bp.build();
+    return new Person(name, age);
+  }*/
+}
+
+
+abstract class BuildPerson {
+  /*abstract (void, proof SetName, SetAge) buildPerson(PersonBuilder p) {}*/
+}
+
+class BuildFoo extends BuildPerson {
+  /*(void, proof SetName, SetAge) buildPerson(PersonBuilder p) {
+    p.setName("Foo");
+    p.setAge(-1);
+  }*/
+}
+

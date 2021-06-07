@@ -39,7 +39,7 @@ object InitialPass {
     pkgName: String
   )(using rootPkg: RootPkg): Unit = {
     val currPkg = parentPkgs.head
-    val FileNode(name, pkgRef, imports, _, _) = file
+    val FileNode(name, pkgRef, imports, _, _, _) = file
 
     verifyPkgStmt(pkgRef, pkgName, name)
 

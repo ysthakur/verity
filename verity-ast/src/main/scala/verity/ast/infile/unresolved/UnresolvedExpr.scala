@@ -8,7 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 sealed trait UnresolvedExpr extends HasText, HasType, RoUExpr
 
 trait UnresolvedTypeExpr extends UnresolvedExpr {
-  private[this] var _typ: Type = ToBeInferred(BuiltinTypes.objectTypeDef.makeRef, NothingType, List.empty)
+  private[this] var _typ: Type = ToBeInferred(BuiltinTypes.objectTypeDef.makeRef, NothingTypeDef.makeRef, List.empty)
   override def typ: Type = _typ
   private[verity] def typ_=(typ: Type): Unit = this._typ = typ
 }

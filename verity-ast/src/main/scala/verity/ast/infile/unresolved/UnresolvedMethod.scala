@@ -15,15 +15,16 @@ class UnresolvedConstructor(
   var proofParams: Option[ParamList],
   private val _body: Block
 ) extends UnresolvedMethod {
-  def typeParams: TypeParamList = ???
-  def returnType: Type = ???
+  override def typeParams: TypeParamList = ???
+  override def returnType: Type = ???
+  override def proofs = Nil
 
   override def text =
     s"${modifiers.map(_.text).mkString(" ")} $name ${params.text} ${body.fold(";")(_.text)}"
 
-  def body: Option[Block] = Some(_body)
+  override def body = Some(_body)
 
-  def name: String = ctorName.text
+  override def name = ctorName.text
   def nameRange = ctorName.textRange
 }
 
@@ -31,6 +32,7 @@ class UnresolvedNormalMethod(
   val modifiers: ArrayBuffer[Modifier],
   val typeParams: TypeParamList,
   private var _returnType: Type,
+  val proofs: collection.immutable.ArraySeq[Type],
   val methodName: Text,
   var params: ParamList,
   var givenParams: Option[ParamList],

@@ -13,7 +13,7 @@ import JavaWhitespace._
 import collection.mutable.ArrayBuffer
 
 private object Methods {
-  def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map { case (typ, name) =>
+  private def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map { case (typ, name) =>
     Parameter(
       List.empty, //TODO Add annotations!
       typ,
@@ -22,25 +22,26 @@ private object Methods {
       isProof = false
     )
   }
+
+  private def params[_: P]: P[List[Parameter]] = P((param ~ ("," ~/ param).rep).?).map {
+    case None => Nil
+    case Some((firstParam, otherParams)) => firstParam :: otherParams.toList
+  }
   
-  def normParamList[_: P]: P[ParamList] = P(Index ~ "(" ~/ param.rep ~ ")" ~ Index).map {
+  def normParamList[_: P]: P[ParamList] = P(Index ~ "(" ~/ params ~ ")" ~ Index).map {
     case (start, params, end) =>
-      ParamList(params.toList, TextRange(start, end), ParamListKind.NORMAL)
+      ParamList(params, TextRange(start, end), ParamListKind.NORMAL)
   }
   def givenParamList[_: P]: P[ParamList] =
-    P(Index ~ "(" ~ "given" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ param.rep ~ ")" ~ Index).map {
+    P(Index ~ "(" ~ "given" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
       case (start, params, end) =>
-        ParamList(params.toList, TextRange(start, end), ParamListKind.GIVEN)
+        ParamList(params, TextRange(start, end), ParamListKind.GIVEN)
     }
   def proofParamList[_: P]: P[ParamList] =
-    P(Index ~ "(" ~ "proof" ~ !CharPred(_.isUnicodeIdentifierPart) ~/ param.rep ~ ")" ~ Index).map {
+    P(Index ~ "(" ~ "proof" ~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
       case (start, params, end) =>
-        ParamList(params.toList, TextRange(start, end), ParamListKind.PROOF)
+        ParamList(params, TextRange(start, end), ParamListKind.PROOF)
     }
-
-  def exprStmt[_: P]: P[UnresolvedExprStmt] = P(expr ~ ";").map { expr =>
-    new UnresolvedExprStmt(expr)
-  }
 
   //todo allow final modifier
   def localVarDecl[_: P]: P[LocalVar] =
@@ -48,6 +49,10 @@ private object Methods {
       .map { case (mods, typ, idStart, name, idEnd, expr, end) =>
         new LocalVar(mods, Text(name, TextRange(idStart, idEnd)), typ, expr, end)
       }
+
+  def exprStmt[_: P]: P[Statement] = P(expr ~ ";").map {
+    case expr => new UnresolvedExprStmt(expr)
+  }
 
   def returnStmt[_: P]: P[ReturnStmt] = P("return" ~/ Index ~ expr ~ ";" ~ Index).map {
     case (start, expr, end) =>
@@ -57,7 +62,7 @@ private object Methods {
   //TODO add control flow, etc. (BEFORE exprStmt)
   def stmt[_: P]: P[Statement] = P(returnStmt | localVarDecl | exprStmt)
 
-  def block[_: P]: P[Block] = P(Index ~ "{" ~/ (stmt ~ ";".rep).rep ~ "}" ~ Index).map {
+  def block[_: P]: P[Block] = P("{" ~/ Index ~ stmt.rep ~ "}" ~ Index).map {
     case (start, stmts, end) =>
       new Block(
         stmts.to(ArrayBuffer),
@@ -69,9 +74,9 @@ private object Methods {
   //TODO add type parameters
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def normMethod[_: P]: P[Method] =
-    P(modifiers ~ typeParamList.? ~ returnType ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index))
-      .map { case (modifiers, typeParams, returnType, name, valParams, givenParams, proofParams, body) =>
-        createNormMethod(modifiers, typeParams, returnType, name, valParams, givenParams, proofParams, body)
+    P(modifiers ~ typeParamList.? ~ (returnTypeAndProofs) ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index))
+      .map { case (modifiers, typeParams, (returnType, proofs), name, valParams, givenParams, proofParams, body) =>
+        createNormMethod(modifiers, typeParams, returnType, proofs, name, valParams, givenParams, proofParams, body)
       }
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
@@ -95,23 +100,30 @@ private object Methods {
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def methodWithTypeParams[_: P]: P[Seq[Modifier] => NormMethod] =
-    P(typeParamList ~/ returnType ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index)).map {
-      case (typeParams, returnType, name, valParams, givenParams, proofParams, body) =>
+    P(typeParamList ~/ (returnTypeAndProofs) ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index)).map {
+      case (typeParams, (returnType, proofs), name, valParams, givenParams, proofParams, body) =>
         (modifiers: Seq[Modifier]) =>
-          createNormMethod(modifiers, Some(typeParams), returnType, name, valParams, givenParams, proofParams, body)
+          createNormMethod(modifiers, Some(typeParams), returnType, proofs, name, valParams, givenParams, proofParams, body)
     }
 
-  def methodWithoutTypeParams[_: P]: P[(Type, Text) => Seq[Modifier] => NormMethod] =
+  def methodWithoutProofsOrTypeParams[_: P]: P[(Type, Text) => Seq[Modifier] => NormMethod] =
     P(normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index)).map { case (valParams, givenParams, proofParams, body) =>
-      (returnType: Type, name: Text) =>
+      (returnType, name) =>
         (modifiers: Seq[Modifier]) =>
-          createNormMethod(modifiers, None, returnType, name, valParams, givenParams, proofParams, body)
+          createNormMethod(modifiers, None, returnType, Seq.empty, name, valParams, givenParams, proofParams, body)
+    }
+  def methodWithProofsWithoutTypeParams[_: P]: P[Seq[Modifier] => NormMethod] =
+    P(returnTypeAndProofs ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index)).map {
+      case (returnType, proofs, name, valParams, givenParams, proofParams, body) =>
+        (modifiers: Seq[Modifier]) =>
+          createNormMethod(modifiers, None, returnType, proofs, name, valParams, givenParams, proofParams, body)
     }
 
   def createNormMethod(
     modifiers: Seq[Modifier],
     typeParams: Option[TypeParamList],
     returnType: Type,
+    proofs: Seq[Type],
     name: Text,
     params: ParamList,
     givenParams: Option[ParamList],
@@ -126,6 +138,7 @@ private object Methods {
       modifiers.to(ArrayBuffer),
       typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
       returnType,
+      proofs.toArray,
       name,
       params,
       givenParams, //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
@@ -134,4 +147,16 @@ private object Methods {
       body
     )
   }
+
+  def returnTypeAndProofs[_: P]: P[(Type, Seq[Type])] =
+    P(returnType).map {
+      case retType: Type => (retType, Seq())
+      case retTypeWithProofs => retTypeWithProofs.asInstanceOf[(Type, Seq[Type])]
+    }
+
+  def returnTypeWithProofs[_: P]: P[(Type, Seq[Type])] =
+    P("(" ~/ returnType ~ ";" ~ "proof" ~ nonWildcardType ~  ("," ~ nonWildcardType).rep ~ ")").map {
+      case (retType, firstProof, restProofs) =>
+        (retType, firstProof +: restProofs)
+    }
 }

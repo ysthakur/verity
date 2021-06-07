@@ -6,6 +6,10 @@ import scala.collection.mutable.ArrayBuffer
 
 trait Methodlike extends NamedTree {
   def returnType: Type
+  /**
+   * The proofs returned by this method/function
+   */
+  def proofs: Iterable[Type]
   def name: String
   var params: ParamList
   def typeParams: TypeParamList
@@ -36,7 +40,8 @@ object Method {
 class NormMethod(
   val modifiers: ArrayBuffer[Modifier],
   val typeParams: TypeParamList,
-  private[this] var _returnType: Type,
+  private[verity] var _returnType: Type,
+  private[verity] var _proofs: Array[Type],
   val methodName: Text,
   var params: ParamList,
   var givenParams: Option[ParamList],
@@ -48,6 +53,7 @@ class NormMethod(
     s"${modifiers.map(_.text).mkString(" ")} ${returnType.text} $name ${params.text} ${body.fold(";")(_.text)}"
 
   override def returnType: Type = _returnType
+  override def proofs: Iterable[Type] = _proofs
 
   private[verity] def returnType_=(typ: Type): Unit = _returnType = typ
 
@@ -70,6 +76,8 @@ class Constructor(
   override lazy val typeParams: TypeParamList =
     TypeParamList(cls.typeParams.params, TextRange.synthetic)
   override lazy val returnType: Type = cls.makeRef
+
+  override def proofs = Nil
 
   val body: Option[Block] = Some(_body)
 

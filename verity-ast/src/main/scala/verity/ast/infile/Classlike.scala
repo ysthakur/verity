@@ -86,22 +86,20 @@ case class ClassDef(
   modifiers: ArrayBuffer[Modifier],
   name: String,
   typeParams: TypeParamList,
-  superClass: ur.UnresolvedTypeRef,
-  superInterfaces: Iterable[ur.UnresolvedTypeRef],
+  superClass: Type,
+  superInterfaces: Array[Type],
   fields: ArrayBuffer[Field],
   ctors: ArrayBuffer[Constructor],
   normMethods: ArrayBuffer[NormMethod],
   metaclassTokTR: TextRange,
   bodyRange: TextRange
-) extends Classlike(ClasslikeType.CLASS),
-      HasCtors {
-
+) extends Classlike(ClasslikeType.CLASS), HasCtors {
   def children = fields ++ methods
 
   override def methods = ctors ++ normMethods
 
   override def superTypes: Iterable[Type] =
-    (superInterfaces.toSeq :+ superClass).map(_.resolved.get.makeRef)
+    superInterfaces.toSeq :+ superClass
 
   //todo also add fields (no need to preserve order)
   override def text: String =
@@ -115,14 +113,14 @@ case class InterfaceDef(
   modifiers: ArrayBuffer[Modifier],
   name: String,
   typeParams: TypeParamList,
-  superInterfaces: Iterable[ur.UnresolvedTypeRef],
+  superInterfaces: Iterable[Type],
   fields: ArrayBuffer[Field],
   methods: ArrayBuffer[Method],
   metaclassTokTR: TextRange,
   bodyRange: TextRange
 ) extends Classlike(ClasslikeType.INTERFACE) {
   def children = fields ++ methods
-  override def superTypes: Iterable[Type] = superInterfaces.map(_.resolved.get.makeRef)
+  override def superTypes: Iterable[Type] = superInterfaces
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} interface $name { ${methods.mkString(" ")}}"
 }
@@ -154,3 +152,62 @@ case class EnumDef(
 }
 
 case class EnumConstant(name: String) extends ClassChild
+
+sealed trait MagicTypeDef extends Classlike, Synthetic {
+  override def text = s"Magic type def for $name"
+
+  override def fields = Nil
+  override def methods = Nil
+  override def superTypes = Nil
+  override def annotations = Nil
+  override def modifiers = ArrayBuffer.empty
+  override def children = Nil
+  override def bodyRange = TextRange.synthetic
+  override def metaclassTokTR = TextRange.synthetic
+}
+
+object NothingTypeDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
+  override def name = "verity.lang.Nothing"
+  override def makeRef = NothingType
+  override def typeParams = TypeParamList(
+      Nil,
+      TextRange.synthetic
+    )
+
+  object NothingType extends Type, Synthetic {
+    override def fields = Nil
+    override def methods = Nil
+
+    override def strictSubTypeOf(sup: Type) = false
+    override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectTypeDef.makeRef
+
+    //todo figure out how to deal with this
+    override def superTypes: Iterable[Type] = Nil
+
+    override def text = "Type Nothing"
+  }
+}
+
+/** The definition of the type `verity.lang.NotGiven`, which is treated specially.
+  * Proofs of type `NotGiven<T>` are provided if no givens of type `T` are found.
+  */
+object NotGivenDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
+  override def name = "verity.lang.NotGiven"
+
+  override lazy val typeParams = TypeParamList(
+    List(TypeParam("T", BuiltinTypes.objectTypeDef.makeRef, NothingTypeDef.makeRef, TextRange.synthetic)),
+    TextRange.synthetic
+  )
+}
+
+/** The definition of the type `verity.lang.NotProven`, which is treated specially.
+  * Proofs of type `NotProven<T>` are provided if no proofs of type `T` are found.
+  */
+object NotProvenDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
+  override def name = "verity.lang.NotProven"
+
+  override lazy val typeParams = TypeParamList(
+    List(TypeParam("T", BuiltinTypes.objectTypeDef.makeRef, NothingTypeDef.makeRef, TextRange.synthetic)),
+    TextRange.synthetic
+  )
+}

@@ -93,7 +93,7 @@ private[verity] object ReferenceResolve {
         res <-
           //Only return a ResolvedTypeRef if the class and all arguments are resolved
           if (allResolved && maybeCls.nonEmpty)
-            Writer(List(warningMsg(s"Resolved type ${typ.path}", typ)), Some(ResolvedTypeRef(typ.path, argList, maybeCls.get)): Option[Type])
+            Writer(List(infoMsg(s"Resolved type ${typ.path}", typ)), Some(ResolvedTypeRef(typ.path, argList, maybeCls.get)): Option[Type])
           else
             Writer(List(errorMsg(s"Could not resolve type ${typ.path}", typ)), Some(UnresolvedTypeRef(typ.path, argList, maybeCls)))
       } yield res

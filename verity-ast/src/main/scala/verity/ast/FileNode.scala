@@ -10,11 +10,17 @@ case class FileNode(
   packageRef: Option[PackageStmt],
   imports: Seq[ImportStmt],
   classlikes: Seq[Classlike],
-  origFile: Option[File]
+  origFile: Option[File],
+  offsetToRowCol: Iterable[(Int, Int, Int)]
 ) {
   val textRanges: mutable.Map[Tree, TextRange] = mutable.HashMap()
   private[verity] var pkg: Pkg | Null = null
   private[verity] var resolvedImports: Iterable[Pkg.Importable] = List.empty
+
+  def getRowCol(targetOffset: Int): (Int, Int) = offsetToRowCol.collectFirst {
+    case (offset, row, endCol) if targetOffset == offset =>
+      (row, endCol - (offset - targetOffset))
+  }.get
 
   /** Whether or not this is a source file or just a classfile that the project depends on.
     */

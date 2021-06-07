@@ -1,11 +1,12 @@
 package verity.parser
 
-import fastparse.JavaWhitespace._
-import fastparse._
 import verity.ast._
 import verity.ast.infile._
 import verity.ast.infile.unresolved._
 import verity.parser.Core.{argList, identifierText, identifierWithTextRange}
+
+import fastparse.JavaWhitespace._
+import fastparse._
 
 object Types {
 
@@ -14,7 +15,7 @@ object Types {
   def lowerBound[_: P]: P[UnresolvedTypeRef] = P("super" ~/ typeRef)
   // def typeBound[_: P] = P(Index ~ StringIn("super", "extends").! ~/ Index ~ typeRef)
 
-  private def typeRef[_: P]: P[UnresolvedTypeRef] =
+  def typeRef[_: P]: P[UnresolvedTypeRef] =
     P(identifierText ~ ("." ~ identifierText).rep ~ typeArgList).map {
       case (first, restPath, args) =>
         UnresolvedTypeRef(
@@ -32,7 +33,13 @@ object Types {
       .map { case (typ, end) =>
         PrimitiveType(PrimitiveTypeDef.fromName(typ).get, TextRange(end - typ.length, end))
       }
-  def nonWildcardType[_: P]: P[Type] = P(primitiveType | typeRef)
+  /**
+   * A type that isn't just a wildcard, possibly an array type
+   */
+  def nonWildcardType[_: P]: P[Type] = P((primitiveType | typeRef) ~ ("[" ~ Index ~ "]" ~ Index).rep).map {
+    case (innerType, brackets) =>
+      brackets.foldLeft(innerType: Type){ case (typ, (start, end)) => ArrayType(typ, TextRange(start, end)) }
+  }
   def typeArg[_: P]: P[Type] = P(wildCard | nonWildcardType)
   def typeArgList[_: P]: P[TypeArgList] = P(("<" ~/ Index ~ argList(typeArg: P[Type]) ~ ">" ~ Index).?).map {
     case Some((start, args, end)) => TypeArgList(args, TextRange(start, end))
@@ -52,7 +59,7 @@ object Types {
       new TypeParam(
         name,
         upper.getOrElse(BuiltinTypes.objectTypeDef.makeRef),
-        lower.getOrElse(NothingType),
+        lower.getOrElse(NothingTypeDef.makeRef),
         nameRange
       )
   }

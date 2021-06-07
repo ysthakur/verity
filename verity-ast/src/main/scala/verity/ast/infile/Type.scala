@@ -60,42 +60,7 @@ object Type {
 
 // given ToJava[AnyType.type] = _ => "Type Any"
 
-object BuiltinTypes {
-  private[verity] var objectTypeDef: TypeDef = TypeDef.placeholder
-  private[verity] var stringTypeDef: TypeDef = TypeDef.placeholder
-
-  def refreshBuiltins(rootPkg: RootPkg): Unit = {
-    for {
-      java <- rootPkg.subPkgs.find(_.name == "java")
-      lang <- java.subPkgs.find(_.name == "lang")
-    } {
-      println("found package java.lang!")
-      lang.classlikes.find(_.name == "Object").foreach { objectClsDef =>
-        this.objectTypeDef = objectClsDef
-        println("reset java.lang.Object!")
-      }
-
-      lang.classlikes.find(_.name == "String").foreach { stringClsDef =>
-        this.stringTypeDef = stringClsDef
-        println("reset String!")
-      }
-    }
-  }
-}
-
 // given ToJava[ObjectType.type] = _ => "Type Object"
-
-object NothingType extends Type, Synthetic {
-  override def strictSubTypeOf(sup: Type) = false
-  override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectTypeDef.makeRef
-
-  //todo figure out how to deal with this
-  override def superTypes: Iterable[Type] = Nil
-
-  override def fields: Iterable[Field] = Nil
-  override def methods: Iterable[Method] = Nil
-  override def text = "Type Nothing"
-}
 
 class VoidTypeRef(override val textRange: TextRange) extends Type, HasTextRange {
   override def strictSubTypeOf(sup: Type): Boolean = false

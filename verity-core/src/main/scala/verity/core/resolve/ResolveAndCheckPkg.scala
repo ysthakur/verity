@@ -33,7 +33,7 @@ private def resolveAndCheckFile(
   pkgName: String
 )(using rootPkg: RootPkg): Unit = {
   val currPkg = parentPkgs.head
-  val FileNode(name, pkgRef, imports, classlikes, jFile) = file
+  val FileNode(name, pkgRef, imports, classlikes, jFile, _) = file
 
   val resolvedImports = file.resolvedImports
 

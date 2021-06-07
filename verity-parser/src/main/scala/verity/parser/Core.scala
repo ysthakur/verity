@@ -58,7 +58,7 @@ private object Core {
     }
 
   def modifier[_: P]: P[Modifier] = P(
-      Index ~ StringIn(
+      StringIn(
           "final",
           "public",
           "protected",
@@ -74,8 +74,8 @@ private object Core {
           "static",
           "abstract"
       ).! ~ !CharPred(!_.isUnicodeIdentifierPart) ~ Index
-  ).map { case (start, modifier, end) =>
-    Modifier(ModifierType.valueOf(modifier.toUpperCase), TextRange(start, end))
+  ).map { case (modifier, end) =>
+    Modifier(ModifierType.valueOf(modifier.toUpperCase), TextRange(end - modifier.length, end))
   }
   def modifiers[_: P]: P[Seq[Modifier]] = P(modifier.rep)
 
