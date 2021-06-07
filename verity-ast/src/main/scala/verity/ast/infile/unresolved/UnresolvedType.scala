@@ -19,12 +19,8 @@ case class UnresolvedTypeRef(
   override def methods: Iterable[Method] = resolved.fold(Nil)(_.methods)
 
   override def superTypes: Iterable[Type] = resolved.fold(Nil)(_.superTypes)
-  override def strictSubTypeOf(sup: Type): Boolean =
-    println(s"unresolvedtyp $text")
-    ??? //resolved.fold(false)(_.strictSubTypeOf(sup))
-  override def strictSuperTypeOf(sub: Type): Boolean =
-    println(s"unresolvedtyp $text")
-    ??? //resolved.fold(false){td => td.strictSuperTypeOf(sub)}
+  override def strictSubTypeOf(sup: Type): Boolean = false
+  override def strictSuperTypeOf(sub: Type): Boolean = false
 
   override def text: String = HasText.seqText(path, ".") + args.text
   override def textRange: TextRange =

@@ -110,26 +110,26 @@ private[resolve] def resolveAndCheckCls(
     cls,
     file
   )
-  val fieldLogs: Iterable[CompilerMsg] = cls.fields.view.flatMap { field =>
-    val resolvedTyp = ReferenceResolve.resolveTypeIfNeeded(field.typ)(using ctxt)
-    resolvedTyp.map { t => field.typ = t }
-
-    if (file.isSource) {
-      val resolvedExpr = field.initExpr.map { e =>
-        val resolved: ResultWithLogs[Option[Expr]] =
-          resolvedTyp.getOrElse(UnknownType).flatMap(resolveAndCheckExpr(e, _)(using ctxt).value)
-        resolved.map {
-          case None =>
-          case s    => field.initExpr = s
-        }
-        resolved
-      }
-
-      resolvedExpr.fold(resolvedTyp.value.written)(_.written)
-    } else List.empty
-  }
+  val fieldLogs: Iterable[CompilerMsg] = 
+    if (file.isSource) cls.fields.view.flatMap(resolveAndCheckField(_)(using ctxt))
+    else Nil
 
   fieldLogs ++ mthdLogs
+}
+
+private def resolveAndCheckField(field: Field)(using Context): List[CompilerMsg] = {
+  // val resolvedTyp = ReferenceResolve.resolveTypeIfNeeded(field.typ)(using ctxt)
+  // resolvedTyp.map { t => field.typ = t }
+
+  field.initExpr.fold(Nil) { e =>
+    val resolved: ResultWithLogs[Option[Expr]] =
+      resolveAndCheckExpr(e, field.typ).value
+    resolved.map {
+      case None =>
+      case s    => field.initExpr = s
+    }
+    resolved.written
+  }
 }
 
 private def resolveAndCheckMthd(

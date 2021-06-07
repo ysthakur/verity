@@ -40,7 +40,7 @@ private[verity] object ReferenceResolve {
     typ: Type,
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg]
-  ): ResolveResult[Type] = typ match {
+  )(using ctxt: Context): ResolveResult[Type] = typ match {
     case tr: UnresolvedTypeRef => resolveTypeRef(tr, typeDefs, pkgDefs)
     case _                     => OptionT.some(typ)
   }
@@ -52,7 +52,7 @@ private[verity] object ReferenceResolve {
     typ: UnresolvedTypeRef,
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg]
-  ): ResolveResult[Type] = {
+  )(using ctxt: Context): ResolveResult[Type] = {
     // println(s"resolving typeref=$typ")
     val typeArgsRange = typ.args.textRange
     val resolvedCls = resolveCls(typ.path, typeDefs, pkgDefs).value
@@ -108,7 +108,7 @@ private[verity] object ReferenceResolve {
     path: Seq[Text],
     typeDefs: Defs[TypeDef],
     pkgDefs: Defs[Pkg]
-  ): ResolveResult[Classlike] = {
+  )(using ctxt: Context): ResolveResult[Classlike] = {
     val head +: tail = path
     typeDefs.find(_._1 == head.text) match {
       case Some((_, cls: Classlike)) =>
@@ -151,7 +151,7 @@ private[verity] object ReferenceResolve {
     prev: Pkg,
     prevPath: List[Text],
     path: Seq[Text]
-  ): ResolveResult[Classlike] = path match {
+  )(using ctxt: Context): ResolveResult[Classlike] = path match {
     case head +: tail =>
       prev.classlikes.find(_.name == head.text) match {
         case Some(cls) =>
@@ -182,7 +182,7 @@ private[verity] object ReferenceResolve {
     prev: Classlike,
     prevPath: List[Text],
     path: Seq[Text]
-  ): ResolveResult[Classlike] = path match {
+  )(using ctxt: Context): ResolveResult[Classlike] = path match {
     case head +: tail => singleMsg(errorMsg("No inner classes yet", head.textRange))
     case _            => OptionT(Writer(Nil, Some(prev)))
   }
@@ -192,7 +192,7 @@ private[verity] object ReferenceResolve {
     prev: Pkg,
     prevPath: List[Text],
     path: Seq[Text]
-  ): ResolveResult[Expr | ClassRef] = path match {
+  )(using ctxt: Context): ResolveResult[Expr | ClassRef] = path match {
     case head +: tail =>
       prev.classlikes.find(_.name == head.text) match {
         case Some(cls) =>
@@ -224,7 +224,7 @@ private[verity] object ReferenceResolve {
   private def resolveExprOnly(
     prev: Expr,
     path: Seq[Text]
-  ): ResolveResult[Expr] = path match {
+  )(using ctxt: Context): ResolveResult[Expr] = path match {
     case head +: tail =>
       prev.typ.fields.find(_.name == head.text) match {
         case Some(field) => resolveExprOnly(FieldAccess(prev, field, head.textRange), tail)
@@ -238,7 +238,7 @@ private[verity] object ReferenceResolve {
   private def resolveExprOrCls(
     prev: ClassRef,
     path: Seq[Text]
-  ): ResolveResult[Expr | ClassRef] = path match {
+  )(using ctxt: Context): ResolveResult[Expr | ClassRef] = path match {
     case head +: tail =>
       prev.cls.fields.find(f => f.isStatic && f.name == head.text) match {
         case Some(field) =>

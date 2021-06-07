@@ -171,8 +171,8 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
               ArrayBuffer.empty,
               simpleName.stripSuffix(".class"),
               TypeParamList(Nil, TextRange.synthetic), //todo
-              null,
-              null,
+              BuiltinTypes.objectTypeDef.makeRef,
+              Array.empty[Type],
               fields,
               ctors.asInstanceOf[ArrayBuffer[Constructor]],
               methods,

@@ -111,10 +111,12 @@ object InitialPass {
       case _                              =>
     }
 
-    //This context is purely for ReferenceResolve.resolveType
-    val dummyCtxt: Context = Context(Map.empty, Map.empty, Nil, Nil, clsRefs, pkgRefs, cls, file)
+    //This context is only for fields
+    val fieldCtxt: Context = Context(cls.fields.map(f => f.name -> f).toMap, Map.empty, Nil, Nil, clsRefs, pkgRefs, cls, file)
 
-    cls.methods.flatMap { mthd =>
+    val fieldPassLogs = cls.fields.flatMap(initialPassField(_)(using fieldCtxt))
+
+    val mthdPassLogs = cls.methods.flatMap { mthd =>
       mthd match {
         case c: Constructor =>
           val mthdName = c.name
@@ -122,11 +124,21 @@ object InitialPass {
             LogUtils.logMsg(s"Wrong constructor name: $mthdName (expected ${cls.name})", c.nameRange, file)
           }
         case m: NormMethod => //TODO!!!!!!!!!!!!!!!!!!!1
-//          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using dummyCtxt)
+//          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using fieldCtxt)
       }
 
       initialPassMthd(mthd, clsRefs, pkgRefs, cls, file)
     }
+
+    fieldPassLogs ++ mthdPassLogs
+  }
+
+  private def initialPassField(field: Field)(using Context): Iterable[CompilerMsg] = {
+    val resolvedType = ReferenceResolve.resolveTypeIfNeeded(field.typ)
+    resolvedType.map { newType =>
+      field.typ = newType
+    }
+    resolvedType.value.written
   }
 
   private def initialPassMthd(
@@ -189,7 +201,6 @@ object InitialPass {
       case None => givenParamLogs
     }
 
-    //TODO resolve return type
     mthd match {
       case nm: NormMethod =>
         proofParamLogs ::: ReferenceResolve

@@ -19,7 +19,7 @@ object Parser {
   }
 
   def makeSyntaxErrorMsg(label: String, index: Int, extra: Parsed.Extra, offsetToRowCol: ArrayBuffer[(Int, Int, Int)]): String =
-    s"Syntax error at offset ${extra.index}, rowcol=${getRowCol(offsetToRowCol, extra.index)}, label = $label, ${extra.stack}"
+    s"Syntax error at offset ${extra.index}, rowcol=${FileNode.getRowCol(offsetToRowCol, extra.index)}, label = $label, ${extra.stack}"
 
   def file[_: P](file: File, offsetToRowCol: ArrayBuffer[(Int, Int, Int)]): P[FileNode] =
     P(Core.packageStmt.? ~ Core.importStmt.rep ~ Classlikes.classlike.rep ~ End).map {
@@ -27,18 +27,13 @@ object Parser {
         FileNode(file.getName, pkgStmt, imptStmts, templateDefs, Some(file), offsetToRowCol)
     }
 
-  def getRowCol(offsetToRowCol: ArrayBuffer[(Int, Int, Int)], targetOffset: Int): Option[(Int, Int)] =
-    offsetToRowCol.collectFirst {
-      case (offset, row, endCol) if targetOffset <= offset => (row, endCol - (offset - targetOffset) + 1)
-    }
-
   class TrackingInputStream(
     delegate: InputStream,
     private[parser] val offsetToRowCol: ArrayBuffer[(Int, Int, Int)]
   ) extends InputStream {
     private var offset: Int = 0
-    private var row: Int = 0
-    private var col: Int = 0
+    private var row: Int = 1
+    private var col: Int = 1
     private var prevChar: Int = 0
     private var reachedEnd: Boolean = false
 

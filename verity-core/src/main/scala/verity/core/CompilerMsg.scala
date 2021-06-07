@@ -1,6 +1,7 @@
 package verity.core
 
 import verity.ast.{HasTextRange, TextRange}
+
 import cats.data.{OptionT, Writer}
 
 type ResultWithLogs[T] = Writer[List[CompilerMsg], T]
@@ -13,6 +14,7 @@ case class CompilerMsg(msg: String, textRangeOrTree: TextRange | HasTextRange, m
 enum MsgType {
   case ERROR, WARNING, WEAK_WARNING, INFO
 }
+
 def errorMsg(msg: String, textRangeOrTree: TextRange | HasTextRange) =
   CompilerMsg(msg, textRangeOrTree, MsgType.ERROR)
 def warningMsg(msg: String, textRangeOrTree: TextRange | HasTextRange) =

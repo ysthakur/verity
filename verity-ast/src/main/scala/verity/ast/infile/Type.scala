@@ -150,6 +150,7 @@ case class ResolvedTypeRef(
   override def strictSubTypeOf(sup: Type): Boolean = sup match {
     case ResolvedTypeRef(_, _, typeDef2) =>
       // typeDef.strictSubTypeDefOf(typeDef2)
+      println(s"checking if ${this.text} strictsubtype of ${sup.text}, supertypes=${typeDef.superTypes}")
       typeDef != typeDef2 &&
         typeDef.superTypes
           .map(Type.fillArgs(typeDef.typeParams.params, args.args))

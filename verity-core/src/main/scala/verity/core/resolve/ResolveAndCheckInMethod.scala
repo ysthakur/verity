@@ -91,6 +91,13 @@ private def resolveAndCheckExpr(
 //  logger.debug(s"Resolving expr ${expr.text}")
 
   val resolved: ResolveResult[Expr] = expr match {
+    case ur.UnresolvedAssignmentExpr(lhs, rhs, extraOp) =>
+      //TODO use extraOp
+      resolveAndCheckExpr(lhs, UnknownType).flatMap { newLhs =>
+        resolveAndCheckExpr(rhs, newLhs.typ).map { newRhs =>
+          AssignmentExpr(newLhs, newRhs, extraOp)
+        }
+      }
     case ur.UnresolvedFieldAccess(obj, fieldName) =>
       resolveAndCheckExpr(obj, BuiltinTypes.objectTypeDef.makeRef).flatMap { owner =>
         ReferenceResolve.findField(owner.typ, fieldName.text) match {
