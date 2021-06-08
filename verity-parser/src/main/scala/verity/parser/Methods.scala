@@ -215,7 +215,7 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit offsetToP
       modifiers.to(ArrayBuffer),
       typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
       returnType,
-      proofs.toArray,
+      proofs,
       name,
       params,
       givenParams, //TODO PARSE GIVEN AND PROOF PARAMETERS!!!

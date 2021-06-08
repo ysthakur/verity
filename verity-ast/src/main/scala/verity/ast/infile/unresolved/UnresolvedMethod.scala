@@ -18,6 +18,7 @@ class UnresolvedConstructor(
   override def typeParams: TypeParamList = ???
   override def returnType: Type = ???
   override def proofs = Nil
+  private[verity] var _proofs = Nil
 
   override def text =
     s"${modifiers.map(_.text).mkString(" ")} $name ${params.text} ${body.fold(";")(_.text)}"
@@ -31,8 +32,8 @@ class UnresolvedConstructor(
 class UnresolvedNormalMethod(
   val modifiers: ArrayBuffer[Modifier],
   val typeParams: TypeParamList,
-  private var _returnType: Type,
-  val proofs: collection.immutable.ArraySeq[Type],
+  private[verity] var _returnType: Type,
+  private[verity] var _proofs: Iterable[Type],
   val methodName: Text,
   var params: ParamList,
   var givenParams: Option[ParamList],

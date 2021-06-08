@@ -24,7 +24,10 @@ trait Methodlike extends NamedTree {
   // def body_=(newBody: Option[Block] /*Option[Block|Expr]*/ ): Unit
 }
 
-trait Method extends Methodlike, ClassChild, HasText, HasModifiers {}
+trait Method extends Methodlike, ClassChild, HasText, HasModifiers {
+  private[verity] var _proofs: Iterable[Type]
+  override def proofs = _proofs
+}
 object Method {
 
   /** Merge a bunch of methods - if one is a subtype of another, keep the overridden method. Also return any methods
@@ -41,7 +44,7 @@ class NormMethod(
   val modifiers: ArrayBuffer[Modifier],
   val typeParams: TypeParamList,
   private[verity] var _returnType: Type,
-  private[verity] var _proofs: Array[Type],
+  private[verity] var _proofs: Iterable[Type],
   val methodName: Text,
   var params: ParamList,
   var givenParams: Option[ParamList],
@@ -76,6 +79,7 @@ class Constructor(
   override lazy val typeParams: TypeParamList =
     TypeParamList(cls.typeParams.params, TextRange.synthetic)
   override lazy val returnType: Type = cls.makeRef
+  private[verity] var _proofs: Iterable[Type] = Nil
 
   override def proofs = Nil
 

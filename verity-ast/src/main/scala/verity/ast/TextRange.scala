@@ -21,6 +21,8 @@ case class Position(row: Int, col: Int, offset: Int) {
   // def in(tr: TextRange): Boolean =
   //   tr.start.offset < this.offset && this.offset < tr.end.offset
   def to(other: Position): TextRange = TextRange(this, other)
+
+  override def toString = s"$row:$col"
 }
 
 object Position {

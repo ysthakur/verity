@@ -5,31 +5,42 @@ import verity.ast.infile.{unresolved => ur, _}
 import verity.core._
 import verity.core.Context.Defs
 
+import cats.catsInstancesForId
 import cats.data.{OptionT, Writer}
 import cats.implicits._
 //import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 import verity.ast.infile.unresolved.UnresolvedMethodCall
+import verity.ast.infile.unresolved.UnresolvedExpr
 
 //todo make a proper solver for this stuff
 private def resolveStmt(
   stmt: Statement,
   mthdReturnType: Type
-)(using ctxt: Context): ResolveResult[Statement] = {
+)(using ctxt: Context): ResolveResult[(Statement, List[ProofDef])] = {
 //  logger.debug(s"Resolving statement ${stmt.text}, ${stmt.getClass}")
   stmt match {
     case ues: ur.UnresolvedExprStmt =>
-      resolveAndCheckExpr(ues.expr, UnknownType).map(e => new ExprStmt(e))
+      resolveAndCheckExpr(ues.expr, UnknownType).map { (expr, proofs) =>
+        (new ExprStmt(expr), proofs)
+      }
     case rs: ReturnStmt =>
-      resolveAndCheckExpr(rs.expr, mthdReturnType).map { expr => ReturnStmt(expr, rs.textRange) }
+      resolveAndCheckExpr(rs.expr, mthdReturnType).map { (expr, proofs) =>
+        (ReturnStmt(expr, rs.textRange), proofs)
+      }
     case lv: LocalVar =>
       ReferenceResolve.resolveTypeIfNeeded(lv.typ).orElse(OptionT.some(lv.typ)).flatMap { newType =>
-        println(s"newtyp=${newType.text}, ${lv.name}, ${newType.getClass}")
+        // println(s"newtyp=${newType.text}, ${lv.name}, ${newType.getClass}")
         lv.initExpr
-          .fold(someResolveRes(None): ResolveResult[Option[Expr]])(origExpr => resolveAndCheckExpr(origExpr, newType).map(Some.apply))
-          .map { (newExpr: Option[Expr]) =>
-            LocalVar(lv.modifiers, lv.varName, newType, newExpr, lv.endInd)
+          .fold(someResolveRes(None): ResolveResult[Option[(Expr, List[Expr])]])(origExpr =>
+            resolveAndCheckExpr(origExpr, newType).map(Some.apply)
+          )
+          .map { case newExprAndProofs =>
+            (
+              LocalVar(lv.modifiers, lv.varName, newType, newExprAndProofs.map(_._1), lv.endInd),
+              newExprAndProofs.fold(Nil)(_._2)
+            )
           }
       }
     case block: Block =>
@@ -42,9 +53,13 @@ private def resolveStmt(
           ]
         ) { case (acc, stmt) =>
           acc.flatMap { case context -> prev =>
+            // println(s"context proofdefs=${context.proofDefs.map(_.asInstanceOf[HasText].text)}")
             resolveStmt(stmt, mthdReturnType)(using context)
-              .orElse(OptionT.some(stmt)) //If the statement could not be resolved, keep the old one
-              .map { newStmt =>
+              .orElse(
+                OptionT.some((stmt, Nil))
+              ) //If the statement could not be resolved, keep the old one
+              .map { (newStmt, newProofs) =>
+                val updatedProofDefs = newProofs ::: context.proofDefs
                 val newCtxt = newStmt match {
                   case vd: LocalVar => //Add a new variable to _varRefs
                     // println(s"just resolved ${vd.name}, ${vd.typ.text}, ${vd.typ.getClass}")
@@ -52,9 +67,9 @@ private def resolveStmt(
                       if (vd.isGiven) vd :: context.givenDefs
                       else context.givenDefs
 
-                    val newProofDefs =
-                      if (vd.isProof) vd :: context.proofDefs
-                      else context.proofDefs
+                    val newProofDefs: List[ProofDef] =
+                      if (vd.isProof) vd :: updatedProofDefs
+                      else updatedProofDefs
 
                     Context(
                       context.varDefs + (vd.name -> vd),
@@ -66,42 +81,49 @@ private def resolveStmt(
                       context.cls,
                       context.file
                     )
-                  case _ => context
+                  case _ => context.copy(proofDefs = updatedProofDefs)
                 }
                 newCtxt -> (prev += newStmt)
               }
           }
         }
 
-      ctxtAndNewStmts.map((_, stmts) =>
-        Block(
-          stmts,
-          block.textRange,
-          if (stmts.isEmpty) VoidTypeRef(TextRange.synthetic) else statementType(stmts.last)
+      ctxtAndNewStmts.map((newCtxt, stmts) =>
+        // if (newCtxt.proofDefs.nonEmpty) println(s"new ctxt, proofs=${newCtxt.proofDefs.map(_.asInstanceOf[HasText].text)}")
+        (
+          Block(
+            stmts,
+            block.textRange,
+            if (stmts.isEmpty) VoidTypeRef(TextRange.synthetic) else statementType(stmts.last)
+          ),
+          Nil //newCtxt.proofDefs
         )
       )
-    case x => println("Did not resolve statement!"); OptionT.none
+    case x => singleMsg(errorMsg("Did not resolve statement!", x))
   }
 }
 
+/** Try to resolve an expression, and return an OptionT that hopefully contains a tuple
+  * holding the resolved expression and new proofs introduced by method calls
+  */
 private def resolveAndCheckExpr(
   expr: ResolvedOrUnresolvedExpr,
   expectedType: Type
-)(using Context): ResolveResult[Expr] = {
+)(using ctxt: Context): ResolveResult[(Expr, List[Expr])] = {
 //  logger.debug(s"Resolving expr ${expr.text}")
 
-  val resolved: ResolveResult[Expr] = expr match {
+  val resolved: ResolveResult[(Expr, List[Expr])] = expr match {
     case ur.UnresolvedAssignmentExpr(lhs, rhs, extraOp) =>
       //TODO use extraOp
-      resolveAndCheckExpr(lhs, UnknownType).flatMap { newLhs =>
-        resolveAndCheckExpr(rhs, newLhs.typ).map { newRhs =>
-          AssignmentExpr(newLhs, newRhs, extraOp)
+      resolveAndCheckExpr(lhs, UnknownType).flatMap { (newLhs, proofs) =>
+        resolveAndCheckExpr(rhs, newLhs.typ).map { (newRhs, proofs) =>
+          (AssignmentExpr(newLhs, newRhs, extraOp), proofs)
         }
       }
     case ur.UnresolvedFieldAccess(obj, fieldName) =>
-      resolveAndCheckExpr(obj, BuiltinTypes.objectType).flatMap { owner =>
+      resolveAndCheckExpr(obj, BuiltinTypes.objectType).flatMap { (owner, proofs) =>
         ReferenceResolve.findField(owner.typ, fieldName.text) match {
-          case Some(field) => OptionT.some(FieldAccess(owner, field, fieldName.textRange))
+          case Some(field) => OptionT.some(FieldAccess(owner, field, fieldName.textRange) -> proofs)
           case None        => singleMsg(errorMsg(s"No such field ${fieldName.text}", fieldName))
         }
       }
@@ -109,18 +131,33 @@ private def resolveAndCheckExpr(
     case mc: ur.UnresolvedMethodCall     => resolveUnresolvedMethodCall(mc)
     case ur.MultiDotRefExpr(path) =>
       ReferenceResolve.resolveDotChainedRef(path).flatMap {
-        case e: Expr => OptionT.some(e)
+        case e: Expr => OptionT.some((e, Nil))
         case c       => singleMsg(errorMsg(s"${c.text} is a class, not an expression", c))
       }
     case b: ur.UnresolvedBinaryExpr => resolveBinaryExpr(b)
     case upe: ur.UnresolvedParenExpr =>
-      resolveAndCheckExpr(upe.expr, expectedType).map(ParenExpr(_, upe.textRange))
-    case x: Expr => OptionT(Writer(Nil, Some(x)))
+      resolveAndCheckExpr(upe.expr, expectedType).map { (expr, proofs) =>
+        (ParenExpr(expr, upe.textRange), proofs)
+      }
+    case t: ur.UnresolvedThisRef => OptionT.some(ThisRef(ctxt.cls, t.textRange) -> Nil)
+    case s: ur.UnresolvedSuperRef =>
+      ctxt.cls match {
+        case cd: ClassDef =>
+          OptionT.some(
+            SuperRef(
+              cd.superClass.asInstanceOf[ResolvedTypeRef].typeDef.asInstanceOf[Classlike],
+              s.textRange
+            ) -> Nil
+          )
+        case _ => singleMsg(errorMsg(s"${ctxt.cls.name} has no superclass", s))
+      }
+
+    case expr: Expr => OptionT.some((expr, Nil))
     case _ =>
       singleMsg(errorMsg(s"aahh!! $expr wrong type!!! ${expr.getClass}", expr))
   }
 
-  resolved.flatMap { expr =>
+  resolved.flatMap { (expr, proofs) =>
     if (
       expectedType != UnknownType && expr.typ != UnknownType && !expr.typ.subTypeOf(expectedType)
     ) {
@@ -131,22 +168,23 @@ private def resolveAndCheckExpr(
         s"${expr.text} is of wrong type: found ${expr.typ.text} (${expr.typ.getClass}), expected ${expectedType.text} (${expectedType.getClass})"
       singleMsg(errorMsg(msg, expr))
     } else {
-      println(s"Type matched for ${expr.text}: ${expr.typ.text}!")
-      OptionT.some(expr)
+      // println(s"Type matched for ${expr.text}: ${expr.typ.text}!")
+      OptionT.some((expr, proofs))
     }
   }
 }
 
 private def resolveUnresolvedCtorCall(
   ctorCall: ur.UnresolvedCtorCall
-)(using ctxt: Context): ResolveResult[Expr] = {
+)(using ctxt: Context): ResolveResult[(Expr, List[Expr])] = {
   ReferenceResolve.resolveCls(ctorCall.cls.path, ctxt.typeDefs, ctxt.pkgDefs).flatMap { cls =>
     ctorCall.typ = cls.makeRef
 
     resolveUnresolvedMethodCall(
       ctorCall,
       None,
-      possibleMthdsBasic(ctorCall, cls.methods.filter(_.isCtor))
+      possibleMthdsBasic(ctorCall, cls.methods.filter(_.isCtor)),
+      Nil
     )
   }
 
@@ -155,7 +193,7 @@ private def resolveUnresolvedCtorCall(
 //TODO Deal with overloading first!!!
 private def resolveUnresolvedMethodCall(
   mthdCall: ur.UnresolvedMethodCall
-)(using ctxt: Context): ResolveResult[Expr] = {
+)(using ctxt: Context): ResolveResult[(Expr, List[Expr])] = {
   val ur.UnresolvedMethodCall(
     _,
     nameText @ Text(mthdName),
@@ -166,28 +204,31 @@ private def resolveUnresolvedMethodCall(
   ) =
     mthdCall
 
-  def resolveHelper(caller: Option[Expr | ClassRef]): ResolveResult[Expr] = {
-    (caller match {
-      case None => OptionT(Writer(Nil, Some(ctxt.mthdDefs(mthdName).methods)))
-      case Some(e: Expr) =>
-        resolveAndCheckExpr(e, BuiltinTypes.objectType).map(_.typ.methods)
-      case Some(c: ClassRef) => OptionT(Writer(Nil, Some(c.cls.methods)))
-    }: ResolveResult[Iterable[Method]]).flatMap { allMthds =>
-      //Filter based on name and number of parameters
-      val possibleMthds = possibleMthdsBasic(mthdCall, allMthds.filter(_.name == mthdName))
-
-      resolveUnresolvedMethodCall(mthdCall, caller, possibleMthds)
+  def resolveHelper(
+    caller: Option[Expr | ClassRef],
+    prevProofs: List[Expr]
+  ): ResolveResult[(Expr, List[Expr])] = {
+    val allMthds = caller match {
+      case None              => ctxt.mthdDefs(mthdName).methods
+      case Some(e: Expr)     => e.typ.methods
+      case Some(c: ClassRef) => c.cls.methods
     }
+    //Filter based on name and number of parameters
+    val possibleMthds = possibleMthdsBasic(mthdCall, allMthds.filter(_.name == mthdName))
+
+    resolveUnresolvedMethodCall(mthdCall, caller, possibleMthds, prevProofs)
   }
 
   (mthdCall.objOrCls: @unchecked) match {
-    case None => resolveHelper(None)
-    case Some(e: Expr) =>
-      resolveAndCheckExpr(e, BuiltinTypes.objectType).flatMap(c =>
-        resolveHelper(Some(c))
-      )
+    case None => resolveHelper(None, Nil)
+    case Some(e: ResolvedOrUnresolvedExpr) =>
+      resolveAndCheckExpr(e, BuiltinTypes.objectType).flatMap { (c, proofs) =>
+        resolveHelper(Some(c), proofs)
+      }
     case Some(ur.MultiDotRef(path)) =>
-      ReferenceResolve.resolveDotChainedRef(path).flatMap { caller => resolveHelper(Some(caller)) }
+      ReferenceResolve.resolveDotChainedRef(path).flatMap { caller =>
+        resolveHelper(Some(caller), Nil)
+      }
   }
 }
 
@@ -212,8 +253,9 @@ private def possibleMthdsBasic(
 private def resolveUnresolvedMethodCall(
   mthdCall: ur.UnresolvedMethodCall,
   caller: Option[Expr | ClassRef],
-  possibleMthds: Iterable[Method]
-)(using Context): ResolveResult[Expr] = {
+  possibleMthds: Iterable[Method],
+  prevProofs: List[Expr]
+)(using Context): ResolveResult[(Expr, List[Expr])] = {
 //  println(s"resolving method call ${mthdCall.text}, ${possibleMthds.map(_.name)}")
   val nameText = mthdCall.methodName
   val mthdName = nameText.text
@@ -225,8 +267,13 @@ private def resolveUnresolvedMethodCall(
   } else {
     val resolvedMthd = possibleMthds.head
     val argEndTextRange = TextRange.empty(mthdCall.valArgs.textRange.end)
+    val returnedProofs = resolvedMthd.proofs.map(Expr.dummy(_)).toList
+
     for {
-      newValArgs <- resolveArgList(mthdCall.valArgs, resolvedMthd.params.params.map(_.typ))
+      (newValArgs, newProofs) <- resolveArgList(
+        mthdCall.valArgs,
+        resolvedMthd.params.params.map(_.typ)
+      )
       newGivenArgs <- ImplicitSearch.resolveImplicitArgList(
         mthdCall.givenArgs,
         resolvedMthd.givenParams,
@@ -237,47 +284,64 @@ private def resolveUnresolvedMethodCall(
         resolvedMthd.proofParams,
         argEndTextRange
       )
-    } yield MethodCall(
-      caller,
-      nameText,
-      newValArgs,
-      mthdCall.typeArgs,
-      newGivenArgs,
-      newProofArgs,
-      resolvedMthd.returnType,
-      resolvedMthd
-    )
+    } yield {
+      val resolvedCall = MethodCall(
+        caller,
+        nameText,
+        newValArgs,
+        mthdCall.typeArgs,
+        newGivenArgs,
+        newProofArgs,
+        resolvedMthd.returnType,
+        resolvedMthd
+      )
+      // println(s"resolvedmthd=${resolvedMthd.name}, proofs=${resolvedMthd.proofs.map(_.text)}")
+      (resolvedCall, returnedProofs ::: newProofs ::: prevProofs)
+    }
   }
 }
 
 private def resolveArgList(
   origArgs: ur.UnresolvedArgList,
   expectedTypes: Iterable[Type]
-)(using Context): ResolveResult[ArgList] = {
+)(using Context): ResolveResult[(ArgList, List[Expr])] = {
 //  println(s"resolving arglist ${origArgs.text}, ${expectedTypes.map(_.text)}")
-  origArgs.args
-    .lazyZip(expectedTypes)
-    .map(resolveAndCheckExpr)
-    .foldLeft(OptionT.some(Nil): ResolveResult[List[Expr]])((resolvedArgs, currArg) =>
-      for {
-        args <- resolvedArgs
-        arg <- currArg
-      } yield arg :: args
-    )
-    .map(resolvedArgs => ArgList(resolvedArgs.reverse, origArgs.argsKind, origArgs.textRange))
+  //Resolves all arguments, and keeps track of whether or not all of them were resolved
+  val resolvedArgs: ResultWithLogs[(List[(ResolvedOrUnresolvedExpr, List[Expr])], Boolean)] =
+    origArgs.args
+      .lazyZip(expectedTypes)
+      .foldLeft(
+        Writer(Nil, (Nil, false)): ResultWithLogs[
+          (List[(ResolvedOrUnresolvedExpr, List[Expr])], Boolean)
+        ]
+      ) { case (acc, (origArg, expectedType)) =>
+        acc.flatMap { case (prevArgs, allResolved) =>
+          resolveAndCheckExpr(origArg, expectedType)
+            .map(resolved => (resolved :: prevArgs, allResolved))
+            .getOrElse(((origArg, Nil) :: prevArgs, false)): ResultWithLogs[
+            (List[(ResolvedOrUnresolvedExpr, List[Expr])], Boolean)
+          ]
+        }
+      }
+
+  OptionT(resolvedArgs.map { case (resolvedArgs, allResolved) =>
+    //TODO do something with allResolved to signal that everything is not okay
+    val (args, proofs) = resolvedArgs.reverse.unzip
+    Some((ArgList(args, origArgs.argsKind, origArgs.textRange), proofs.flatten))
+  })
 }
 
 private def resolveBinaryExpr(
   expr: ur.UnresolvedBinaryExpr
-)(using Context): ResolveResult[Expr] = {
+)(using Context): ResolveResult[(Expr, List[Expr])] = {
   val ur.UnresolvedBinaryExpr(lhs, op, rhs) = expr
   import OpType._
   op.opType match {
     case SUBTRACT | MULTIPLY | DIVIDE =>
       for {
-        newLhs <- resolveAndCheckExpr(lhs, PrimitiveTypeDef.numericType)
-        newRhs <- resolveAndCheckExpr(rhs, PrimitiveTypeDef.numericType)
-      } yield BinaryExpr(newLhs, op, newRhs, ???)
+        (newLhs, lhsProofs) <- resolveAndCheckExpr(lhs, PrimitiveTypeDef.numericType)
+        (newRhs, rhsProofs) <- resolveAndCheckExpr(rhs, PrimitiveTypeDef.numericType)
+      } yield (BinaryExpr(newLhs, op, newRhs, ???), lhsProofs ::: rhsProofs)
     case _ => OptionT(Writer(errorMsg("Operator not implemented", op) :: Nil, None))
   }
 }

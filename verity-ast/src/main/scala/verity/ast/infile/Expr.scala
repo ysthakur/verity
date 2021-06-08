@@ -3,7 +3,6 @@ package verity.ast.infile
 import verity.ast._
 
 import scala.collection.mutable.ArrayBuffer
-import verity.ast.infile.NothingTypeDef.NothingType
 
 trait ResolvedOrUnresolvedExpr extends HasTextRange, HasType, Tree
 
@@ -11,6 +10,13 @@ sealed trait Expr extends Tree, HasText, HasTextRange, HasType, ResolvedOrUnreso
   // private var _exprType: Type = ToBeInferred(ObjectType, NothingType, List.empty)
   def typ: Type
   // private[verity] def exprType_=(typ: Type) = _exprType = typ
+}
+
+object Expr {
+  def dummy(typ: Type, textRange: TextRange = TextRange.synthetic): Expr = typ match {
+    case pt: PrimitiveType => ???
+    case _ => UpcastExpr(NullLiteral(textRange), typ, textRange)
+  }
 }
 
 sealed trait Literal extends Expr
@@ -44,7 +50,7 @@ enum FloatingLiteral(typ: PrimitiveType) extends NumLiteral(typ) {
 class NullLiteral(override val textRange: TextRange) extends Expr {
   override def text = "null"
   
-  override def typ: Type = NothingType
+  override def typ: Type = NothingTypeDef.NothingType
 }
 
 case class StringLiteral(text: String, override val textRange: TextRange) extends Expr {
@@ -246,4 +252,8 @@ class StaticFieldAccess(clsRef: ClassRef, field: Field, fieldNameRange: TextRang
   override def typ: Type = field.typ
   override def textRange: TextRange = TextRange(clsRef.textRange.start, fieldNameRange.end)
   override def text = s"${clsRef.text}.${field.name}"
+}
+
+case class UpcastExpr(expr: Expr, typ: Type, textRange: TextRange) extends Expr {
+  override def text = s"(${typ.text}) ${expr.text}"
 }

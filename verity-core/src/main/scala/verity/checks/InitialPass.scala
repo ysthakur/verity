@@ -201,16 +201,23 @@ object InitialPass {
       case None => givenParamLogs
     }
 
+    val proofClauseLogs = proofParamLogs.to(scala.collection.mutable.ListBuffer)
+    mthd._proofs = mthd.proofs.map { proofType =>
+      val resolved = ReferenceResolve.resolveTypeIfNeeded(proofType).value
+      proofClauseLogs ++= resolved.written
+      resolved.value.getOrElse(proofType)
+    }
+
     mthd match {
       case nm: NormMethod =>
-        proofParamLogs ::: ReferenceResolve
+        proofClauseLogs ++= ReferenceResolve
           .resolveTypeIfNeeded(mthd.returnType)
           .map { typ =>
             nm.returnType = typ
           }
           .value
           .written
-      case _ => proofParamLogs
+      case _ => proofClauseLogs
     }
   }
 

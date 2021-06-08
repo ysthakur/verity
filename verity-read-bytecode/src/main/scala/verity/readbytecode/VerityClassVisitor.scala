@@ -142,7 +142,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
           ArrayBuffer(),
           TypeParamList(Nil, TextRange.synthetic),
           returnType,
-          Array(),
+          Nil,
           Text(methodName),
           paramList,
           givenParams = None, //todo retrieve given parameters somehow

@@ -45,7 +45,7 @@ private class Types(core: Core)(implicit offsetToPos: collection.mutable.ArrayBu
   def typeArg[_: P]: P[Type] = P(wildCard | nonWildcardType)
   def typeArgList[_: P]: P[TypeArgList] = P(("<" ~/ Index ~ typeArg ~ ("," ~ typeArg).rep ~ ">" ~ Index).?).map {
     case Some((start, firstArg, restArgs, end)) =>
-      println(s"typearglist, ${firstArg +: restArgs}")
+      // println(s"typearglist, ${firstArg +: restArgs}")
       TypeArgList(firstArg +: restArgs, ps2tr(start, end))
     case None => TypeArgList(Nil, TextRange.synthetic)
   }

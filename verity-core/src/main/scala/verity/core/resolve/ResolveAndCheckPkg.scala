@@ -123,7 +123,7 @@ private def resolveAndCheckField(field: Field)(using Context): List[CompilerMsg]
 
   field.initExpr.fold(Nil) { e =>
     val resolved: ResultWithLogs[Option[Expr]] =
-      resolveAndCheckExpr(e, field.typ).value
+      resolveAndCheckExpr(e, field.typ).map(_._1).value
     resolved.map {
       case None =>
       case s    => field.initExpr = s
@@ -160,7 +160,7 @@ private def resolveAndCheckMthd(
             file
           )
           resolveStmt(block, mthd.returnType)(using ctxt)
-            .map { newBlock =>
+            .map { (newBlock, newProofs) =>
               block.stmts.clear()
               newBlock match {
                 case b: Block => block.stmts.addAll(b.stmts)

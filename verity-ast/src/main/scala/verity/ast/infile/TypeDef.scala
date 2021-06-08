@@ -60,15 +60,15 @@ object BuiltinTypes {
       java <- rootPkg.subPkgs.find(_.name == "java")
       lang <- java.subPkgs.find(_.name == "lang")
     } {
-      println("found package java.lang!")
+      // println("found package java.lang!")
       lang.classlikes.find(_.name == "Object").foreach { objectClsDef =>
         this.objectTypeDef = objectClsDef
-        println("reset java.lang.Object!")
+        // println("reset java.lang.Object!")
       }
 
       lang.classlikes.find(_.name == "String").foreach { stringClsDef =>
         this.stringTypeDef = stringClsDef
-        println("reset String!")
+        // println("reset String!")
       }
     }
 
@@ -85,7 +85,6 @@ object BuiltinTypes {
     }
     
     langPkg.files += FileNode("Magic.verity", None, Nil, Seq(NotGivenDef, NotProvenDef), None, Nil)
-    println(s"added verity.lang yay ${rootPkg.subPkgs.find(_.name == "verity").get.subPkgs.find(_.name == "lang").get.classlikes}")
   }
 
 }
