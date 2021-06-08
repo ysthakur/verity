@@ -35,6 +35,8 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
         }
     }
   def numLiteral[_: P]: P[IntegerLiteral] = P(intLiteral)
+  def nullLiteral[_: P]: P[NullLiteral] =
+    P("null" ~ Index).map { endInd => new NullLiteral(ps2tr(endInd - 4, endInd))}
   def stringLiteral[_: P]: P[StringLiteral] =
     P("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
       case (start, text, end) => StringLiteral("\"" + text + "\"", ps2tr(start, end))
@@ -45,7 +47,7 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
   def superRef[_: P]: P[UnresolvedSuperRef] = P(Index ~ "super" ~ nid ~/ Index).map { case (start, end) =>
     new UnresolvedSuperRef(ps2tr(start, end))
   }
-  def literal[_: P]: P[RoUExpr] = P(numLiteral | boolLiteral | stringLiteral | thisRef | superRef)
+  def literal[_: P]: P[RoUExpr] = P(numLiteral | boolLiteral | nullLiteral | stringLiteral | thisRef | superRef)
   // def varRef[_: P] = P(Index ~ identifier ~ Index).map { case (start, varName, end) =>
   //   new VarRef(varName, ps2tr(start, end))
   // }

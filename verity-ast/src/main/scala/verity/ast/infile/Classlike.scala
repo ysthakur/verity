@@ -178,8 +178,8 @@ object NothingTypeDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
     override def fields = Nil
     override def methods = Nil
 
-    override def strictSubTypeOf(sup: Type) = false
-    override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectType
+    override def strictSubTypeOf(sup: Type) = true
+    override def strictSuperTypeOf(sub: Type): Boolean = false
 
     //todo figure out how to deal with this
     override def superTypes: Iterable[Type] = Nil
