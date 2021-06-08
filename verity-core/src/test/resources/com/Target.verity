@@ -25,9 +25,12 @@ class PersonBuilder {
   private String name;
   private int age;
 
+  private PersonBuilder(){}
+
   public static Person build(BuildPerson bp) {
-    bp.buildPerson(this);
-    return new Person(name, age);
+    PersonBuilder b = new PersonBuilder();
+    bp.buildPerson(b);
+    return new Person(b.name, b.age);
   }
 
   public void setName(String n)(proof verity.lang.NotProven<SetName> ev) proof SetName {
