@@ -32,10 +32,14 @@ class PersonBuilder {
 
   public void setName(String n)(proof verity.lang.NotProven<SetName> ev) proof SetName {
     name = n;
+    proof SetName ev = null;
+    return;
   }
 
   public void setAge(int a)(proof verity.lang.NotProven<SetAge> ev) proof SetAge {
     age = a;
+    proof SetAge ev = null;
+    return;
   }
 }
 
@@ -49,6 +53,7 @@ class BuildFoo extends BuildPerson {
     p.setName("Foo");
     p.setName("Bar");
     p.setAge(0);
+    return;
   }
 }
 

@@ -13,7 +13,7 @@ class ExprStmt(val expr: Expr) extends Statement {
   override def textRange = expr.textRange
 }
 
-class ReturnStmt(val expr: ResolvedOrUnresolvedExpr, override val textRange: TextRange)
+class ReturnStmt(val expr: Option[ResolvedOrUnresolvedExpr], override val textRange: TextRange)
     extends Statement {
-  override def text = s"return ${expr.text};"
+  override def text = s"return ${expr.fold("")(_.text)};"
 }

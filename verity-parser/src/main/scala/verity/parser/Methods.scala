@@ -79,7 +79,7 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit offsetToP
     new UnresolvedExprStmt(expr)
   }
 
-  def returnStmt[_: P]: P[ReturnStmt] = P("return" ~/ Index ~ expr ~ ";" ~ Index).map {
+  def returnStmt[_: P]: P[ReturnStmt] = P("return" ~/ Index ~ (expr).? ~ ";" ~ Index).map {
     case (start, expr, end) =>
       new ReturnStmt(expr, ps2tr(start - 6, end))
   }

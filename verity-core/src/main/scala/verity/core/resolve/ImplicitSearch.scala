@@ -54,7 +54,7 @@ object ImplicitSearch {
     } else if (poss.size > 1) {
       singleMsg(
         errorMsg(
-          s"Ambiguous implicits - all of the following match type ${givenType.text}: ${poss.map(_.text).mkString("\n")}",
+          s"Ambiguous implicits - all of the following match type ${givenType.text}:\n${poss.map(_.text).mkString("\n")}",
           tr
         )
       )
@@ -70,7 +70,7 @@ object ImplicitSearch {
     } else if (poss.size > 1) {
       singleMsg(
         errorMsg(
-          s"Ambiguous implicits - all of the following match type ${proofType.text}: ${poss.map(_.text).mkString("\n")}",
+          s"Ambiguous implicits - all of the following match type ${proofType.text}:\n${poss.map(_.text).mkString("\n")}",
           tr
         )
       )

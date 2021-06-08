@@ -5,6 +5,7 @@ import verity.ast.infile.{unresolved => ur, _}
 import verity.core._
 import verity.core.Context.Defs
 
+import cats._
 import cats.catsInstancesForId
 import cats.data.{OptionT, Writer}
 import cats.implicits._
@@ -17,7 +18,8 @@ import verity.ast.infile.unresolved.UnresolvedExpr
 //todo make a proper solver for this stuff
 private def resolveStmt(
   stmt: Statement,
-  mthdReturnType: Type
+  mthdReturnType: Type,
+  mthdProofs: Iterable[Type]
 )(using ctxt: Context): ResolveResult[(Statement, List[ProofDef])] = {
 //  logger.debug(s"Resolving statement ${stmt.text}, ${stmt.getClass}")
   stmt match {
@@ -26,9 +28,15 @@ private def resolveStmt(
         (new ExprStmt(expr), proofs)
       }
     case rs: ReturnStmt =>
-      resolveAndCheckExpr(rs.expr, mthdReturnType).map { (expr, proofs) =>
-        (ReturnStmt(expr, rs.textRange), proofs)
-      }
+      for {
+        newReturnStmt <- rs.expr match {
+            case None => OptionT(Writer(Nil, Some(rs)))
+            case Some(oldExpr) => resolveAndCheckExpr(oldExpr, mthdReturnType).map { (newExpr, proofs) =>
+              ReturnStmt(Some(newExpr), rs.textRange)
+            }
+          }: ResolveResult[ReturnStmt]
+        _ <- mthdProofs.toList.map(ImplicitSearch.findProof(_, rs.textRange)).sequence: ResolveResult[List[Expr]]
+      } yield (newReturnStmt, List.empty[Expr])
     case lv: LocalVar =>
       ReferenceResolve.resolveTypeIfNeeded(lv.typ).orElse(OptionT.some(lv.typ)).flatMap { newType =>
         // println(s"newtyp=${newType.text}, ${lv.name}, ${newType.getClass}")
@@ -54,7 +62,7 @@ private def resolveStmt(
         ) { case (acc, stmt) =>
           acc.flatMap { case context -> prev =>
             // println(s"context proofdefs=${context.proofDefs.map(_.asInstanceOf[HasText].text)}")
-            resolveStmt(stmt, mthdReturnType)(using context)
+            resolveStmt(stmt, mthdReturnType, mthdProofs)(using context)
               .orElse(
                 OptionT.some((stmt, Nil))
               ) //If the statement could not be resolved, keep the old one

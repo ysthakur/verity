@@ -159,7 +159,7 @@ private def resolveAndCheckMthd(
             cls,
             file
           )
-          resolveStmt(block, mthd.returnType)(using ctxt)
+          resolveStmt(block, mthd.returnType, mthd.proofs)(using ctxt)
             .map { (newBlock, newProofs) =>
               block.stmts.clear()
               newBlock match {
