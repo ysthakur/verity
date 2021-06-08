@@ -12,7 +12,7 @@ class Person {
   final String name;
   final int age;
 
-  public String Person(String n, int a) {
+  public Person(String n, int a) {
     name = n;
     age = a;
   }
@@ -25,29 +25,29 @@ class PersonBuilder {
   private String name;
   private int age;
 
-  /*public void setName(String n)(proof verity.lang.NotProven[SetName] ev) {
+  public static Person build(BuildPerson bp) {
+    bp.buildPerson(this);
+    return new Person(name, age);
+  }
+
+  public void setName(String n)(proof verity.lang.NotProven<SetName> ev) {
     name = n;
   }
 
-  public void setAge(int a)(proof verity.lang.NotProven[SetAge] ev) {
+  public void setAge(int a)(proof verity.lang.NotProven<SetAge> ev) {
     age = a;
   }
-
-  public static Person build(BuildPerson bp) {
-    bp.build();
-    return new Person(name, age);
-  }*/
 }
 
 
 abstract class BuildPerson {
-  /*abstract (void, proof SetName, SetAge) buildPerson(PersonBuilder p) {}*/
+  abstract void buildPerson(PersonBuilder p) proof SetName, SetAge;
 }
 
 class BuildFoo extends BuildPerson {
-  /*(void, proof SetName, SetAge) buildPerson(PersonBuilder p) {
+  void buildPerson(PersonBuilder p) proof SetName, SetAge {
     p.setName("Foo");
-    p.setAge(-1);
-  }*/
+    p.setAge(0);
+  }
 }
 

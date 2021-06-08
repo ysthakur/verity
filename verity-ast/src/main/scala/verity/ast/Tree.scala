@@ -56,7 +56,7 @@ object Tree {
 }
 
 trait Synthetic extends Tree, HasTextRange {
-  override def textRange = TextRange(-1, -1)
+  override def textRange = TextRange.synthetic
   override def synthetic = true
 }
 

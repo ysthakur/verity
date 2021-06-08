@@ -11,13 +11,13 @@ case class FileNode(
   imports: Seq[ImportStmt],
   classlikes: Seq[Classlike],
   origFile: Option[File],
-  offsetToRowCol: Iterable[(Int, Int, Int)]
+  offsetToPos: Iterable[(Int, Int, Int)]
 ) {
   val textRanges: mutable.Map[Tree, TextRange] = mutable.HashMap()
   private[verity] var pkg: Pkg | Null = null
   private[verity] var resolvedImports: Iterable[Pkg.Importable] = List.empty
 
-  def getRowCol(targetOffset: Int): Option[(Int, Int)] = FileNode.getRowCol(offsetToRowCol, targetOffset)
+  def getPos(targetOffset: Int): Position = FileNode.getPos(offsetToPos, targetOffset)
 
   /** Whether or not this is a source file or just a classfile that the project depends on.
     */
@@ -28,10 +28,28 @@ case class FileNode(
 }
 
 object FileNode {
-  def getRowCol(offsetToRowCol: Iterable[(Int, Int, Int)], targetOffset: Int): Option[(Int, Int)] =
-    offsetToRowCol.collectFirst {
-      case (offset, row, endCol) if targetOffset <= offset => (row, endCol - (offset - targetOffset) + 1)
+  def getPos(offsetToPos: Iterable[(Int, Int, Int)], targetOffset: Int): Position = {
+    if (targetOffset < 0) {
+      Position.synthetic
+    } else {
+      val prevRow = 1
+      val prevCol = 0
+      val it = offsetToPos.iterator
+      var shouldBreak = false
+
+      while (it.hasNext && !shouldBreak) {
+        val (offset, row, endCol) = it.next
+        if (targetOffset <= offset) {
+
+        }
+      }
+      offsetToPos.find {
+        case (offset, _, _) => targetOffset <= offset
+      }.getOrElse(offsetToPos.last) match {
+        case (offset, row, endCol) => Position(row, endCol - (offset - targetOffset) + 1, targetOffset)
+      }
     }
+  }
 }
 
 /** @param path The path of the package this file is in

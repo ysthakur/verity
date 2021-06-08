@@ -150,12 +150,12 @@ case class ResolvedTypeRef(
   override def strictSubTypeOf(sup: Type): Boolean = sup match {
     case ResolvedTypeRef(_, _, typeDef2) =>
       // typeDef.strictSubTypeDefOf(typeDef2)
-      println(s"checking if ${this.text} strictsubtype of ${sup.text}, supertypes=${typeDef.superTypes}")
+      // println(s"checking if ${this.text} strictsubtype of ${sup.text}, supertypes=${typeDef.superTypes}")
       typeDef != typeDef2 &&
         typeDef.superTypes
           .map(Type.fillArgs(typeDef.typeParams.params, args.args))
           .exists(_.subTypeOf(sup))
-    case _ => false
+    case _ => sup == BuiltinTypes.objectType
   }
   override def strictSuperTypeOf(sub: Type): Boolean = sub match {
     case ResolvedTypeRef(_, _, typeDef2) =>
@@ -218,8 +218,8 @@ case class Wildcard(upper: Option[ResolvedTypeRef], lower: Option[ResolvedTypeRe
   override def strictSubTypeOf(sup: Type): Boolean = upper.fold(false)(_.strictSubTypeOf(sup))
   override def strictSuperTypeOf(sub: Type): Boolean = lower.fold(false)(_.strictSuperTypeOf(sub))
 
-  override def fields: Iterable[Field] = upper.fold(BuiltinTypes.objectTypeDef.makeRef.fields)(_.fields)
-  override def methods: Iterable[Method] = upper.fold(BuiltinTypes.objectTypeDef.makeRef.methods)(_.methods)
+  override def fields: Iterable[Field] = upper.fold(BuiltinTypes.objectType.fields)(_.fields)
+  override def methods: Iterable[Method] = upper.fold(BuiltinTypes.objectType.methods)(_.methods)
 
   override def superTypes: Iterable[Type] = upper.fold(Nil)(_.superTypes)
 
@@ -234,9 +234,9 @@ case class ArrayType(elemType: Type, private[this] val bracketRange: TextRange) 
   )
   override def methods: Iterable[Method] = List()
 
-  override def superTypes: Iterable[Type] = BuiltinTypes.objectTypeDef.makeRef :: Nil
+  override def superTypes: Iterable[Type] = BuiltinTypes.objectType :: Nil
 
-  override def strictSubTypeOf(sup: Type): Boolean = sup == BuiltinTypes.objectTypeDef.makeRef
+  override def strictSubTypeOf(sup: Type): Boolean = sup == BuiltinTypes.objectType
   override def strictSuperTypeOf(sub: Type): Boolean = false
 
   override def text = s"${elemType.text}[]"

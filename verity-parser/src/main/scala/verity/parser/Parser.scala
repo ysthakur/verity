@@ -1,35 +1,57 @@
 package verity.parser
 
-import verity.ast.FileNode
+import verity.ast.{FileNode, TextRange, Position}
 
 import fastparse._, JavaWhitespace._
 
 import java.io.{File, FileInputStream, InputStream}
 import collection.mutable.ArrayBuffer
 
+private class Parser(inputFile: File)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]) {
+  val core = new Core
+  val types = new Types(core)
+  val exprs = new Exprs(core, types)
+  val methods = new Methods(core, types, exprs)
+  val classlikes = new Classlikes(core, types, exprs, methods)
+
+  def file[_: P]: P[FileNode] =
+    P(core.packageStmt.? ~ core.importStmt.rep ~ classlikes.classlike.rep ~ End).map {
+      case (pkgStmt, imptStmts, templateDefs) =>
+        FileNode(inputFile.getName, pkgStmt, imptStmts, templateDefs, Some(inputFile), offsetToPos)
+    }
+}
+
 object Parser {
-  
   def parseFile(name: String, input: File): Either[(String, Int), FileNode] = {
-    val offsetToRowCol = ArrayBuffer.empty[(Int, Int, Int)]
-    val res = parse(new TrackingInputStream(new FileInputStream(input), offsetToRowCol), file(input, offsetToRowCol)(_), verboseFailures=true)
-    (res: @unchecked) match {
+    val offsetToPos = ArrayBuffer.empty[(Int, Int, Int)]
+    val parser = new Parser(input)(offsetToPos)
+    val tis = new TrackingInputStream(new FileInputStream(input), offsetToPos)
+    
+    (parse(tis, parser.file(_), verboseFailures=true): @unchecked) match {
       case Parsed.Success(ast, _) => Right(ast)
-      case Parsed.Failure(label, index, extra) => Left((makeSyntaxErrorMsg(label, index, extra, offsetToRowCol), index))
+      case Parsed.Failure(label, index, extra) => Left((makeSyntaxErrorMsg(label, index, extra, offsetToPos), index))
     }
   }
 
-  def makeSyntaxErrorMsg(label: String, index: Int, extra: Parsed.Extra, offsetToRowCol: ArrayBuffer[(Int, Int, Int)]): String =
-    s"Syntax error at offset ${extra.index}, rowcol=${FileNode.getRowCol(offsetToRowCol, extra.index)}, label = $label, ${extra.stack}"
+  def makeSyntaxErrorMsg(label: String, index: Int, extra: Parsed.Extra, offsetToPos: ArrayBuffer[(Int, Int, Int)]): String =
+    s"Syntax error at offset ${extra.index}, rowcol=${FileNode.getPos(offsetToPos, extra.index)}, label = $label, ${extra.stack}"
 
-  def file[_: P](file: File, offsetToRowCol: ArrayBuffer[(Int, Int, Int)]): P[FileNode] =
-    P(Core.packageStmt.? ~ Core.importStmt.rep ~ Classlikes.classlike.rep ~ End).map {
-      case (pkgStmt, imptStmts, templateDefs) =>
-        FileNode(file.getName, pkgStmt, imptStmts, templateDefs, Some(file), offsetToRowCol)
-    }
+  private[parser] def getPos(offset: Int)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]): Position =
+    FileNode.getPos(offsetToPos, offset)
 
-  class TrackingInputStream(
+  /**
+    * Create a [[TextRange]] from two positions
+    *
+    * @param startOffset
+    * @param endOffset
+    * @return
+    */
+  private[parser] def ps2tr(startOffset: Int, endOffset: Int)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]): TextRange =
+    TextRange(getPos(startOffset), getPos(endOffset))
+
+  private class TrackingInputStream(
     delegate: InputStream,
-    private[parser] val offsetToRowCol: ArrayBuffer[(Int, Int, Int)]
+    private[parser] val offsetToPos: ArrayBuffer[(Int, Int, Int)]
   ) extends InputStream {
     private var offset: Int = 0
     private var row: Int = 1
@@ -44,10 +66,10 @@ object Parser {
         val char = delegate.read()
         offset += 1
         if (char == -1) {
-          offsetToRowCol += ((offset, row, col))
+          offsetToPos += ((offset, row, col))
           reachedEnd = true
         } else if (char == 12 || char == 10 && prevChar != 12) {
-          offsetToRowCol += ((offset, row, col))
+          offsetToPos += ((offset, row, col))
           row += 1
           col = 0
         } else if (char != 10) {

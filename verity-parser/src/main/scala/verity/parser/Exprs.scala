@@ -3,26 +3,29 @@ package verity.parser
 import verity.ast._
 import verity.ast.infile.unresolved._
 import verity.ast.infile.{ResolvedOrUnresolvedExpr => RoUExpr, _}
-import verity.parser.Core._
-import verity.parser.Types._
+// import verity.parser.Core._
+// import verity.parser.Types._
+import Parser.ps2tr
 
 import fastparse._
 import fastparse.JavaWhitespace._
 
-private object Exprs {
+private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]) {
+  import core._
+  import types._
 
   /** **************************BEGIN ATOMS***************************************
     */
   def boolLiteral[_: P]: P[BoolLiteral] = P(Index ~ ("true".! | "false".!) ~ Index).map {
     case (start, text, end) =>
-      if (text(0) == 't') new TrueLiteral(TextRange(start, end))
-      else new FalseLiteral(TextRange(start, end))
+      if (text(0) == 't') new TrueLiteral(ps2tr(start, end))
+      else new FalseLiteral(ps2tr(start, end))
   }
   //TODO merge int and float literals, and allow underscores
   def intLiteral[_: P]: P[IntegerLiteral] =
     P(Index ~ CharsWhileIn("0-9").! ~ CharIn("bBsSlL").?.! ~ Index).map {
       case (start, num, suffix, end) =>
-        val range = TextRange(start, end)
+        val range = ps2tr(start, end)
         import IntegerLiteral._
         suffix match {
           case "l" | "L" => LongLiteral(num, range)
@@ -34,21 +37,21 @@ private object Exprs {
   def numLiteral[_: P]: P[IntegerLiteral] = P(intLiteral)
   def stringLiteral[_: P]: P[StringLiteral] =
     P("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
-      case (start, text, end) => StringLiteral("\"" + text + "\"", TextRange(start, end))
+      case (start, text, end) => StringLiteral("\"" + text + "\"", ps2tr(start, end))
     }
   def thisRef[_: P]: P[UnresolvedThisRef] = P(Index ~ "this" ~ nid ~/ Index).map { case (start, end) =>
-    new UnresolvedThisRef(TextRange(start, end))
+    new UnresolvedThisRef(ps2tr(start, end))
   }
   def superRef[_: P]: P[UnresolvedSuperRef] = P(Index ~ "super" ~ nid ~/ Index).map { case (start, end) =>
-    new UnresolvedSuperRef(TextRange(start, end))
+    new UnresolvedSuperRef(ps2tr(start, end))
   }
   def literal[_: P]: P[RoUExpr] = P(numLiteral | boolLiteral | stringLiteral | thisRef | superRef)
   // def varRef[_: P] = P(Index ~ identifier ~ Index).map { case (start, varName, end) =>
-  //   new VarRef(varName, TextRange(start, end))
+  //   new VarRef(varName, ps2tr(start, end))
   // }
   def parenExpr[_: P]: P[UnresolvedParenExpr] = P(Index ~ "(" ~ expr ~/ ")" ~ Index).map {
     case (start, expr, end) =>
-      new UnresolvedParenExpr(expr, TextRange(start, end))
+      new UnresolvedParenExpr(expr, ps2tr(start, end))
   }
 
   /**
@@ -63,7 +66,7 @@ private object Exprs {
         typeArgs,
         givenArgs,
         proofArgs,
-        newTokEnd - 4
+        Parser.getPos(newTokEnd - 4)
       )
     }
 
@@ -134,7 +137,7 @@ private object Exprs {
       )
   }
   def arrayAccess[_: P]: P[RoUExpr => RoUExpr] = P("[" ~/ Index ~ expr ~ "]" ~ Index).map {
-    case (start, index, end) => arr => UnresolvedArraySelect(arr, index, TextRange(start, end))
+    case (start, index, end) => arr => UnresolvedArraySelect(arr, index, ps2tr(start, end))
   }
 
   def topExpr[_: P]: P[RoUExpr] =
@@ -162,7 +165,7 @@ private object Exprs {
             | ("instanceof".! ~ Index ~/ nonWildcardType)).rep
     ).map { case (first, reps) =>
       reps.foldLeft(first) { case (lhs, (op, opEnd, rhs)) =>
-        val opRange = TextRange(opEnd - op.length, opEnd)
+        val opRange = ps2tr(opEnd - op.length, opEnd)
         op match {
           case "instanceof" =>
             new UnresolvedInstanceOf(lhs, rhs.asInstanceOf[UnresolvedTypeRef], opRange)
@@ -204,27 +207,27 @@ private object Exprs {
 
   val foldBinExpr: ((RoUExpr, Seq[(Int, String, Int, RoUExpr)])) => RoUExpr = { case (left, reps) =>
     reps.foldLeft(left) { case (lhs, (opStart, op, opEnd, rhs)) =>
-      UnresolvedBinaryExpr(lhs, Op(OpType.findBySymbol(op).get, TextRange(opStart, opEnd)), rhs)
+      UnresolvedBinaryExpr(lhs, Op(OpType.findBySymbol(op).get, ps2tr(opStart, opEnd)), rhs)
     }
   }
 
   def valArgList[_: P]: P[UnresolvedArgList] =
     P("(" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
-      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Normal, TextRange(start, end))
+      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Normal, ps2tr(start, end))
       case (start, Some((firstArg, args)), end) =>
-        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Normal, TextRange(start, end))
+        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Normal, ps2tr(start, end))
     }
   //TODO make sure the character after "given" isn't a unicode identifier part
   def givenArgList[_: P]: P[UnresolvedArgList] =
     P("(" ~ "given" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
-      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Given, TextRange(start, end))
+      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Given, ps2tr(start, end))
       case (start, Some((firstArg, args)), end) =>
-        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Given, TextRange(start, end))
+        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Given, ps2tr(start, end))
     }
   def proofArgList[_: P]: P[UnresolvedArgList] =
     P("(" ~ "proof" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
-      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Proof, TextRange(start, end))
+      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Proof, ps2tr(start, end))
       case (start, Some((firstArg, args)), end) =>
-        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Proof, TextRange(start, end))
+        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Proof, ps2tr(start, end))
     }
 }

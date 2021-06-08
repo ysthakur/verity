@@ -143,7 +143,7 @@ case class EnumDef(
   def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
 
   override def superTypes: Iterable[Type] =
-    BuiltinTypes.objectTypeDef.makeRef +: superInterfaces.map(_.resolved.get.makeRef)
+    BuiltinTypes.objectType +: superInterfaces.map(_.resolved.get.makeRef)
 
   override def text: String =
     s"${modifiers.map(_.text).mkString(" ")} enum $name { ${methods.mkString(" ")}}"
@@ -179,7 +179,7 @@ object NothingTypeDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
     override def methods = Nil
 
     override def strictSubTypeOf(sup: Type) = false
-    override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectTypeDef.makeRef
+    override def strictSuperTypeOf(sub: Type): Boolean = sub != BuiltinTypes.objectType
 
     //todo figure out how to deal with this
     override def superTypes: Iterable[Type] = Nil
@@ -192,10 +192,10 @@ object NothingTypeDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
   * Proofs of type `NotGiven<T>` are provided if no givens of type `T` are found.
   */
 object NotGivenDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
-  override def name = "verity.lang.NotGiven"
+  override def name = "NotGiven"
 
   override lazy val typeParams = TypeParamList(
-    List(TypeParam("T", BuiltinTypes.objectTypeDef.makeRef, NothingTypeDef.makeRef, TextRange.synthetic)),
+    List(TypeParam("T", BuiltinTypes.objectType, NothingTypeDef.makeRef, TextRange.synthetic)),
     TextRange.synthetic
   )
 }
@@ -204,10 +204,10 @@ object NotGivenDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
   * Proofs of type `NotProven<T>` are provided if no proofs of type `T` are found.
   */
 object NotProvenDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
-  override def name = "verity.lang.NotProven"
+  override def name = "NotProven"
 
   override lazy val typeParams = TypeParamList(
-    List(TypeParam("T", BuiltinTypes.objectTypeDef.makeRef, NothingTypeDef.makeRef, TextRange.synthetic)),
+    List(TypeParam("T", BuiltinTypes.objectType, NothingTypeDef.makeRef, TextRange.synthetic)),
     TextRange.synthetic
   )
 }

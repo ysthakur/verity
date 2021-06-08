@@ -3,6 +3,7 @@ package verity.ast.infile
 import verity.ast._
 
 import scala.collection.mutable.ArrayBuffer
+import verity.ast.infile.NothingTypeDef.NothingType
 
 trait ResolvedOrUnresolvedExpr extends HasTextRange, HasType, Tree
 
@@ -38,6 +39,12 @@ enum FloatingLiteral(typ: PrimitiveType) extends NumLiteral(typ) {
       extends FloatingLiteral(PrimitiveType.FloatType)
   case DoubleLiteral(text: String, override val textRange: TextRange)
       extends FloatingLiteral(PrimitiveType.DoubleType)
+}
+
+class NullLiteral(override val textRange: TextRange) extends Expr {
+  override def text = "null"
+  
+  override def typ: Type = NothingType
 }
 
 case class StringLiteral(text: String, override val textRange: TextRange) extends Expr {
@@ -202,7 +209,7 @@ class CtorCall(
   proofArgs: Option[ArgList],
   typ: Type,
   resolved: Method,
-  newKeywordInd: Int
+  newKeywordPos: Position
 ) extends MethodCall(Some(cls), Text("<init>"), valArgs, typeArgs, givenArgs, proofArgs, typ, resolved) {
   override def text: String = cls.text
     + typeArgs.fold("")(_.text)
@@ -211,7 +218,7 @@ class CtorCall(
     + HasText.optText(proofArgs)
 
   override def textRange = TextRange(
-    newKeywordInd,
+    newKeywordPos,
     proofArgs.orElse(givenArgs).getOrElse(valArgs).textRange.end
   )
 }

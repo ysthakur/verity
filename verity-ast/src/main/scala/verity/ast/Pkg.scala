@@ -17,7 +17,7 @@ sealed trait Pkg extends NamedTree {
   def findClasslike(className: String): Option[Classlike] =
     this.classlikes.find(_.name == className)
 
-  def classlikes: Iterable[Classlike] = files.view.flatMap(_.classlikes)
+  def classlikes: Iterable[Classlike] = files.flatMap(_.classlikes)
 
   def parents: List[Pkg]
 

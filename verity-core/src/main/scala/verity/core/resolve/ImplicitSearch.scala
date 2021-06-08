@@ -31,32 +31,30 @@ object ImplicitSearch {
             (paramList.kind: @unchecked) match {
               case ParamListKind.GIVEN =>
                 OptionT(paramList.params
-                  .map(param => findGiven(param, defaultTextRange).getOrElse(ur.UnresolvedImplicit(param)))
+                  .map(param => findGiven(param.typ, defaultTextRange).getOrElse(ur.UnresolvedImplicit(param)))
                   .sequence
                   .map(givenArgs => Some(Some(ArgList(givenArgs, ArgsKind.Given, TextRange.synthetic)))))
-              case ParamListKind.PROOF => ???
+              case ParamListKind.PROOF =>
+                OptionT(paramList.params
+                  .map(param => findProof(param.typ, defaultTextRange).getOrElse(ur.UnresolvedImplicit(param)))
+                  .sequence
+                  .map(proofArgs => Some(Some(ArgList(proofArgs, ArgsKind.Proof, TextRange.synthetic)))))
             }
           case None            => OptionT(Writer(Nil, Some(None)))
         }
     }
   }
   
-  def findGiven(givenParam: Parameter, tr: TextRange)(using ctxt: Context): ResolveResult[Expr] =
-    val poss = ctxt.givenDefs.view.map {
-      case vd: VariableDecl =>
-        println(s"vd=${vd.text}, vd.typ=${vd.typ.text}, vdtypcls=${vd.typ.getClass}")
-        Option.when(vd.typ.subTypeOf(givenParam.typ))(VarRef(Text(vd.name), vd))
-      case mthd: Methodlike => ???
-    }.collect {
-      case Some(expr) => expr
-    }
+  //TODO reduce code duplication (findGiven and findProof)
+  def findGiven(givenType: Type, tr: TextRange)(using ctxt: Context): ResolveResult[Expr] =
+    val poss = findGivens(givenType)
 
     if (poss.isEmpty) {
-      singleMsg(errorMsg(s"No givens of type ${givenParam.typ.text} found", tr))
+      singleMsg(errorMsg(s"No givens of type ${givenType.text} found", tr))
     } else if (poss.size > 1) {
       singleMsg(
         errorMsg(
-          s"Ambiguous implicits - all of the following match type ${givenParam.typ.text}: ${poss.map(_.text).mkString("\n")}",
+          s"Ambiguous implicits - all of the following match type ${givenType.text}: ${poss.map(_.text).mkString("\n")}",
           tr
         )
       )
@@ -64,7 +62,55 @@ object ImplicitSearch {
       OptionT.some(poss.head)
     }
 
-  def findProof(proofParam: Parameter)(using ctxt: Context): ResolveResult[Expr] =
-    ???
+  def findProof(proofType: Type, tr: TextRange)(using ctxt: Context): ResolveResult[Expr] = {
+    val poss = findProofs(proofType)
 
+    if (poss.isEmpty) {
+      singleMsg(errorMsg(s"No proofs of type ${proofType.text} found", tr))
+    } else if (poss.size > 1) {
+      singleMsg(
+        errorMsg(
+          s"Ambiguous implicits - all of the following match type ${proofType.text}: ${poss.map(_.text).mkString("\n")}",
+          tr
+        )
+      )
+    } else {
+      OptionT.some(poss.head)
+    }
+  }
+
+  def findGivens(givenType: Type)(using ctxt: Context): Iterable[Expr] =
+    ctxt.givenDefs.view.map {
+      case vd: VariableDecl =>
+        println(s"vd=${vd.text}, vd.typ=${vd.typ.text}, vdtypcls=${vd.typ.getClass}")
+        Option.when(vd.typ.subTypeOf(givenType))(VarRef(Text(vd.name), vd))
+      case mthd: Methodlike => ???
+    }.collect {
+      case Some(expr) => expr
+    }
+
+  def findProofs(proofType: Type)(using ctxt: Context): Iterable[Expr] = {
+    proofType match {
+      case ResolvedTypeRef(_, TypeArgList(singleArg, _), NotGivenDef) =>
+        //There shouldn't be a given of type singleArg.head (proofType is NotGivenDef<singleArg.head>)
+        val givens = findGivens(singleArg.head)
+        if (givens.isEmpty) Seq(NullLiteral(TextRange.synthetic))
+        else Nil
+      case ResolvedTypeRef(_, TypeArgList(singleArg, _), NotProvenDef) =>
+        val proofs = findProofs(singleArg.head)
+        if (proofs.isEmpty) Seq(NullLiteral(TextRange.synthetic))
+        else Nil
+      case _ =>
+        (ctxt.proofDefs.view ++ ctxt.givenDefs).map {
+          case expr: Expr =>
+            Option.when(expr.typ.subTypeOf(proofType))(expr)
+          case vd: VariableDecl =>
+            println(s"vd=${vd.text}, vd.typ=${vd.typ.text}, vdtypcls=${vd.typ.getClass}")
+            Option.when(vd.typ.subTypeOf(proofType))(VarRef(Text(vd.name), vd))
+          case mthd: Methodlike => ???
+        }.collect {
+          case Some(expr) => expr
+        }
+    }
+  }
 }

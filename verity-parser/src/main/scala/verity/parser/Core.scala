@@ -1,12 +1,14 @@
 package verity.parser
 
-import fastparse.JavaWhitespace._
-import fastparse._
 import verity.ast._
 import verity.ast.infile._
 import verity.ast.infile.unresolved._
+import Parser.ps2tr
 
-private object Core {
+import fastparse.JavaWhitespace._
+import fastparse._
+
+private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]) {
   /**
    * Negative lookahead to ensure that an identifier has ended
    */
@@ -21,13 +23,13 @@ private object Core {
     * turned into a Text object later
     */
   def identifierText[_: P]: P[Text] =
-    P(Index ~ identifier ~ Index).map { case (start, id, end) => Text(id, TextRange(start, end)) }
+    P(Index ~ identifier ~ Index).map { case (start, id, end) => Text(id, ps2tr(start, end)) }
 
   /** Like [[identifierWithTextRange]], but can be inlined
     */
   def identifierWithTextRange[_: P]: P[(String, TextRange)] =
     P(Index ~ identifier ~ Index).map { case (start, id, end) =>
-      id -> TextRange(start, end)
+      id -> ps2tr(start, end)
     }
 
   def multiDotRef[_: P]: P[MultiDotRef] = P(identifierText ~ ("." ~ identifierText ~ !"(").rep).map {
@@ -37,7 +39,7 @@ private object Core {
 //  implicit class StringOps(str: String) {
 //    @inline
 //    def t[_: P]: P[Token] = P(Index ~ str ~ Index).map { case (start, end) =>
-//      new Token(str, TextRange(start, end))
+//      new Token(str, ps2tr(start, end))
 //    }
 //  }
 
@@ -50,12 +52,11 @@ private object Core {
   //     }
   //   }
 
-  @inline
-  def argList[A, _: P](arg: P[A]): P[Seq[A]] =
-    P((arg ~ ",").rep ~ arg.?).map {
-      case (firstArgs, Some(lastArg)) => firstArgs :+ lastArg
-      case (firstArgs, _)             => firstArgs
-    }
+  // @inline
+  // def argList[A, _: P](arg: P[A]): P[Seq[A]] = P(((arg ~ ",").rep ~ arg).?).map {
+  //     case Some((firstArgs, lastArg)) => firstArgs :+ lastArg
+  //     case _             => Nil
+  //   }
 
   def modifier[_: P]: P[Modifier] = P(
       StringIn(
@@ -75,7 +76,7 @@ private object Core {
           "abstract"
       ).! ~ !CharPred(!_.isUnicodeIdentifierPart) ~ Index
   ).map { case (modifier, end) =>
-    Modifier(ModifierType.valueOf(modifier.toUpperCase), TextRange(end - modifier.length, end))
+    Modifier(ModifierType.valueOf(modifier.toUpperCase), ps2tr(end - modifier.length, end))
   }
   def modifiers[_: P]: P[Seq[Modifier]] = P(modifier.rep)
 
@@ -93,9 +94,9 @@ private object Core {
   def importStmt[_: P]: P[ImportStmt] =
     P(Index ~ "import" ~/ dotPath ~ ("." ~ "*" ~ Index).? ~ ";").map {
       case (imptTokStart, path, None) =>
-        ImportStmt(path, TextRange(imptTokStart, path.textRange.end), wildCard = false)
+        ImportStmt(path, TextRange(Parser.getPos(imptTokStart), path.textRange.end), wildCard = false)
       case (imptTokStart, path, Some(wildcardInd)) =>
-        ImportStmt(path, TextRange(imptTokStart, wildcardInd), wildCard = true)
+        ImportStmt(path, ps2tr(imptTokStart, wildcardInd), wildCard = true)
     }
 
   //todo update list of hard keywords

@@ -52,6 +52,9 @@ object BuiltinTypes {
   private[verity] var objectTypeDef: TypeDef = TypeDef.placeholder
   private[verity] var stringTypeDef: TypeDef = TypeDef.placeholder
 
+  def objectType: Type = objectTypeDef.makeRef
+  def stringType: Type = stringTypeDef.makeRef
+
   def refreshBuiltins(rootPkg: RootPkg): Unit = {
     for {
       java <- rootPkg.subPkgs.find(_.name == "java")
@@ -80,8 +83,9 @@ object BuiltinTypes {
       verityPkg.subPkgs += newPkg
       newPkg
     }
-
+    
     langPkg.files += FileNode("Magic.verity", None, Nil, Seq(NotGivenDef, NotProvenDef), None, Nil)
+    println(s"added verity.lang yay ${rootPkg.subPkgs.find(_.name == "verity").get.subPkgs.find(_.name == "lang").get.classlikes}")
   }
 
 }

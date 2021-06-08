@@ -5,7 +5,7 @@ import verity.ast.{FileNode, HasText, HasTextRange, TextRange}
 
 object LogUtils {
   def logMsg(msg: String, pos: TextRange | HasTextRange, file: FileNode): Unit =
-    val (start, end) = getRowColRange(pos, file)
+    val TextRange(start, end) = getPosRange(pos, file)
     println(s"$msg (from $start to $end in file ${file.name})")
 
   def logMsg(msg: String, pos: TextRange)(using ctxt: Context): Unit =
@@ -17,15 +17,9 @@ object LogUtils {
   def log(msg: CompilerMsg)(using ctxt: Context): Unit =
     log(msg, ctxt.file)
 
-  def getRowColRange(textRangeOrTree: TextRange | HasTextRange, file: FileNode) =
-    val default = (-1, -1)
+  def getPosRange(textRangeOrTree: TextRange | HasTextRange, file: FileNode) =
     textRangeOrTree match {
-      case tr: TextRange =>
-        (file.getRowCol(tr.start).getOrElse(default), file.getRowCol(tr.end).getOrElse(default))
-      case htr: HasTextRange =>
-        (
-          file.getRowCol(htr.textRange.start).getOrElse(default),
-          file.getRowCol(htr.textRange.end).getOrElse(default)
-        )
+      case tr: TextRange => tr
+      case htr: HasTextRange => htr.textRange
     }
 }

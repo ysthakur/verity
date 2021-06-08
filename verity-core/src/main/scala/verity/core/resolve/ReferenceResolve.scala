@@ -57,24 +57,15 @@ private[verity] object ReferenceResolve {
     val typeArgsRange = typ.args.textRange
     val resolvedCls = resolveCls(typ.path, typeDefs, pkgDefs).value
 
-    var lastAcc = Writer(List.empty[CompilerMsg], true -> List.empty[Type])
-
     //A writer where the value is a tuple (areAllArgsResolved?, resolvedArgsInReverse)
     val resolvedArgs: ResultWithLogs[(Boolean, List[Type])] =
-      try {
-        typ.args.args.foldLeft(Writer(List.empty[CompilerMsg], true -> List.empty[Type])) {
-          (acc, arg) =>
-            val foo: Writer[List[CompilerMsg], (Boolean, List[Type])] = acc.flatMap {
-              (allResolved, prev) =>
-                resolveTypeIfNeeded(arg, typeDefs, pkgDefs)
-                  .map(typ => allResolved -> (typ :: prev))
-                  .getOrElse(false -> (arg :: prev))
-            }
-            lastAcc = foo
-            foo.asInstanceOf[Writer[List[CompilerMsg], (Boolean, List[Type])]]
+      typ.args.args.foldLeft(Writer(List.empty[CompilerMsg], true -> List.empty[Type])) { (acc, arg) =>
+        acc.flatMap {
+          (allResolved, prev) =>
+            resolveTypeIfNeeded(arg, typeDefs, pkgDefs)
+              .map(typ => allResolved -> (typ :: prev))
+              .getOrElse(false -> (arg :: prev))
         }
-      } catch {
-        case e => throw new Error(s"lastAcc=$lastAcc,typ=${typ.path.map(_.text)}", e)
       }
 
     OptionT(
@@ -93,7 +84,7 @@ private[verity] object ReferenceResolve {
         res <-
           //Only return a ResolvedTypeRef if the class and all arguments are resolved
           if (allResolved && maybeCls.nonEmpty)
-            Writer(List(infoMsg(s"Resolved type ${typ.path}", typ)), Some(ResolvedTypeRef(typ.path, argList, maybeCls.get)): Option[Type])
+            Writer(List(/*infoMsg(s"Resolved type ${typ.path}", typ)*/), Some(ResolvedTypeRef(typ.path, argList, maybeCls.get)): Option[Type])
           else
             Writer(List(errorMsg(s"Could not resolve type ${typ.path}", typ)), Some(UnresolvedTypeRef(typ.path, argList, maybeCls)))
       } yield res

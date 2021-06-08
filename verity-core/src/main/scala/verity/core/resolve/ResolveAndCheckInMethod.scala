@@ -99,7 +99,7 @@ private def resolveAndCheckExpr(
         }
       }
     case ur.UnresolvedFieldAccess(obj, fieldName) =>
-      resolveAndCheckExpr(obj, BuiltinTypes.objectTypeDef.makeRef).flatMap { owner =>
+      resolveAndCheckExpr(obj, BuiltinTypes.objectType).flatMap { owner =>
         ReferenceResolve.findField(owner.typ, fieldName.text) match {
           case Some(field) => OptionT.some(FieldAccess(owner, field, fieldName.textRange))
           case None        => singleMsg(errorMsg(s"No such field ${fieldName.text}", fieldName))
@@ -170,7 +170,7 @@ private def resolveUnresolvedMethodCall(
     (caller match {
       case None => OptionT(Writer(Nil, Some(ctxt.mthdDefs(mthdName).methods)))
       case Some(e: Expr) =>
-        resolveAndCheckExpr(e, BuiltinTypes.objectTypeDef.makeRef).map(_.typ.methods)
+        resolveAndCheckExpr(e, BuiltinTypes.objectType).map(_.typ.methods)
       case Some(c: ClassRef) => OptionT(Writer(Nil, Some(c.cls.methods)))
     }: ResolveResult[Iterable[Method]]).flatMap { allMthds =>
       //Filter based on name and number of parameters
@@ -183,7 +183,7 @@ private def resolveUnresolvedMethodCall(
   (mthdCall.objOrCls: @unchecked) match {
     case None => resolveHelper(None)
     case Some(e: Expr) =>
-      resolveAndCheckExpr(e, BuiltinTypes.objectTypeDef.makeRef).flatMap(c =>
+      resolveAndCheckExpr(e, BuiltinTypes.objectType).flatMap(c =>
         resolveHelper(Some(c))
       )
     case Some(ur.MultiDotRef(path)) =>

@@ -16,7 +16,7 @@ object CheckTypes {
     val numParams = params.size
     val numArgs = args.size
     if (numParams == numArgs)
-      args.lazyZip(params).map(checkTypeArg).collect { case Some(msg) => msg }.toList
+      args.lazyZip(params).flatMap(checkTypeArg).toList
     else
       List(
         errorMsg(
@@ -26,8 +26,8 @@ object CheckTypes {
       )
   }
 
-  /** Check a type argument, and if there's a problem, give a Some containing an error message.
+  /** Check a type argument, and if there are problems, return error messages.
     */
-  private def checkTypeArg(args: Type, param: TypeParam): Option[CompilerMsg] =
-    ???
+  private def checkTypeArg(args: Type, param: TypeParam): Iterable[CompilerMsg] =
+    Nil //TODO!!!!!!!!!!!!1
 }

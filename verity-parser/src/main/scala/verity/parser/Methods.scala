@@ -3,60 +3,85 @@ package verity.parser
 import verity.ast._
 import infile._
 import unresolved._
-import Core._
-import Exprs._
-import Types._
+// import Core._
+// import Exprs._
+// import Types._
+import Parser.ps2tr
 
 import fastparse._
 import JavaWhitespace._
 
 import collection.mutable.ArrayBuffer
 
-private object Methods {
-  private def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map { case (typ, name) =>
-    Parameter(
-      List.empty, //TODO Add annotations!
-      typ,
-      name,
-      isGiven = false,
-      isProof = false
-    )
+private class Methods(core: Core, types: Types, exprs: Exprs)(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]) {
+  import core._
+  import types._
+  import exprs._
+
+
+  // private def returnTypeOrProofs[_: P]: P[(Type, Seq[Type])] =
+  //   P(returnType).map {
+  //     case retType: Type     => (retType, Seq())
+  //     case retTypeWithProofs => retTypeWithProofs.asInstanceOf[(Type, Seq[Type])]
+  //   }
+
+  def returnTypeWithProofs[_: P]: P[(Type, Seq[Type])] =
+    P("(" ~/ returnType ~ ";" ~ "proof" ~ nonWildcardType ~ ("," ~ nonWildcardType).rep ~ ")").map {
+      case (retType, firstProof, restProofs) =>
+        (retType, firstProof +: restProofs)
+    }
+
+  private def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map {
+    case (typ, name) =>
+      Parameter(
+        List.empty, //TODO Add annotations!
+        typ,
+        name,
+        isGiven = false,
+        isProof = false
+      )
   }
 
   private def params[_: P]: P[List[Parameter]] = P((param ~ ("," ~/ param).rep).?).map {
-    case None => Nil
+    case None                            => Nil
     case Some((firstParam, otherParams)) => firstParam :: otherParams.toList
   }
-  
-  def normParamList[_: P]: P[ParamList] = P(Index ~ "(" ~/ params ~ ")" ~ Index).map {
+
+  def normParamList[_: P]: P[ParamList] = P("(" ~ Index ~ params ~ ")" ~ Index).map {
     case (start, params, end) =>
-      ParamList(params, TextRange(start, end), ParamListKind.NORMAL)
+      ParamList(params, ps2tr(start, end), ParamListKind.NORMAL)
   }
   def givenParamList[_: P]: P[ParamList] =
-    P(Index ~ "(" ~ "given" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
+    P("(" ~ Index ~ "given" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
       case (start, params, end) =>
-        ParamList(params, TextRange(start, end), ParamListKind.GIVEN)
+        ParamList(params, ps2tr(start, end), ParamListKind.GIVEN)
     }
   def proofParamList[_: P]: P[ParamList] =
-    P(Index ~ "(" ~ "proof" ~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
+    P("(" ~ Index ~ "proof" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
       case (start, params, end) =>
-        ParamList(params, TextRange(start, end), ParamListKind.PROOF)
+        ParamList(params, ps2tr(start, end), ParamListKind.PROOF)
+    }
+
+  def proofClause[_: P]: P[Seq[Type]] =
+    P(("proof" ~/ typeRef ~ ("," ~ typeRef).rep).?).map {
+      case None => Nil
+      case Some((firstType, restTypes)) => firstType +: restTypes
     }
 
   //todo allow final modifier
   def localVarDecl[_: P]: P[LocalVar] =
     P(modifiers ~ nonWildcardType ~ Index ~ identifier ~/ Index ~ ("=" ~/ expr).? ~ ";" ~ Index)
       .map { case (mods, typ, idStart, name, idEnd, expr, end) =>
-        new LocalVar(mods, Text(name, TextRange(idStart, idEnd)), typ, expr, end)
+        new LocalVar(mods, Text(name, ps2tr(idStart, idEnd)), typ, expr, end)
       }
 
-  def exprStmt[_: P]: P[Statement] = P(expr ~ ";").map {
-    case expr => new UnresolvedExprStmt(expr)
+  def exprStmt[_: P]: P[Statement] = P(expr ~ ";").map { case expr =>
+    new UnresolvedExprStmt(expr)
   }
 
   def returnStmt[_: P]: P[ReturnStmt] = P("return" ~/ Index ~ expr ~ ";" ~ Index).map {
     case (start, expr, end) =>
-      new ReturnStmt(expr, TextRange(start - 6, end))
+      new ReturnStmt(expr, ps2tr(start - 6, end))
   }
 
   //TODO add control flow, etc. (BEFORE exprStmt)
@@ -66,57 +91,109 @@ private object Methods {
     case (start, stmts, end) =>
       new Block(
         stmts.to(ArrayBuffer),
-        TextRange(start, end),
+        ps2tr(start, end),
         ToBeInferred(UnknownType, UnknownType, Nil)
       )
   }
 
+  def paramsAndBlock[_: P]: P[(ParamList, Option[ParamList], Option[ParamList], Seq[Type], Any)] =
+    P(normParamList ~ givenParamList.? ~ proofParamList.? ~ proofClause ~ (block | ";" ~ Index))
+
   //TODO add type parameters
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def normMethod[_: P]: P[Method] =
-    P(modifiers ~ typeParamList.? ~ (returnTypeAndProofs) ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index))
-      .map { case (modifiers, typeParams, (returnType, proofs), name, valParams, givenParams, proofParams, body) =>
-        createNormMethod(modifiers, typeParams, returnType, proofs, name, valParams, givenParams, proofParams, body)
-      }
+    P(modifiers ~ typeParamList.? ~ returnType ~ identifierText ~ paramsAndBlock).map {
+      case (
+            modifiers,
+            typeParams,
+            returnType,
+            name,
+            (valParams, givenParams, proofParams, provenProofs, body)
+          ) =>
+        createNormMethod(
+          modifiers,
+          typeParams,
+          returnType,
+          provenProofs,
+          name,
+          valParams,
+          givenParams,
+          proofParams,
+          body
+        )
+    }
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def ctor[_: P]: P[Seq[Modifier] => (() => HasCtors) => Constructor] =
-    P(identifierWithTextRange ~ &("(") ~/ normParamList ~ givenParamList.? ~ proofParamList.? ~ block).map {
-      case (name, nameRange, valParams, givenParams, proofParams, body) =>
-        modifiers =>
-          cls =>
-            new Constructor(
-              modifiers.to(ArrayBuffer),
-              name,
-              nameRange,
-              valParams,
-              givenParams,
-              proofParams,
-              Nil,
-              body,
-              cls
-            )
+    P(
+      identifierWithTextRange ~ &(
+        "("
+      ) ~/ normParamList ~ givenParamList.? ~ proofParamList.? ~ block
+    ).map { case (name, nameRange, valParams, givenParams, proofParams, body) =>
+      modifiers =>
+        cls =>
+          new Constructor(
+            modifiers.to(ArrayBuffer),
+            name,
+            nameRange,
+            valParams,
+            givenParams,
+            proofParams,
+            Nil,
+            body,
+            cls
+          )
     }
 
   //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
   def methodWithTypeParams[_: P]: P[Seq[Modifier] => NormMethod] =
-    P(typeParamList ~/ (returnTypeAndProofs) ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index)).map {
-      case (typeParams, (returnType, proofs), name, valParams, givenParams, proofParams, body) =>
+    P(typeParamList ~/ returnType ~ identifierText ~ paramsAndBlock).map {
+      case (typeParams, returnType, name, (valParams, givenParams, proofParams, provenProofs, body)) =>
         (modifiers: Seq[Modifier]) =>
-          createNormMethod(modifiers, Some(typeParams), returnType, proofs, name, valParams, givenParams, proofParams, body)
+          createNormMethod(
+            modifiers,
+            Some(typeParams),
+            returnType,
+            provenProofs,
+            name,
+            valParams,
+            givenParams,
+            proofParams,
+            body
+          )
     }
 
   def methodWithoutProofsOrTypeParams[_: P]: P[(Type, Text) => Seq[Modifier] => NormMethod] =
-    P(normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index)).map { case (valParams, givenParams, proofParams, body) =>
+    P(paramsAndBlock).map { case (valParams, givenParams, proofParams, provenProofs, body) =>
       (returnType, name) =>
         (modifiers: Seq[Modifier]) =>
-          createNormMethod(modifiers, None, returnType, Seq.empty, name, valParams, givenParams, proofParams, body)
+          createNormMethod(
+            modifiers,
+            None,
+            returnType,
+            provenProofs,
+            name,
+            valParams,
+            givenParams,
+            proofParams,
+            body
+          )
     }
   def methodWithProofsWithoutTypeParams[_: P]: P[Seq[Modifier] => NormMethod] =
-    P(returnTypeAndProofs ~ identifierText ~ normParamList ~ givenParamList.? ~ proofParamList.? ~ (block | ";" ~ Index)).map {
-      case (returnType, proofs, name, valParams, givenParams, proofParams, body) =>
+    P(returnType ~ identifierText ~ paramsAndBlock).map {
+      case (returnType, name, (valParams, givenParams, proofParams, provenProofs, body)) =>
         (modifiers: Seq[Modifier]) =>
-          createNormMethod(modifiers, None, returnType, proofs, name, valParams, givenParams, proofParams, body)
+          createNormMethod(
+            modifiers,
+            None,
+            returnType,
+            provenProofs,
+            name,
+            valParams,
+            givenParams,
+            proofParams,
+            body
+          )
     }
 
   def createNormMethod(
@@ -147,16 +224,4 @@ private object Methods {
       body
     )
   }
-
-  def returnTypeAndProofs[_: P]: P[(Type, Seq[Type])] =
-    P(returnType).map {
-      case retType: Type => (retType, Seq())
-      case retTypeWithProofs => retTypeWithProofs.asInstanceOf[(Type, Seq[Type])]
-    }
-
-  def returnTypeWithProofs[_: P]: P[(Type, Seq[Type])] =
-    P("(" ~/ returnType ~ ";" ~ "proof" ~ nonWildcardType ~  ("," ~ nonWildcardType).rep ~ ")").map {
-      case (retType, firstProof, restProofs) =>
-        (retType, firstProof +: restProofs)
-    }
 }

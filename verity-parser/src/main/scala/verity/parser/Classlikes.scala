@@ -1,17 +1,22 @@
 package verity.parser
 
 import verity.ast._, infile._
-import Core._
-import Exprs._
-import Methods._
-import Types._
+// import Core._
+// import Exprs._
+// import Methods._
+// import Types._
+import Parser.ps2tr
 
 import fastparse._, JavaWhitespace._
 
 import collection.mutable.ArrayBuffer
 
 //TODO add annotations
-private object Classlikes {
+private class Classlikes(core: Core, types: Types, exprs: Exprs, methods: Methods)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]) {
+  import core._
+  import exprs._
+  import methods._
+  import types._
 
   // def field[_: P] = P(modifiers ~ nonWildcardType ~ identifierText ~ ("=" ~/ expr).? ~ ";").map {
   //   case (mods, typ, name, initExpr) => new Field(name, mods.to(ArrayBuffer), typ, initExpr)
@@ -59,13 +64,13 @@ private object Classlikes {
             modifiers.to(ArrayBuffer),
             name,
             typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
-            superClass.getOrElse(BuiltinTypes.objectTypeDef.makeRef),
+            superClass.getOrElse(BuiltinTypes.objectType),
             Array.empty[Type],//isArr,
             fields.to(ArrayBuffer).asInstanceOf[ArrayBuffer[Field]],
             ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ArrayBuffer),
             normMethods.to(ArrayBuffer).asInstanceOf[ArrayBuffer[NormMethod]],
-            TextRange(classTokEnd - 5, classTokEnd),
-            TextRange(braceStart, braceEnd)
+            ps2tr(classTokEnd - 5, classTokEnd),
+            ps2tr(braceStart, braceEnd)
         )
 
         cls
@@ -75,7 +80,7 @@ private object Classlikes {
   //TODO add modifiers and annotations
   //TODO allow extending classes, interfaces
   def interface[_: P]: P[Seq[Modifier] => Classlike] = P(
-      "interface" ~/ Index ~ identifier ~ typeParamList.? ~ ("extends" ~/ argList(typeRef)).? ~ classOrInterfaceBody
+      "interface" ~/ Index ~ identifier ~ typeParamList.? ~ ("extends" ~/ typeRef ~ ("," ~/ typeRef).rep).? ~ classOrInterfaceBody
   ).map {
     case (classTokEnd, name, typeParams, superTypes, (braceStart, members, braceEnd)) =>
       modifiers => {
@@ -89,11 +94,11 @@ private object Classlikes {
             modifiers.to(ArrayBuffer),
             name,
             typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
-            superTypes.getOrElse(Nil),
+            superTypes.fold(Nil: Seq[Type]){ case (first, rest) => first +: rest },
             fields.to(ArrayBuffer).asInstanceOf[ArrayBuffer[Field]],
             castMethods.to(ArrayBuffer),
-            TextRange(classTokEnd - 5, classTokEnd),
-            TextRange(braceStart, braceEnd)
+            ps2tr(classTokEnd - 5, classTokEnd),
+            ps2tr(braceStart, braceEnd)
         )
       }
   }
