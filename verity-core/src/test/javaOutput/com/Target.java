@@ -6,7 +6,7 @@ public class Target extends Object {
   public Target() {
   }
 
-  public static void main(String args) {
+  public static void main(String[] args) {
     Person foo = PersonBuilder.build(new BuildFoo());
   }
 }
@@ -68,7 +68,6 @@ class BuildFoo extends BuildPerson {
 
   void buildPerson(PersonBuilder p) {
     p.setName("Foo");
-    p.setAge(0);
     return;
   }
 }

@@ -3,7 +3,7 @@ package com;
 import java.lang.*;
 
 public class Target {
-  public static void main(String args) {
+  public static void main(String[] args) {
     Person foo = PersonBuilder.build(new BuildFoo());
   }
 }
@@ -54,7 +54,6 @@ abstract class BuildPerson {
 class BuildFoo extends BuildPerson {
   void buildPerson(PersonBuilder p) proof SetName, SetAge {
     p.setName("Foo");
-    p.setAge(0);
     return;
   }
 }
