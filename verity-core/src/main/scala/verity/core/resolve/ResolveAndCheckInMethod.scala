@@ -187,12 +187,14 @@ private def resolveUnresolvedCtorCall(
 )(using ctxt: Context): ResolveResult[(Expr, List[Expr])] = {
   ReferenceResolve.resolveCls(ctorCall.cls.path, ctxt.typeDefs, ctxt.pkgDefs).flatMap { cls =>
     ctorCall.typ = cls.makeRef
+    // ReferenceResolve.resolveDotChainedRef(mthdCall.asInstanceOf[ur.UnresolvedCtorCall].cls.path)
 
     resolveUnresolvedMethodCall(
       ctorCall,
-      None,
+      Some(ClassRef(cls, ctorCall.cls.path)),
       possibleMthdsBasic(ctorCall, cls.methods.filter(_.isCtor)),
-      Nil
+      Nil,
+      true
     )
   }
 
@@ -224,7 +226,7 @@ private def resolveUnresolvedMethodCall(
     //Filter based on name and number of parameters
     val possibleMthds = possibleMthdsBasic(mthdCall, allMthds.filter(_.name == mthdName))
 
-    resolveUnresolvedMethodCall(mthdCall, caller, possibleMthds, prevProofs)
+    resolveUnresolvedMethodCall(mthdCall, caller, possibleMthds, prevProofs, false)
   }
 
   (mthdCall.objOrCls: @unchecked) match {
@@ -262,7 +264,8 @@ private def resolveUnresolvedMethodCall(
   mthdCall: ur.UnresolvedMethodCall,
   caller: Option[Expr | ClassRef],
   possibleMthds: Iterable[Method],
-  prevProofs: List[Expr]
+  prevProofs: List[Expr],
+  isCtor: Boolean
 )(using Context): ResolveResult[(Expr, List[Expr])] = {
 //  println(s"resolving method call ${mthdCall.text}, ${possibleMthds.map(_.name)}")
   val nameText = mthdCall.methodName
@@ -293,16 +296,26 @@ private def resolveUnresolvedMethodCall(
         argEndTextRange
       )
     } yield {
-      val resolvedCall = MethodCall(
-        caller,
-        nameText,
-        newValArgs,
-        mthdCall.typeArgs,
-        newGivenArgs,
-        newProofArgs,
-        resolvedMthd.returnType,
-        resolvedMthd
-      )
+      val resolvedCall =
+        if (!isCtor) MethodCall(
+          caller,
+          nameText,
+          newValArgs,
+          mthdCall.typeArgs,
+          newGivenArgs,
+          newProofArgs,
+          resolvedMthd.returnType,
+          resolvedMthd
+        ) else CtorCall(
+          caller.get.asInstanceOf[ClassRef],
+          newValArgs,
+          mthdCall.typeArgs,
+          newGivenArgs,
+          newProofArgs,
+          resolvedMthd.returnType,
+          resolvedMthd,
+          Position.synthetic
+        )
       // println(s"resolvedmthd=${resolvedMthd.name}, proofs=${resolvedMthd.proofs.map(_.text)}")
       (resolvedCall, returnedProofs ::: newProofs ::: prevProofs)
     }

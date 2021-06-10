@@ -21,6 +21,8 @@ trait Type extends Tree, HasText {
     this != sup && this.subTypeOf(sup)
   def strictSuperTypeOf(sub: Type): Boolean =
     this != sub && this.superTypeOf(sub)
+
+  override def toString = text
 }
 
 object Type {
@@ -144,8 +146,7 @@ case class ResolvedTypeRef(
   path: Seq[Text],
   args: TypeArgList,
   typeDef: TypeDef
-) extends Type,
-      ResolvedOrUnresolvedTypeRef {
+) extends Type, ResolvedOrUnresolvedTypeRef {
   //todo deal with wildcards
   override def strictSubTypeOf(sup: Type): Boolean = sup match {
     case ResolvedTypeRef(_, _, typeDef2) =>
@@ -154,6 +155,7 @@ case class ResolvedTypeRef(
       typeDef != typeDef2 &&
         typeDef.superTypes
           .map(Type.fillArgs(typeDef.typeParams.params, args.args))
+          // .map{s => println(s"filled super ${s.text} (${s.getClass}) for ${this.text} <: ${sup.text} ${sup.getClass}"); s}
           .exists(_.subTypeOf(sup))
     case _ => sup == BuiltinTypes.objectType
   }

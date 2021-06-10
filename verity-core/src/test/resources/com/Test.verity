@@ -1,26 +1,24 @@
 package com;
 
-//import java.lang.String;
 import java.lang.*;
 
-class Test {
-  int foobar = 5;
+class ExecutionContext {
+  public static final ExecutionContext global = new ExecutionContext();
+}
 
-  public Test(int foo) {
-    int bar = foo;
-    given String xyzzy = "2567";
-    boolean baz = isEven(bar);
-    Test blah = new Test(bar);
-    String foo = "foo";
+class Foo {
+  public void foo()(given ExecutionContext ec) {
+    //do stuff here
   }
 
-  public boolean isEven(int x)(given String foo) {
-    return x % 2 < 0; //operators aren't checked yet
+  public void bar()(given ExecutionContext ec) {
+    //do stuff here
   }
 
-  public static void main() {
-    // System.out.println("Hello world!");
-  }
+  public void baz() {
+    given ExecutionContext ec = ExecutionContext.global;
 
-  private static void foo(int bar);
+    foo();
+    bar();
+  }
 }

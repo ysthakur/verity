@@ -112,7 +112,13 @@ object InitialPass {
     }
 
     //This context is only for fields
-    val fieldCtxt: Context = Context(cls.fields.map(f => f.name -> f).toMap, Map.empty, Nil, Nil, clsRefs, pkgRefs, cls, file)
+    given fieldCtxt: Context = Context(cls.fields.map(f => f.name -> f).toMap, Map.empty, Nil, Nil, clsRefs, pkgRefs, cls, file)
+
+    cls match {
+      case cd: ClassDef =>
+        cd.superClass = ReferenceResolve.resolveTypeIfNeeded(cd.superClass).value.value.get
+      case _ =>
+    }
 
     val fieldPassLogs = cls.fields.flatMap(initialPassField(_)(using fieldCtxt))
 

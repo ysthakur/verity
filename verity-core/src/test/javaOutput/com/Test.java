@@ -1,1 +1,1 @@
-package com;import java.lang.*; class Test { public Test ( int foo) { intbar=foo;given Stringxyzzy="2567"; booleanbaz=isEven(bar)(xyzzy); Testblah=Test(bar); Stringfoo="foo";} public boolean isEven ( int x) {return ((x % 2) < 0);} public static void main () {} private static void foo ( int bar) ;}
+package com;import java.lang.*; class ExecutionContext extends Object{public static final ExecutionContext global=new ExecutionContext(); ExecutionContext(){}} class Foo extends Object{ Foo(){}public void foo(){}public void bar(){}public void baz(){foo();bar();}}

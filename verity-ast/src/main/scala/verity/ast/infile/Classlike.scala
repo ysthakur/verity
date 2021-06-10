@@ -86,7 +86,7 @@ case class ClassDef(
   modifiers: ArrayBuffer[Modifier],
   name: String,
   typeParams: TypeParamList,
-  superClass: Type,
+  var superClass: Type,
   superInterfaces: Array[Type],
   fields: ArrayBuffer[Field],
   ctors: ArrayBuffer[Constructor],
@@ -103,7 +103,7 @@ case class ClassDef(
 
   //todo also add fields (no need to preserve order)
   override def text: String =
-    s"${modifiers.map(_.text).mkString(" ")} class $name { ${methods.view.map(_.text).mkString(" ")}}"
+    s"${HasText.seqText(modifiers, " ")} class $name{${HasText.seqText(fields)}${HasText.seqText(methods)}}"
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 }

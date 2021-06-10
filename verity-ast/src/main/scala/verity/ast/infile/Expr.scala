@@ -195,9 +195,9 @@ case class MethodCall(
   override def text: String = caller.fold("")(_.text + ".")
     + typeArgs.fold("")(_.text)
     + methodName.text
-    + valArgs.text
+    + valArgs.text/*
     + HasText.optText(givenArgs)
-    + HasText.optText(proofArgs)
+    + HasText.optText(proofArgs)*/
   override def textRange = TextRange(
     caller.orElse(typeArgs).getOrElse(methodName).textRange.start,
     proofArgs.orElse(givenArgs).getOrElse(valArgs).textRange.end
@@ -217,7 +217,7 @@ class CtorCall(
   resolved: Method,
   newKeywordPos: Position
 ) extends MethodCall(Some(cls), Text("<init>"), valArgs, typeArgs, givenArgs, proofArgs, typ, resolved) {
-  override def text: String = cls.text
+  override def text: String = "new " + cls.text
     + typeArgs.fold("")(_.text)
     + valArgs.text
     + HasText.optText(givenArgs)
