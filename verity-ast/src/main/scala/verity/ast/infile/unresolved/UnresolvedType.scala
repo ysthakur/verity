@@ -9,7 +9,10 @@ case class UnresolvedTypeRef(
   path: Seq[Text],
   args: TypeArgList,
   private[this] var _resolved: Option[TypeDef] = None
-) extends Type, ResolvedOrUnresolvedTypeRef, HasText, HasTextRange {
+) extends Type,
+      ResolvedOrUnresolvedTypeRef,
+      HasText,
+      HasTextRange {
   override def fields: Iterable[Field] = resolved.fold(Nil)(_.fields)
 
   def resolved: Option[TypeDef] = _resolved

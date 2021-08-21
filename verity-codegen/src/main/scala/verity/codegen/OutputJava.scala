@@ -57,7 +57,7 @@ object OutputJava {
       case c: ClassDef =>
         write(" extends ")
         output(c.superClass)
-      case _          =>
+      case _ =>
     }
     write("{")
     cls match {

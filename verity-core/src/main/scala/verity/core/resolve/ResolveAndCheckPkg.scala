@@ -42,7 +42,9 @@ private def resolveAndCheckFile(
       .map(c => c.name -> c)
       .toMap
   val pkgDefs =
-    (resolvedImports.collect { case p: Pkg => p }.view ++ rootPkg.subPkgs).map(p => p.name -> p).toMap
+    (resolvedImports.collect { case p: Pkg => p }.view ++ rootPkg.subPkgs)
+      .map(p => p.name -> p)
+      .toMap
 
   file.classlikes.foreach(c =>
     resolveAndCheckCls(
@@ -110,7 +112,7 @@ private[resolve] def resolveAndCheckCls(
     cls,
     file
   )
-  val fieldLogs: Iterable[CompilerMsg] = 
+  val fieldLogs: Iterable[CompilerMsg] =
     if (file.isSource) cls.fields.view.flatMap(resolveAndCheckField(_)(using ctxt))
     else Nil
 

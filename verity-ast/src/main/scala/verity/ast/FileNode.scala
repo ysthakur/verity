@@ -39,14 +39,15 @@ object FileNode {
 
       while (it.hasNext && !shouldBreak) {
         val (offset, row, endCol) = it.next
-        if (targetOffset <= offset) {
-
-        }
+        if (targetOffset <= offset) {}
       }
-      offsetToPos.find {
-        case (offset, _, _) => targetOffset <= offset
-      }.getOrElse(offsetToPos.last) match {
-        case (offset, row, endCol) => Position(row, endCol - (offset - targetOffset) + 1, targetOffset)
+      offsetToPos
+        .find { case (offset, _, _) =>
+          targetOffset <= offset
+        }
+        .getOrElse(offsetToPos.last) match {
+        case (offset, row, endCol) =>
+          Position(row, endCol - (offset - targetOffset) + 1, targetOffset)
       }
     }
   }

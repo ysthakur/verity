@@ -93,7 +93,8 @@ case class ClassDef(
   normMethods: ArrayBuffer[NormMethod],
   metaclassTokTR: TextRange,
   bodyRange: TextRange
-) extends Classlike(ClasslikeType.CLASS), HasCtors {
+) extends Classlike(ClasslikeType.CLASS),
+      HasCtors {
   def children = fields ++ methods
 
   override def methods = ctors ++ normMethods
@@ -170,9 +171,9 @@ object NothingTypeDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
   override def name = "verity.lang.Nothing"
   override def makeRef = NothingType
   override def typeParams = TypeParamList(
-      Nil,
-      TextRange.synthetic
-    )
+    Nil,
+    TextRange.synthetic
+  )
 
   object NothingType extends Type, Synthetic {
     override def fields = Nil

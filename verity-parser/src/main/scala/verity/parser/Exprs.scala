@@ -10,7 +10,9 @@ import Parser.ps2tr
 import fastparse._
 import fastparse.JavaWhitespace._
 
-private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]) {
+private class Exprs(core: Core, types: Types)(implicit
+  offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]
+) {
   import core._
   import types._
 
@@ -36,18 +38,22 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
     }
   def numLiteral[_: P]: P[IntegerLiteral] = P(intLiteral)
   def nullLiteral[_: P]: P[NullLiteral] =
-    P("null" ~ Index).map { endInd => new NullLiteral(ps2tr(endInd - 4, endInd))}
+    P("null" ~ Index).map { endInd => new NullLiteral(ps2tr(endInd - 4, endInd)) }
   def stringLiteral[_: P]: P[StringLiteral] =
     P("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
       case (start, text, end) => StringLiteral("\"" + text + "\"", ps2tr(start, end))
     }
-  def thisRef[_: P]: P[UnresolvedThisRef] = P(Index ~ "this" ~ nid ~/ Index).map { case (start, end) =>
-    new UnresolvedThisRef(ps2tr(start, end))
+  def thisRef[_: P]: P[UnresolvedThisRef] = P(Index ~ "this" ~ nid ~/ Index).map {
+    case (start, end) =>
+      new UnresolvedThisRef(ps2tr(start, end))
   }
-  def superRef[_: P]: P[UnresolvedSuperRef] = P(Index ~ "super" ~ nid ~/ Index).map { case (start, end) =>
-    new UnresolvedSuperRef(ps2tr(start, end))
+  def superRef[_: P]: P[UnresolvedSuperRef] = P(Index ~ "super" ~ nid ~/ Index).map {
+    case (start, end) =>
+      new UnresolvedSuperRef(ps2tr(start, end))
   }
-  def literal[_: P]: P[RoUExpr] = P(numLiteral | boolLiteral | nullLiteral | stringLiteral | thisRef | superRef)
+  def literal[_: P]: P[RoUExpr] = P(
+    numLiteral | boolLiteral | nullLiteral | stringLiteral | thisRef | superRef
+  )
   // def varRef[_: P] = P(Index ~ identifier ~ Index).map { case (start, varName, end) =>
   //   new VarRef(varName, ps2tr(start, end))
   // }
@@ -56,37 +62,36 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
       new UnresolvedParenExpr(expr, ps2tr(start, end))
   }
 
-  /**
-   * A constructor call in the form `new Foo.Bar<Type, Arguments>(other, arguments)`
-   * TODO use negative lookahead instead of requiring a space after `new`
-   */
+  /** A constructor call in the form `new Foo.Bar<Type, Arguments>(other, arguments)`
+    * TODO use negative lookahead instead of requiring a space after `new`
+    */
   def ctorCall[_: P]: P[UnresolvedCtorCall] =
-    P("new " ~/ Index ~ multiDotRef ~ typeArgList.? ~ valArgList ~ givenArgList.? ~ proofArgList.?).map {
-      case (newTokEnd, classPath, typeArgs, valArgs, givenArgs, proofArgs) => new UnresolvedCtorCall(
-        classPath,
-        valArgs,
-        typeArgs,
-        givenArgs,
-        proofArgs,
-        Parser.getPos(newTokEnd - 4)
-      )
-    }
+    P("new " ~/ Index ~ multiDotRef ~ typeArgList.? ~ valArgList ~ givenArgList.? ~ proofArgList.?)
+      .map { case (newTokEnd, classPath, typeArgs, valArgs, givenArgs, proofArgs) =>
+        new UnresolvedCtorCall(
+          classPath,
+          valArgs,
+          typeArgs,
+          givenArgs,
+          proofArgs,
+          Parser.getPos(newTokEnd - 4)
+        )
+      }
 
   //TODO parse given and proof arguments!!!
-  /**
-   * A method call without a caller (method is either in same class or is imported), e.g. `foo(bar, baz)`.
-   */
+  /** A method call without a caller (method is either in same class or is imported), e.g. `foo(bar, baz)`.
+    */
   def noObjMethodCall[_: P]: P[UnresolvedMethodCall] =
-    P(typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).map { case (typeArgs, name, valArgs, givenArgs, proofArgs) =>
-      UnresolvedMethodCall(None, name, valArgs, Some(typeArgs), givenArgs, proofArgs)
+    P(typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).map {
+      case (typeArgs, name, valArgs, givenArgs, proofArgs) =>
+        UnresolvedMethodCall(None, name, valArgs, Some(typeArgs), givenArgs, proofArgs)
     }
 
-  /**
-   * Either a reference to a field/local variable or a method call, e.g. `com.foo.Foo` or `foo` or `foo.bleh.bar(baz, foobar)`.
-   */
+  /** Either a reference to a field/local variable or a method call, e.g. `com.foo.Foo` or `foo` or `foo.bleh.bar(baz, foobar)`.
+    */
   def varRefOrMethodCall[_: P]: P[RoUExpr] =
     P(
-        identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList.? ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).?
+      identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList.? ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).?
     ).map {
       case (first, rest, Some((typeArgs, name, valArgs, givenArgs, proofArgs))) =>
         UnresolvedMethodCall(
@@ -100,7 +105,9 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
       case (first, rest, None) => MultiDotRefExpr(first +: rest)
     }
 
-  def selectable[_: P]: P[RoUExpr] = P(parenExpr | literal | ctorCall | noObjMethodCall | varRefOrMethodCall | ctorCall)
+  def selectable[_: P]: P[RoUExpr] = P(
+    parenExpr | literal | ctorCall | noObjMethodCall | varRefOrMethodCall | ctorCall
+  )
 
   /** **************************END ATOMS***************************************
     */
@@ -109,7 +116,7 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
     */
   def fieldAccessOrMethodCall[_: P]: P[RoUExpr => RoUExpr] =
     P(
-        "." ~ identifierText ~/ (valArgList ~/ givenArgList.? ~ proofArgList.?).?
+      "." ~ identifierText ~/ (valArgList ~/ givenArgList.? ~ proofArgList.?).?
     ).map {
       case (name, Some((valArgs, givenArgs, proofArgs))) =>
         obj =>
@@ -126,7 +133,7 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
     }
 
   def typeParamsFirstMethodCall[_: P]: P[HasTextRange => RoUExpr] = P(
-      "." ~ typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?
+    "." ~ typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?
   ).map { case (typeArgs, name, valArgs, givenArgs, proofArgs) =>
     caller =>
       UnresolvedMethodCall(
@@ -162,9 +169,9 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
     P(addSub ~ (Index ~ StringIn(">>>", ">>", "<<").! ~/ Index ~ addSub).rep).map(foldBinExpr)
   def relational[_: P]: P[RoUExpr] =
     P(
-        bitShift ~
-          ((StringIn("<=", "<", ">=", ">").! ~/ Index ~ bitShift)
-            | ("instanceof".! ~ Index ~/ nonWildcardType)).rep
+      bitShift ~
+        ((StringIn("<=", "<", ">=", ">").! ~/ Index ~ bitShift)
+          | ("instanceof".! ~ Index ~/ nonWildcardType)).rep
     ).map { case (first, reps) =>
       reps.foldLeft(first) { case (lhs, (op, opEnd, rhs)) =>
         val opRange = ps2tr(opEnd - op.length, opEnd)
@@ -173,9 +180,9 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
             new UnresolvedInstanceOf(lhs, rhs.asInstanceOf[UnresolvedTypeRef], opRange)
           case _ =>
             UnresolvedBinaryExpr(
-                lhs,
-                Op(OpType.findBySymbol(op).get, opRange),
-                rhs.asInstanceOf[RoUExpr]
+              lhs,
+              Op(OpType.findBySymbol(op).get, opRange),
+              rhs.asInstanceOf[RoUExpr]
             )
         }
       }
@@ -190,12 +197,13 @@ private class Exprs(core: Core, types: Types)(implicit offsetToPos: collection.m
   def logicAnd[_: P]: P[RoUExpr] = P(bitOr ~ (Index ~ "&&".! ~/ Index ~ bitOr).rep).map(foldBinExpr)
   def logicOr[_: P]: P[RoUExpr] =
     P(logicAnd ~ (Index ~ "||".! ~/ Index ~ logicAnd).rep).map(foldBinExpr)
-  def assignment[_: P]: P[RoUExpr] = P(logicOr ~ ("=" ~/ assignment).?)/*.filter {
+  def assignment[_: P]: P[RoUExpr] = P(logicOr ~ ("=" ~/ assignment).?) /*.filter {
     case (_, None) => true
     case (expr, _) => expr.isInstanceOf[UnresolvedArraySelect] || expr.isInstanceOf[UnresolvedFieldAccess]
   }*/.map {
     case (expr, None) => expr
-    case (property, Some(value)) => UnresolvedAssignmentExpr(property, value, None) //todo extraOp such as +=, -=
+    case (property, Some(value)) =>
+      UnresolvedAssignmentExpr(property, value, None) //todo extraOp such as +=, -=
   }
 
   //TODO add ternary and assignment

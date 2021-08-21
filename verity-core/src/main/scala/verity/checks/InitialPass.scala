@@ -112,7 +112,16 @@ object InitialPass {
     }
 
     //This context is only for fields
-    given fieldCtxt: Context = Context(cls.fields.map(f => f.name -> f).toMap, Map.empty, Nil, Nil, clsRefs, pkgRefs, cls, file)
+    given fieldCtxt: Context = Context(
+      cls.fields.map(f => f.name -> f).toMap,
+      Map.empty,
+      Nil,
+      Nil,
+      clsRefs,
+      pkgRefs,
+      cls,
+      file
+    )
 
     cls match {
       case cd: ClassDef =>
@@ -127,7 +136,11 @@ object InitialPass {
         case c: Constructor =>
           val mthdName = c.name
           if (mthdName != cls.name && mthdName != Keywords.constructorName) {
-            LogUtils.logMsg(s"Wrong constructor name: $mthdName (expected ${cls.name})", c.nameRange, file)
+            LogUtils.logMsg(
+              s"Wrong constructor name: $mthdName (expected ${cls.name})",
+              c.nameRange,
+              file
+            )
           }
         case m: NormMethod => //TODO!!!!!!!!!!!!!!!!!!!1
 //          m.returnType = ReferenceResolve.resolveTypeIfNeeded(mthd.returnType)(using fieldCtxt)

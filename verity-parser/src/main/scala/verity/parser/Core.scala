@@ -9,15 +9,17 @@ import fastparse.JavaWhitespace._
 import fastparse._
 
 private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]) {
-  /**
-   * Negative lookahead to ensure that an identifier has ended
-   */
+
+  /** Negative lookahead to ensure that an identifier has ended
+    */
   def nid[_: P] = P(!CharPred(_.isUnicodeIdentifierPart))
 
   def identifier[_: P]: P[String] =
-    P(CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!).map {
-      case (first, rest) => first + rest
-    }.filter(s => !hardKeywords(s))
+    P(CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!)
+      .map { case (first, rest) =>
+        first + rest
+      }
+      .filter(s => !hardKeywords(s))
 
   /** Like [[identifierWithTextRange]], but doesn't get inlined, and a tuple doesn't have to be
     * turned into a Text object later
@@ -32,9 +34,10 @@ private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, In
       id -> ps2tr(start, end)
     }
 
-  def multiDotRef[_: P]: P[MultiDotRef] = P(identifierText ~ ("." ~ identifierText ~ !"(").rep).map {
-    case (first, rest) => MultiDotRef(first +: rest)
-  }
+  def multiDotRef[_: P]: P[MultiDotRef] =
+    P(identifierText ~ ("." ~ identifierText ~ !"(").rep).map { case (first, rest) =>
+      MultiDotRef(first +: rest)
+    }
 
 //  implicit class StringOps(str: String) {
 //    @inline
@@ -59,22 +62,22 @@ private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, In
   //   }
 
   def modifier[_: P]: P[Modifier] = P(
-      StringIn(
-          "final",
-          "public",
-          "protected",
-          "private",
-          "synchronized",
-          "transient",
-          "volatile",
-          "native",
-          "const",
-          "given",
-          "proof",
-          "default",
-          "static",
-          "abstract"
-      ).! ~ !CharPred(!_.isUnicodeIdentifierPart) ~ Index
+    StringIn(
+      "final",
+      "public",
+      "protected",
+      "private",
+      "synchronized",
+      "transient",
+      "volatile",
+      "native",
+      "const",
+      "given",
+      "proof",
+      "default",
+      "static",
+      "abstract"
+    ).! ~ !CharPred(!_.isUnicodeIdentifierPart) ~ Index
   ).map { case (modifier, end) =>
     Modifier(ModifierType.valueOf(modifier.toUpperCase), ps2tr(end - modifier.length, end))
   }
@@ -94,42 +97,46 @@ private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, In
   def importStmt[_: P]: P[ImportStmt] =
     P(Index ~ "import" ~/ dotPath ~ ("." ~ "*" ~ Index).? ~ ";").map {
       case (imptTokStart, path, None) =>
-        ImportStmt(path, TextRange(Parser.getPos(imptTokStart), path.textRange.end), wildCard = false)
+        ImportStmt(
+          path,
+          TextRange(Parser.getPos(imptTokStart), path.textRange.end),
+          wildCard = false
+        )
       case (imptTokStart, path, Some(wildcardInd)) =>
         ImportStmt(path, ps2tr(imptTokStart, wildcardInd), wildCard = true)
     }
 
   //todo update list of hard keywords
   val hardKeywords: Set[String] = Set(
-      "class",
-      "interface",
-      "enum",
-      "new",
-      "void",
-      "throw",
-      "return",
-      "try",
-      "catch",
-      "if",
-      "else",
-      "while",
-      "for",
-      "do",
-      "super",
-      "this",
-      "false",
-      "true",
-      "final",
-      "public",
-      "protected",
-      "private",
-      "synchronized",
-      "transient",
-      "volatile",
-      "native",
-      "const",
-      "default",
-      "static",
-      "abstract"
+    "class",
+    "interface",
+    "enum",
+    "new",
+    "void",
+    "throw",
+    "return",
+    "try",
+    "catch",
+    "if",
+    "else",
+    "while",
+    "for",
+    "do",
+    "super",
+    "this",
+    "false",
+    "true",
+    "final",
+    "public",
+    "protected",
+    "private",
+    "synchronized",
+    "transient",
+    "volatile",
+    "native",
+    "const",
+    "default",
+    "static",
+    "abstract"
   )
 }

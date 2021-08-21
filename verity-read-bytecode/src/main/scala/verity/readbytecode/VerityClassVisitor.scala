@@ -71,7 +71,8 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
           Text(fieldName),
           ArrayBuffer.empty,
           fieldType,
-          None //TODO constants
+          None, //TODO constants
+          true //TODO check if fields are final or not!
         ) //(access, descriptor, signature, value)
 //        println(s"created field ${fields.last.text}!")
       }

@@ -30,12 +30,15 @@ private def resolveStmt(
     case rs: ReturnStmt =>
       for {
         newReturnStmt <- rs.expr match {
-            case None => OptionT(Writer(Nil, Some(rs)))
-            case Some(oldExpr) => resolveAndCheckExpr(oldExpr, mthdReturnType).map { (newExpr, proofs) =>
+          case None => OptionT(Writer(Nil, Some(rs)))
+          case Some(oldExpr) =>
+            resolveAndCheckExpr(oldExpr, mthdReturnType).map { (newExpr, proofs) =>
               ReturnStmt(Some(newExpr), rs.textRange)
             }
-          }: ResolveResult[ReturnStmt]
-        _ <- mthdProofs.toList.map(ImplicitSearch.findProof(_, rs.textRange)).sequence: ResolveResult[List[Expr]]
+        }: ResolveResult[ReturnStmt]
+        _ <- mthdProofs.toList
+          .map(ImplicitSearch.findProof(_, rs.textRange))
+          .sequence: ResolveResult[List[Expr]]
       } yield (newReturnStmt, List.empty[Expr])
     case lv: LocalVar =>
       ReferenceResolve.resolveTypeIfNeeded(lv.typ).orElse(OptionT.some(lv.typ)).flatMap { newType =>
@@ -46,7 +49,7 @@ private def resolveStmt(
           )
           .map { case newExprAndProofs =>
             (
-              LocalVar(lv.modifiers, lv.varName, newType, newExprAndProofs.map(_._1), lv.endInd),
+              LocalVar(lv.modifiers, lv.varName, newType, newExprAndProofs.map(_._1), lv.endInd, lv.isFinal),
               newExprAndProofs.fold(Nil)(_._2)
             )
           }
@@ -297,25 +300,28 @@ private def resolveUnresolvedMethodCall(
       )
     } yield {
       val resolvedCall =
-        if (!isCtor) MethodCall(
-          caller,
-          nameText,
-          newValArgs,
-          mthdCall.typeArgs,
-          newGivenArgs,
-          newProofArgs,
-          resolvedMthd.returnType,
-          resolvedMthd
-        ) else CtorCall(
-          caller.get.asInstanceOf[ClassRef],
-          newValArgs,
-          mthdCall.typeArgs,
-          newGivenArgs,
-          newProofArgs,
-          resolvedMthd.returnType,
-          resolvedMthd,
-          Position.synthetic
-        )
+        if (!isCtor)
+          MethodCall(
+            caller,
+            nameText,
+            newValArgs,
+            mthdCall.typeArgs,
+            newGivenArgs,
+            newProofArgs,
+            resolvedMthd.returnType,
+            resolvedMthd
+          )
+        else
+          CtorCall(
+            caller.get.asInstanceOf[ClassRef],
+            newValArgs,
+            mthdCall.typeArgs,
+            newGivenArgs,
+            newProofArgs,
+            resolvedMthd.returnType,
+            resolvedMthd,
+            Position.synthetic
+          )
       // println(s"resolvedmthd=${resolvedMthd.name}, proofs=${resolvedMthd.proofs.map(_.text)}")
       (resolvedCall, returnedProofs ::: newProofs ::: prevProofs)
     }

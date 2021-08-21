@@ -18,13 +18,16 @@ trait VariableDecl extends Tree, HasText, HasType, NamedTree, HasModifiers {
     * @return True if only a declaration, false if also intialized
     */
   def declarationOnly: Boolean = initExpr == None
+
+  def isFinal: Boolean
 }
 
 class Field(
   val fieldName: Text,
   override val modifiers: ArrayBuffer[Modifier],
   var typ: Type,
-  var initExpr: Option[ResolvedOrUnresolvedExpr] = None
+  var initExpr: Option[ResolvedOrUnresolvedExpr] = None,
+  override val isFinal: Boolean
 ) extends VariableDecl,
       ClassChild,
       HasModifiers,
@@ -40,7 +43,8 @@ class LocalVar(
   val varName: Text,
   var typ: Type,
   var initExpr: Option[ResolvedOrUnresolvedExpr] = None,
-  val endInd: Int
+  val endInd: Int,
+  override val isFinal: Boolean
 ) extends VariableDecl,
       Statement {
 

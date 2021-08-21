@@ -146,7 +146,8 @@ case class ResolvedTypeRef(
   path: Seq[Text],
   args: TypeArgList,
   typeDef: TypeDef
-) extends Type, ResolvedOrUnresolvedTypeRef {
+) extends Type,
+      ResolvedOrUnresolvedTypeRef {
   //todo deal with wildcards
   override def strictSubTypeOf(sup: Type): Boolean = sup match {
     case ResolvedTypeRef(_, _, typeDef2) =>
@@ -163,7 +164,7 @@ case class ResolvedTypeRef(
     case ResolvedTypeRef(_, _, typeDef2) =>
       // typeDef2.strictSubTypeDefOf(typeDef)
       sub.strictSubTypeOf(this)
-    case _                               => false
+    case _ => false
   }
 
   override def fields: Iterable[Field] = typeDef.fields
@@ -232,7 +233,7 @@ case class Wildcard(upper: Option[ResolvedTypeRef], lower: Option[ResolvedTypeRe
 //TODO arrays
 case class ArrayType(elemType: Type, private[this] val bracketRange: TextRange) extends Type {
   val fields: Iterable[Field] = List(
-    Field(Text("length"), ArrayBuffer.empty, PrimitiveType.IntType)
+    Field(Text("length"), ArrayBuffer.empty, PrimitiveType.IntType, None, true)
   )
   override def methods: Iterable[Method] = List()
 

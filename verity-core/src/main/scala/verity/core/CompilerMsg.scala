@@ -7,6 +7,23 @@ import cats.data.{OptionT, Writer}
 type ResultWithLogs[T] = Writer[List[CompilerMsg], T]
 type ResolveResult[T] = OptionT[ResultWithLogs, T]
 
+// case class ResWithLogs[T](res: T, logs: Seq[CompilerMsg]) {
+//   def map[R](fn: T => R): ResWithLogs[R] = ResWithLogs(fn(res), logs)
+//   def flatMap[R](fn: T => ResWithLogs[R]) = {
+//     val ResWithLogs(res2, logs2) = fn(res)
+//     ResWithLogs(res2, logs ++ logs2)
+//   }
+//   def mapLogs(fn: Seq[CompilerMsg] => Seq[CompilerMsg]) {
+//     ResWithLogs()
+//   }
+// }
+
+// opaque type ResolveRes[T] = ResWithLogs[Option[T]]
+
+// extension [T](res: ResolveRes[T]) {
+
+// }
+
 case class CompilerMsg(msg: String, textRangeOrTree: TextRange | HasTextRange, msgType: MsgType) {
   override def toString = s"$msgType: $msg"
 }

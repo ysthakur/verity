@@ -8,7 +8,8 @@ import scala.collection.mutable.ArrayBuffer
 sealed trait UnresolvedExpr extends HasText, HasType, RoUExpr
 
 trait UnresolvedTypeExpr extends UnresolvedExpr {
-  private[this] var _typ: Type = ToBeInferred(BuiltinTypes.objectType, NothingTypeDef.makeRef, List.empty)
+  private[this] var _typ: Type =
+    ToBeInferred(BuiltinTypes.objectType, NothingTypeDef.makeRef, List.empty)
   override def typ: Type = _typ
   private[verity] def typ_=(typ: Type): Unit = this._typ = typ
 }
@@ -145,9 +146,8 @@ case class MultiDotRefExpr(path: Seq[Text]) extends UnresolvedTypeExpr {
   override def textRange: TextRange = TextRange(path.head.textRange.start, path.last.textRange.end)
 }
 
-/**
- * A dummy variable declaration for when a given/proof argument can't be found
- */
+/** A dummy variable declaration for when a given/proof argument can't be found
+  */
 case class UnresolvedImplicit(param: Parameter) extends UnresolvedExpr {
   override def typ = param.typ
 

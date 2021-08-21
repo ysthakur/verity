@@ -19,7 +19,7 @@ object LogUtils {
 
   def getPosRange(textRangeOrTree: TextRange | HasTextRange, file: FileNode) =
     textRangeOrTree match {
-      case tr: TextRange => tr
+      case tr: TextRange     => tr
       case htr: HasTextRange => htr.textRange
     }
 }

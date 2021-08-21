@@ -26,27 +26,36 @@ object Parser {
     val offsetToPos = ArrayBuffer.empty[(Int, Int, Int)]
     val parser = new Parser(input)(offsetToPos)
     val tis = new TrackingInputStream(new FileInputStream(input), offsetToPos)
-    
-    (parse(tis, parser.file(_), verboseFailures=true): @unchecked) match {
+
+    (parse(tis, parser.file(_), verboseFailures = true): @unchecked) match {
       case Parsed.Success(ast, _) => Right(ast)
-      case Parsed.Failure(label, index, extra) => Left((makeSyntaxErrorMsg(label, index, extra, offsetToPos), index))
+      case Parsed.Failure(label, index, extra) =>
+        Left((makeSyntaxErrorMsg(label, index, extra, offsetToPos), index))
     }
   }
 
-  def makeSyntaxErrorMsg(label: String, index: Int, extra: Parsed.Extra, offsetToPos: ArrayBuffer[(Int, Int, Int)]): String =
+  def makeSyntaxErrorMsg(
+    label: String,
+    index: Int,
+    extra: Parsed.Extra,
+    offsetToPos: ArrayBuffer[(Int, Int, Int)]
+  ): String =
     s"Syntax error at offset ${extra.index}, rowcol=${FileNode.getPos(offsetToPos, extra.index)}, label = $label, ${extra.stack}"
 
-  private[parser] def getPos(offset: Int)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]): Position =
+  private[parser] def getPos(offset: Int)(implicit
+    offsetToPos: ArrayBuffer[(Int, Int, Int)]
+  ): Position =
     FileNode.getPos(offsetToPos, offset)
 
-  /**
-    * Create a [[TextRange]] from two positions
+  /** Create a [[TextRange]] from two positions
     *
     * @param startOffset
     * @param endOffset
     * @return
     */
-  private[parser] def ps2tr(startOffset: Int, endOffset: Int)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]): TextRange =
+  private[parser] def ps2tr(startOffset: Int, endOffset: Int)(implicit
+    offsetToPos: ArrayBuffer[(Int, Int, Int)]
+  ): TextRange =
     TextRange(getPos(startOffset), getPos(endOffset))
 
   private class TrackingInputStream(

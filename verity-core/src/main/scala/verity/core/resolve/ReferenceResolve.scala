@@ -59,13 +59,13 @@ private[verity] object ReferenceResolve {
 
     //A writer where the value is a tuple (areAllArgsResolved?, resolvedArgsInReverse)
     val resolvedArgs: ResultWithLogs[(Boolean, List[Type])] =
-      typ.args.args.foldLeft(Writer(List.empty[CompilerMsg], true -> List.empty[Type])) { (acc, arg) =>
-        acc.flatMap {
-          (allResolved, prev) =>
+      typ.args.args.foldLeft(Writer(List.empty[CompilerMsg], true -> List.empty[Type])) {
+        (acc, arg) =>
+          acc.flatMap { (allResolved, prev) =>
             resolveTypeIfNeeded(arg, typeDefs, pkgDefs)
               .map(typ => allResolved -> (typ :: prev))
               .getOrElse(false -> (arg :: prev))
-        }
+          }
       }
 
     OptionT(
@@ -84,9 +84,15 @@ private[verity] object ReferenceResolve {
         res <-
           //Only return a ResolvedTypeRef if the class and all arguments are resolved
           if (allResolved && maybeCls.nonEmpty)
-            Writer(List(/*infoMsg(s"Resolved type ${typ.path}", typ)*/), Some(ResolvedTypeRef(typ.path, argList, maybeCls.get)): Option[Type])
+            Writer(
+              List( /*infoMsg(s"Resolved type ${typ.path}", typ)*/ ),
+              Some(ResolvedTypeRef(typ.path, argList, maybeCls.get)): Option[Type]
+            )
           else
-            Writer(List(errorMsg(s"Could not resolve type ${typ.path}", typ)), Some(UnresolvedTypeRef(typ.path, argList, maybeCls)))
+            Writer(
+              List(errorMsg(s"Could not resolve type ${typ.path}", typ)),
+              Some(UnresolvedTypeRef(typ.path, argList, maybeCls))
+            )
       } yield res
     )
 

@@ -63,12 +63,12 @@ object BuiltinTypes {
       // println("found package java.lang!")
       lang.classlikes.find(_.name == "Object").foreach { objectClsDef =>
         this.objectTypeDef = objectClsDef
-        // println("reset java.lang.Object!")
+      // println("reset java.lang.Object!")
       }
 
       lang.classlikes.find(_.name == "String").foreach { stringClsDef =>
         this.stringTypeDef = stringClsDef
-        // println("reset String!")
+      // println("reset String!")
       }
     }
 
@@ -83,7 +83,7 @@ object BuiltinTypes {
       verityPkg.subPkgs += newPkg
       newPkg
     }
-    
+
     langPkg.files += FileNode("Magic.verity", None, Nil, Seq(NotGivenDef, NotProvenDef), None, Nil)
   }
 

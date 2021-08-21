@@ -6,9 +6,9 @@ import scala.collection.mutable.ArrayBuffer
 
 trait Methodlike extends NamedTree {
   def returnType: Type
-  /**
-   * The proofs returned by this method/function
-   */
+
+  /** The proofs returned by this method/function
+    */
   def proofs: Iterable[Type]
   def name: String
   var params: ParamList
@@ -66,8 +66,6 @@ class NormMethod(
 
 class Constructor(
   val modifiers: ArrayBuffer[Modifier],
-  val name: String,
-  val nameRange: TextRange,
   var params: ParamList,
   var givenParams: Option[ParamList],
   var proofParams: Option[ParamList],
@@ -86,15 +84,17 @@ class Constructor(
   val body: Option[Block] = Some(_body)
 
   override def text =
-    s"${modifiers.map(_.text).mkString(" ")} $name ${params.text} ${body.fold(";")(_.text)}"
+    s"${modifiers.map(_.text).mkString(" ")} constructor${params.text}${
+      givenParams.fold("")(_.text)}${proofParams.fold("")(_.text)} ${body.fold(";")(_.text)}"
+
+  override def name: String = "constructor"
+  override def nameRange: TextRange = TextRange.synthetic
 }
 
 object Constructor {
   def defaultCtor(cls: HasCtors): Constructor =
     Constructor(
       cls.accessModifier.map(Modifier(_, TextRange.synthetic)).to(ArrayBuffer),
-      cls.name,
-      TextRange.synthetic,
       Empty[ParamList],
       None,
       None,
@@ -123,14 +123,17 @@ case class Parameter(
     else if (isGiven) List(Modifier(ModifierType.GIVEN, TextRange.synthetic))
     else Nil
   def initExpr: None.type = None
+  def name: String = paramName.text
   override def text: String =
     s"${annotations.map(_.text).mkString(" ")} ${typ.text} $name"
-
-  def name: String = paramName.text
+  override def isFinal: Boolean = true
 }
 
-case class ParamList(params: List[Parameter], override val textRange: TextRange, kind: ParamListKind = ParamListKind.NORMAL)
-    extends Tree,
+case class ParamList(
+  params: List[Parameter],
+  override val textRange: TextRange,
+  kind: ParamListKind = ParamListKind.NORMAL
+) extends Tree,
       HasTextRange {
   override def text: String = HasText.seqText(params, ",", "(", ")")
 }

@@ -15,7 +15,7 @@ sealed trait Expr extends Tree, HasText, HasTextRange, HasType, ResolvedOrUnreso
 object Expr {
   def dummy(typ: Type, textRange: TextRange = TextRange.synthetic): Expr = typ match {
     case pt: PrimitiveType => ???
-    case _ => UpcastExpr(NullLiteral(textRange), typ, textRange)
+    case _                 => UpcastExpr(NullLiteral(textRange), typ, textRange)
   }
 }
 
@@ -49,7 +49,7 @@ enum FloatingLiteral(typ: PrimitiveType) extends NumLiteral(typ) {
 
 class NullLiteral(override val textRange: TextRange) extends Expr {
   override def text = "null"
-  
+
   override def typ: Type = NothingTypeDef.NothingType
 }
 
@@ -195,7 +195,7 @@ case class MethodCall(
   override def text: String = caller.fold("")(_.text + ".")
     + typeArgs.fold("")(_.text)
     + methodName.text
-    + valArgs.text/*
+    + valArgs.text /*
     + HasText.optText(givenArgs)
     + HasText.optText(proofArgs)*/
   override def textRange = TextRange(
@@ -216,7 +216,16 @@ class CtorCall(
   typ: Type,
   resolved: Method,
   newKeywordPos: Position
-) extends MethodCall(Some(cls), Text("<init>"), valArgs, typeArgs, givenArgs, proofArgs, typ, resolved) {
+) extends MethodCall(
+      Some(cls),
+      Text("<init>"),
+      valArgs,
+      typeArgs,
+      givenArgs,
+      proofArgs,
+      typ,
+      resolved
+    ) {
   override def text: String = "new " + cls.text
     + typeArgs.fold("")(_.text)
     + valArgs.text
@@ -229,8 +238,11 @@ class CtorCall(
   )
 }
 
-case class ArgList(args: List[ResolvedOrUnresolvedExpr], argsKind: ArgsKind, override val textRange: TextRange)
-    extends HasTextRange {
+case class ArgList(
+  args: List[ResolvedOrUnresolvedExpr],
+  argsKind: ArgsKind,
+  override val textRange: TextRange
+) extends HasTextRange {
   override def text: String = args.view.map(_.text).mkString("(", ",", ")")
 }
 

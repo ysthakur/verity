@@ -3,20 +3,20 @@ package com;
 import java.lang.*;
 
 class ExecutionContext {
-  public static final ExecutionContext global = new ExecutionContext();
+  public static val global: ExecutionContext = new ExecutionContext();
 }
 
 class Foo {
-  public void foo()(given ExecutionContext ec) {
+  public def foo()(given ExecutionContext ec): void {
     //do stuff here
   }
 
-  public void bar()(given ExecutionContext ec) {
+  public def bar()(given ExecutionContext ec): void {
     //do stuff here
   }
 
-  public void baz() {
-    given ExecutionContext ec = ExecutionContext.global;
+  public def baz(): void {
+    given val ec: ExecutionContext = ExecutionContext.global;
 
     foo();
     bar();

@@ -9,7 +9,9 @@ import Parser.ps2tr
 import fastparse.JavaWhitespace._
 import fastparse._
 
-private class Types(core: Core)(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]) {
+private class Types(core: Core)(implicit
+  offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]
+) {
   import core._
 
   //todo clear this up?
@@ -35,25 +37,29 @@ private class Types(core: Core)(implicit offsetToPos: collection.mutable.ArrayBu
       .map { case (typ, end) =>
         PrimitiveType(PrimitiveTypeDef.fromName(typ).get, ps2tr(end - typ.length, end))
       }
-  /**
-   * A type that isn't just a wildcard, possibly an array type
-   */
-  def nonWildcardType[_: P]: P[Type] = P((primitiveType | typeRef) ~ ("[" ~ Index ~ "]" ~ Index).rep).map {
-    case (innerType, brackets) =>
-      brackets.foldLeft(innerType: Type){ case (typ, (start, end)) => ArrayType(typ, ps2tr(start, end)) }
-  }
+
+  /** A type that isn't just a wildcard, possibly an array type
+    */
+  def nonWildcardType[_: P]: P[Type] =
+    P((primitiveType | typeRef) ~ ("[" ~ Index ~ "]" ~ Index).rep).map {
+      case (innerType, brackets) =>
+        brackets.foldLeft(innerType: Type) { case (typ, (start, end)) =>
+          ArrayType(typ, ps2tr(start, end))
+        }
+    }
   def typeArg[_: P]: P[Type] = P(wildCard | nonWildcardType)
-  def typeArgList[_: P]: P[TypeArgList] = P(("<" ~/ Index ~ typeArg ~ ("," ~ typeArg).rep ~ ">" ~ Index).?).map {
-    case Some((start, firstArg, restArgs, end)) =>
-      // println(s"typearglist, ${firstArg +: restArgs}")
-      TypeArgList(firstArg +: restArgs, ps2tr(start, end))
-    case None => TypeArgList(Nil, TextRange.synthetic)
-  }
+  def typeArgList[_: P]: P[TypeArgList] =
+    P(("<" ~/ Index ~ typeArg ~ ("," ~ typeArg).rep ~ ">" ~ Index).?).map {
+      case Some((start, firstArg, restArgs, end)) =>
+        // println(s"typearglist, ${firstArg +: restArgs}")
+        TypeArgList(firstArg +: restArgs, ps2tr(start, end))
+      case None => TypeArgList(Nil, TextRange.synthetic)
+    }
 
   def returnType[_: P]: P[Type] =
-    P(("void" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ Index) | nonWildcardType) .map { t =>
+    P(("void" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ Index) | nonWildcardType).map { t =>
       (t: @unchecked) match {
-        case end: Int => new VoidTypeRef(ps2tr(end - 4, end))
+        case end: Int  => new VoidTypeRef(ps2tr(end - 4, end))
         case typ: Type => typ
       }
     }
