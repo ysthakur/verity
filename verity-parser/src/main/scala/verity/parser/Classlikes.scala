@@ -20,16 +20,21 @@ private class Classlikes(core: Core, types: Types, exprs: Exprs, methods: Method
   import methods._
   import types._
 
-  def valOrVal[_: P]: P[Boolean] =
-    P(StringIn("val", "var").! ~ &(CharPred(_.isWhitespace))).map(_.charAt(2) == 'l')
-
+  /**
+   * Matches a field without its modifiers, then returns a function that takes
+   * those modifiers and creates an actual Field object.
+   */
   def field[_: P]: P[Seq[Modifier] => Any] =
     P(valOrVal ~/ identifierText ~ ":" ~ typeRef ~ ("=" ~/ expr).? ~ ";").map {
       case (isFinal, name, typ, initExpr) =>
         (modifiers: Seq[Modifier]) =>
           new Field(name, modifiers.to(ArrayBuffer), typ, initExpr, isFinal)
     }
-
+  
+  /**
+   * Matches a bunch of modifiers, then tries to match the method, field, or constructor
+   * that those modifiers belong to.
+   */
   def templateDefMember[_: P]: P[Any] =
     P(modifiers ~ (normMethod | field | ctor: P[Seq[Modifier] => Any])).map {
       case (mods, astCtor) => astCtor(mods)

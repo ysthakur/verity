@@ -1,1 +1,1 @@
-package com;import java.lang.*; class ExecutionContext<T> extends Object{public static final ExecutionContext global=ExecutionContext(); <T>ExecutionContext(){}} class Foo extends Object{ Foo(){}public void foo(){}public void bar(){}public void baz(){foo();bar();}}
+package com;import java.lang.*; class ExecutionContext extends Object{ ExecutionContext ec; ExecutionContext(){}}

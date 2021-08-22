@@ -49,7 +49,14 @@ private def resolveStmt(
           )
           .map { case newExprAndProofs =>
             (
-              LocalVar(lv.modifiers, lv.varName, newType, newExprAndProofs.map(_._1), lv.endInd, lv.isFinal),
+              LocalVar(
+                lv.modifiers,
+                lv.varName,
+                newType,
+                newExprAndProofs.map(_._1),
+                lv.endInd,
+                lv.isFinal
+              ),
               newExprAndProofs.fold(Nil)(_._2)
             )
           }

@@ -3,17 +3,20 @@ package com;
 import java.lang.*;
 
 public class Target {
-  public static void main(String[] args) {
-    Person foo = PersonBuilder.build(new BuildFoo());
+  def foo(): bar {
+
+  }
+  public static def main(args: Array[String]): void {
+    val foo: Person = PersonBuilder.build(new BuildFoo());
     return;
   }
 }
 
 class Person {
-  final String name;
-  final int age;
+  val name: String;
+  val age: int;
 
-  public Person(String n, int a) {
+  public constructor(n: String, a: int) {
     name = n;
     age = a;
   }
@@ -23,37 +26,37 @@ class SetName {}
 class SetAge {}
 
 class PersonBuilder {
-  private String name;
-  private int age;
+  private var name: String;
+  private var age: int;
+  
+  private constructor(){}
 
-  private PersonBuilder(){}
-
-  public static Person build(BuildPerson bp) {
-    PersonBuilder b = new PersonBuilder();
+  public static def build(bp: BuildPerson): Person {
+    val b: PersonBuilder = new PersonBuilder();
     bp.buildPerson(b);
     return new Person(b.name, b.age);
   }
 
-  public void setName(String n)(proof verity.lang.NotProven<SetName> ev) proof SetName {
+  public def setName(n: String)(proof ev: verity.lang.NotProven[SetName]): void proof SetName {
     name = n;
-    proof SetName ev = null;
+    proof val ev: SetName = null;
     return;
   }
 
-  public void setAge(int a)(proof verity.lang.NotProven<SetAge> ev) proof SetAge {
+  public def setAge(a: int)(proof ev: verity.lang.NotProven[SetAge]): void proof SetAge {
     age = a;
-    proof SetAge ev = null;
+    proof val ev: SetAge = null;
     return;
   }
 }
 
 
 abstract class BuildPerson {
-  abstract void buildPerson(PersonBuilder p) proof SetName, SetAge;
+  abstract def buildPerson(p: PersonBuilder): void proof SetName, SetAge;
 }
 
 class BuildFoo extends BuildPerson {
-  void buildPerson(PersonBuilder p) proof SetName, SetAge {
+  def buildPerson(p: PersonBuilder): void proof SetName, SetAge {
     p.setName("Foo");
     p.setAge(0);
     return;

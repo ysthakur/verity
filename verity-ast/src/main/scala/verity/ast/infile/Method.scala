@@ -84,8 +84,8 @@ class Constructor(
   val body: Option[Block] = Some(_body)
 
   override def text =
-    s"${modifiers.map(_.text).mkString(" ")} constructor${params.text}${
-      givenParams.fold("")(_.text)}${proofParams.fold("")(_.text)} ${body.fold(";")(_.text)}"
+    s"${modifiers.map(_.text).mkString(" ")} constructor${params.text}${givenParams.fold("")(_.text)}${proofParams
+      .fold("")(_.text)} ${body.fold(";")(_.text)}"
 
   override def name: String = "constructor"
   override def nameRange: TextRange = TextRange.synthetic

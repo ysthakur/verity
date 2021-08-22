@@ -74,6 +74,7 @@ object InitialPass {
           } else {
             clsMap += name -> cls
           }
+        case _ =>
       }
 
       imported.asInstanceOf[Pkg.Importable]

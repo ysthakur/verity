@@ -15,23 +15,21 @@ private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, In
   def nid[_: P] = P(!CharPred(_.isUnicodeIdentifierPart))
 
   def identifier[_: P]: P[String] =
-    P(CharPred(_.isUnicodeIdentifierStart).! ~ CharsWhile(_.isUnicodeIdentifierPart, 0).!)
-      .map { case (first, rest) =>
-        first + rest
-      }
+    P(CharPred(_.isUnicodeIdentifierStart).! ~~ CharsWhile(_.isUnicodeIdentifierPart, 0).!)
+      .map { case (first, rest) => first + rest }
       .filter(s => !hardKeywords(s))
 
   /** Like [[identifierWithTextRange]], but doesn't get inlined, and a tuple doesn't have to be
     * turned into a Text object later
     */
   def identifierText[_: P]: P[Text] =
-    P(Index ~ identifier ~ Index).map { case (start, id, end) => Text(id, ps2tr(start, end)) }
+    P(identifier ~ Index).map { case (id, end) => Text(id, ps2tr(end - id.length, end)) }
 
   /** Like [[identifierWithTextRange]], but can be inlined
     */
   def identifierWithTextRange[_: P]: P[(String, TextRange)] =
-    P(Index ~ identifier ~ Index).map { case (start, id, end) =>
-      id -> ps2tr(start, end)
+    P(identifier ~ Index).map { case (id, end) =>
+      id -> ps2tr(end - id.length, end)
     }
 
   def multiDotRef[_: P]: P[MultiDotRef] =
@@ -61,6 +59,9 @@ private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, In
   //     case _             => Nil
   //   }
 
+  def GIVEN[_: P]: P[Unit] = P("given" ~~ !CharPred(_.isUnicodeIdentifierPart))
+  def PROOF[_: P]: P[Unit] = P("proof" ~~ !CharPred(_.isUnicodeIdentifierPart))
+  
   def modifier[_: P]: P[Modifier] = P(
     StringIn(
       "final",
@@ -76,8 +77,9 @@ private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, In
       "proof",
       "default",
       "static",
-      "abstract"
-    ).! ~ !CharPred(!_.isUnicodeIdentifierPart) ~ Index
+      "abstract",
+      "erased"
+    ).! ~~ !CharPred(_.isUnicodeIdentifierPart) ~ Index
   ).map { case (modifier, end) =>
     Modifier(ModifierType.valueOf(modifier.toUpperCase), ps2tr(end - modifier.length, end))
   }

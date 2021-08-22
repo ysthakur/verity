@@ -20,8 +20,8 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
   import types._
   import exprs._
 
-  private def param[_: P]: P[Parameter] = P(nonWildcardType ~ identifierText).map {
-    case (typ, name) =>
+  private def param[_: P]: P[Parameter] = P(identifierText ~ ":" ~ nonWildcardType).map {
+    case (name, typ) =>
       Parameter(
         List.empty, //TODO Add annotations!
         typ,
@@ -41,26 +41,25 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
       ParamList(params, ps2tr(start, end), ParamListKind.NORMAL)
   }
   def givenParamList[_: P]: P[ParamList] =
-    P("(" ~ Index ~ "given" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
+    P("(" ~ Index ~ "given" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
       case (start, params, end) =>
         ParamList(params, ps2tr(start, end), ParamListKind.GIVEN)
     }
   def proofParamList[_: P]: P[ParamList] =
-    P("(" ~ Index ~ "proof" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
+    P("(" ~ Index ~ "proof" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index).map {
       case (start, params, end) =>
         ParamList(params, ps2tr(start, end), ParamListKind.PROOF)
     }
 
   def proofClause[_: P]: P[Seq[Type]] =
-    P(("proof" ~/ typeRef ~ ("," ~ typeRef).rep).?).map {
-      case None                         => Nil
-      case Some((firstType, restTypes)) => firstType +: restTypes
+    P("proof" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ typeRef ~ ("," ~ typeRef).rep).map {
+      case (firstType, restTypes) => firstType +: restTypes
     }
 
   /** Matches either "val" or "var", result is whether or not it matched "val" i.e. it's final.
     */
   def valOrVal[_: P]: P[Boolean] =
-    P(StringIn("val", "var").! ~ &(CharPred(_.isWhitespace))).map(_.charAt(2) == 'l')
+    P(StringIn("val", "var").! ~~ !CharPred(_.isUnicodeIdentifierPart)).map(_.charAt(2) == 'l')
 
   //todo allow final modifier
   def localVarDecl[_: P]: P[LocalVar] =
@@ -90,31 +89,17 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
       )
   }
 
-  //TODO PARSE GIVEN AND PROOF PARAMETERS!!!
-  def ctor[_: P]: P[Seq[Modifier] => (() => HasCtors) => Constructor] =
-    P(
-      "constructor" ~/ normParamList ~ givenParamList.? ~ proofParamList.? ~ block
-    ).map { case (valParams, givenParams, proofParams, body) =>
-      modifiers =>
-        cls =>
-          new Constructor(
-            modifiers.to(ArrayBuffer),
-            valParams,
-            givenParams,
-            proofParams,
-            Nil,
-            body,
-            cls
-          )
-    }
-
+  /**
+   * Matches a method without its modifiers, then returns a function that takes
+   * those modifiers and creates an actual Method object.
+   */
   def normMethod[_: P]: P[Seq[Modifier] => NormMethod] =
     P(
-      "def" ~ &(" " | "\n" | "\t")
+      "def" ~~ !CharPred(_.isUnicodeIdentifierStart)
         ~/ identifierText
         ~ typeParamList.? ~ normParamList ~ givenParamList.? ~ proofParamList.?
         ~ ":" ~ returnType
-        ~ proofClause
+        ~ proofClause.?
         ~ (";" ~ Index | block)
     ).map {
       case (
@@ -136,7 +121,7 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
             modifiers.to(ArrayBuffer),
             typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
             returnType,
-            provenProofs,
+            provenProofs.getOrElse(Nil),
             name,
             valParams,
             givenParams,
@@ -146,4 +131,26 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
           )
         }
     }
+
+  /**
+   * Matches a constructor without its modifiers, then returns a function that takes
+   * those modifiers and creates an actual Constructor object.
+   */
+  def ctor[_: P]: P[Seq[Modifier] => (() => HasCtors) => Constructor] =
+    P(
+      "constructor" ~/ normParamList ~ givenParamList.? ~ proofParamList.? ~ block
+    ).map { case (valParams, givenParams, proofParams, body) =>
+      modifiers =>
+        cls =>
+          new Constructor(
+            modifiers.to(ArrayBuffer),
+            valParams,
+            givenParams,
+            proofParams,
+            Nil,
+            body,
+            cls
+          )
+    }
+
 }

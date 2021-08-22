@@ -49,7 +49,7 @@ private class Types(core: Core)(implicit
     }
   def typeArg[_: P]: P[Type] = P(wildCard | nonWildcardType)
   def typeArgList[_: P]: P[TypeArgList] =
-    P(("<" ~/ Index ~ typeArg ~ ("," ~ typeArg).rep ~ ">" ~ Index).?).map {
+    P(("[" ~/ Index ~ typeArg ~ ("," ~ typeArg).rep ~ "]" ~ Index).?).map {
       case Some((start, firstArg, restArgs, end)) =>
         // println(s"typearglist, ${firstArg +: restArgs}")
         TypeArgList(firstArg +: restArgs, ps2tr(start, end))
@@ -57,7 +57,7 @@ private class Types(core: Core)(implicit
     }
 
   def returnType[_: P]: P[Type] =
-    P(("void" ~ !CharPred(!_.isUnicodeIdentifierPart) ~/ Index) | nonWildcardType).map { t =>
+    P(("void" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ Index) | nonWildcardType).map { t =>
       (t: @unchecked) match {
         case end: Int  => new VoidTypeRef(ps2tr(end - 4, end))
         case typ: Type => typ
@@ -74,7 +74,7 @@ private class Types(core: Core)(implicit
       )
   }
   def typeParamList[_: P]: P[TypeParamList] =
-    P("<" ~/ Index ~ typeParam ~ ("," ~ typeParam).rep ~ ">" ~ Index).map {
+    P("[" ~/ Index ~ typeParam ~ ("," ~ typeParam).rep ~ "]" ~ Index).map {
       case (start, first, rest, end) => new TypeParamList(first +: rest, ps2tr(start, end))
     }
 
