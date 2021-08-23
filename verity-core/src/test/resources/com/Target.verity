@@ -3,7 +3,7 @@ package com;
 import java.lang.*;
 
 public class Target {
-  def foo(): bar {
+  def foo(): void {
 
   }
   public static def main(args: Array[String]): void {

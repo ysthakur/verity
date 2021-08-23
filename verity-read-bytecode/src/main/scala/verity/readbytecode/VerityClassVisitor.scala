@@ -165,6 +165,7 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
       case Some(parentPkg -> simpleName) =>
         val (ctors, normMethods) = methods.partition(_.isCtor)
 
+        println(simpleName)
         val classDef = metaclass match {
           case ClasslikeType.CLASS =>
             ClassDef(

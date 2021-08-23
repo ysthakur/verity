@@ -89,10 +89,9 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
       )
   }
 
-  /**
-   * Matches a method without its modifiers, then returns a function that takes
-   * those modifiers and creates an actual Method object.
-   */
+  /** Matches a method without its modifiers, then returns a function that takes
+    * those modifiers and creates an actual Method object.
+    */
   def normMethod[_: P]: P[Seq[Modifier] => NormMethod] =
     P(
       "def" ~~ !CharPred(_.isUnicodeIdentifierStart)
@@ -132,10 +131,9 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
         }
     }
 
-  /**
-   * Matches a constructor without its modifiers, then returns a function that takes
-   * those modifiers and creates an actual Constructor object.
-   */
+  /** Matches a constructor without its modifiers, then returns a function that takes
+    * those modifiers and creates an actual Constructor object.
+    */
   def ctor[_: P]: P[Seq[Modifier] => (() => HasCtors) => Constructor] =
     P(
       "constructor" ~/ normParamList ~ givenParamList.? ~ proofParamList.? ~ block

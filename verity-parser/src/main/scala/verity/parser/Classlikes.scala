@@ -1,13 +1,14 @@
 package verity.parser
 
-import verity.ast._, infile._
+import verity.ast.*
+import infile.*
 // import Core._
 // import Exprs._
 // import Methods._
 // import Types._
 import Parser.ps2tr
-
-import fastparse._, JavaWhitespace._
+import fastparse.*
+import JavaWhitespace.*
 
 import collection.mutable.ArrayBuffer
 
@@ -15,26 +16,24 @@ import collection.mutable.ArrayBuffer
 private class Classlikes(core: Core, types: Types, exprs: Exprs, methods: Methods)(implicit
   offsetToPos: ArrayBuffer[(Int, Int, Int)]
 ) {
-  import core._
-  import exprs._
-  import methods._
-  import types._
+  import core.*
+  import exprs.*
+  import methods.*
+  import types.*
 
-  /**
-   * Matches a field without its modifiers, then returns a function that takes
-   * those modifiers and creates an actual Field object.
-   */
+  /** Matches a field without its modifiers, then returns a function that takes
+    * those modifiers and creates an actual Field object.
+    */
   def field[_: P]: P[Seq[Modifier] => Any] =
-    P(valOrVal ~/ identifierText ~ ":" ~ typeRef ~ ("=" ~/ expr).? ~ ";").map {
+    P(valOrVal ~/ identifierText ~ ":" ~ typeArg ~ ("=" ~/ expr).? ~ ";").map {
       case (isFinal, name, typ, initExpr) =>
         (modifiers: Seq[Modifier]) =>
           new Field(name, modifiers.to(ArrayBuffer), typ, initExpr, isFinal)
     }
-  
-  /**
-   * Matches a bunch of modifiers, then tries to match the method, field, or constructor
-   * that those modifiers belong to.
-   */
+
+  /** Matches a bunch of modifiers, then tries to match the method, field, or constructor
+    * that those modifiers belong to.
+    */
   def templateDefMember[_: P]: P[Any] =
     P(modifiers ~ (normMethod | field | ctor: P[Seq[Modifier] => Any])).map {
       case (mods, astCtor) => astCtor(mods)
@@ -50,15 +49,17 @@ private class Classlikes(core: Core, types: Types, exprs: Exprs, methods: Method
   //TODO add annotations
   //TODO allow extending classes, interfaces
   def clazz[_: P]: P[Seq[Modifier] => Classlike] = P(
-    "class" ~/ Index ~ identifier ~ typeParamList.? ~
-      ("extends" ~/ typeRef).? ~ //("implements" ~/ typeRef.rep).? ~
-      classOrInterfaceBody
+    "class" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ Index
+      ~ identifier ~ typeParamList.?
+      ~ ("extends" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ typeRef).?
+      ~ ("implements" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ typeRef ~ ("," ~ typeRef).rep).?
+      ~ classOrInterfaceBody
   ).map {
     case (
           classTokEnd,
           name,
           typeParams,
-          superClass, /*interfaces, */ (braceStart, members, braceEnd)
+          superClass, superInterfaces, (braceStart, members, braceEnd)
         ) =>
       modifiers => {
         val (fields, normMethodsAndCtors) = members.partition(_.isInstanceOf[Field])
@@ -75,7 +76,8 @@ private class Classlikes(core: Core, types: Types, exprs: Exprs, methods: Method
           name,
           typeParams.getOrElse(TypeParamList(Seq.empty, TextRange.synthetic)),
           superClass.getOrElse(BuiltinTypes.objectType),
-          Array.empty[Type], //isArr,
+          superInterfaces.fold(Array.empty[Type]) { case (first, rest) => (first +: rest).toArray },
+          //isArr,
           fields.to(ArrayBuffer).asInstanceOf[ArrayBuffer[Field]],
           ctors.map(_.asInstanceOf[(() => Classlike) => Constructor](() => cls)).to(ArrayBuffer),
           normMethods.to(ArrayBuffer).asInstanceOf[ArrayBuffer[NormMethod]],

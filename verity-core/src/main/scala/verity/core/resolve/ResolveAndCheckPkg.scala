@@ -1,37 +1,41 @@
 package verity.core.resolve
 
-import verity.ast._
+import verity.ast.*
 import verity.ast.Pkg.Importable
-import verity.ast.infile._
+import verity.ast.infile.*
 import verity.checks.InitialPass
 import verity.core.Context.Defs
-import verity.core._
-import verity.util._
-import cats.implicits._
+import verity.core.*
+import verity.util.*
+import cats.implicits.*
 import cats.catsInstancesForId
 //import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable.{ArrayBuffer, HashMap}
 
+type BooleanResolveResult = (Boolean, Iterable[CompilerMsg])
+
 /** Resolve all references to classes and type parameters in a package
   * @param pkg The package to work on
   * @param parentPkgs A list of this package's parents (topmost packages at the end)
   * @param logger The logger to use
+  * @return Whether or not all the files succeeded, and all their accompanying compiler messages
   */
-def resolveAndCheck(root: RootPkg): Unit =
-  verity.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root)
+def resolveAndCheck(root: RootPkg): Map[FileNode, BooleanResolveResult] =
+  verity.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root).toMap
 
 /** Resolve all references to classes and type parameters in a file
   * @param file The file to work on
   * @param parentPkgs A non-empty list of this package's parents (topmost packages at the end)
   * @param root The root package
   * @param logger The logger to use
+  * @return Whether or not this file succeeded, and all the compiler messages emitted there
   */
 private def resolveAndCheckFile(
   file: FileNode,
   parentPkgs: List[Pkg],
   pkgName: String
-)(using rootPkg: RootPkg): Unit = {
+)(using rootPkg: RootPkg): BooleanResolveResult = {
   val currPkg = parentPkgs.head
   val FileNode(name, pkgRef, imports, classlikes, jFile, _) = file
 
@@ -46,14 +50,18 @@ private def resolveAndCheckFile(
       .map(p => p.name -> p)
       .toMap
 
-  file.classlikes.foreach(c =>
-    resolveAndCheckCls(
-      c,
-      pkgDefs,
-      clsDefs,
-      resolvedImports.collect { case m: MethodGroup => m.name -> m }.toMap,
-      file
-    ).foreach(LogUtils.log(_, file))
+  println(s"Classikes = ${file.classlikes}")
+
+  reduceBooleanResolveResults(
+    file.classlikes.map(c =>
+      resolveAndCheckCls(
+        c,
+        pkgDefs,
+        clsDefs,
+        resolvedImports.collect { case m: MethodGroup => m.name -> m }.toMap,
+        file
+      )
+    )
   )
 }
 
@@ -71,7 +79,7 @@ private[resolve] def resolveAndCheckCls(
   typeDefs: Defs[TypeDef],
   mthdRefs: Defs[MethodGroup],
   file: FileNode
-): Iterable[CompilerMsg] = {
+): BooleanResolveResult = {
   val fieldDefs: Defs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
 
   if (file.isSource) {
@@ -87,7 +95,7 @@ private[resolve] def resolveAndCheckCls(
   val givenDefs = cls.methods.filter(_.isGiven).toList
   val proofDefs = cls.methods.filter(_.isProof).toList
 
-  val mthdLogs = cls.methods.flatMap { mthd =>
+  val mthdLogs: BooleanResolveResult = cls.methods.view.map { mthd =>
 //    logger.debug(s"Working on method ${mthd.name}!!")
     resolve.resolveAndCheckMthd(
       mthd,
@@ -100,7 +108,7 @@ private[resolve] def resolveAndCheckCls(
       cls,
       file
     )
-  }
+  }.reduce(combineBooleanResolveResults)
 
   val ctxt = Context(
     fieldDefs,
@@ -112,11 +120,11 @@ private[resolve] def resolveAndCheckCls(
     cls,
     file
   )
-  val fieldLogs: Iterable[CompilerMsg] =
-    if (file.isSource) cls.fields.view.flatMap(resolveAndCheckField(_)(using ctxt))
-    else Nil
+  val fieldLogs: BooleanResolveResult =
+    if (file.isSource) (false, Nil) //cls.fields.view.flatMap(resolveAndCheckField(_)(using ctxt))
+    else (true, Nil)
 
-  fieldLogs ++ mthdLogs
+  combineBooleanResolveResults(fieldLogs, mthdLogs)
 }
 
 private def resolveAndCheckField(field: Field)(using Context): List[CompilerMsg] = {
@@ -144,37 +152,78 @@ private def resolveAndCheckMthd(
   pkgDefs: Defs[Pkg],
   cls: Classlike,
   file: FileNode
-): List[CompilerMsg] = {
+): BooleanResolveResult = {
   val isCtor = mthd.isInstanceOf[Constructor]
 
   if (file.isSource) {
     mthd.body match {
       case Some(block) =>
-        if (!mthd.isAbstract) {
-          val ctxt = Context(
-            fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),
-            mthdRefs,
-            givenDefs,
-            proofDefs,
-            typeDefs,
-            pkgDefs,
-            cls,
-            file
-          )
-          resolveStmt(block, mthd.returnType, mthd.proofs)(using ctxt)
-            .map { (newBlock, newProofs) =>
-              block.stmts.clear()
-              newBlock match {
-                case b: Block => block.stmts.addAll(b.stmts)
-                case s        => block.stmts += s
+        mthd.modifiers.find(_.modType == ModifierType.ABSTRACT) match {
+          case Some(abstractMod) =>
+            (false, List(errorMsg("Abstract methods cannot have implementations", abstractMod.textRange)))
+          case None =>
+            val ctxt = Context(
+              fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),
+              mthdRefs,
+              givenDefs,
+              proofDefs,
+              typeDefs,
+              pkgDefs,
+              cls,
+              file
+            )
+            val resolved = resolveStmt(block, mthd.returnType, mthd.proofs)(using ctxt)
+              .map { (newBlock, newProofs) =>
+                block.stmts.clear()
+                newBlock match {
+                  case b: Block => block.stmts.addAll(b.stmts)
+                  case s        => block.stmts += s
+                }
               }
-            }
-            .getOrElse(block)
-            .written
-        } else {
-          Nil
+              .isEmpty
+            (!resolved.value, resolved.written)
         }
-      case _ => Nil
+      case _ =>
+        if (mthd.isAbstract) {
+          (true, Nil)
+        } else {
+          (
+            false,
+            List(
+              errorMsg(
+                if (mthd.isCtor) "Constructors must have implementations"
+                else s"${mthd.name} must be marked abstract if it does not have a body",
+                mthd.nameRange
+              )
+            )
+          )
+        }
     }
-  } else Nil
+  } else (true, Nil)
+}
+
+/**
+  * Combine multiple BooleanResolveResults, the same way `combineBooleanResolveResults` does.
+  * If there are no results, that is taken as a success and `(true, Nil)` is returned.
+  */
+private[resolve] def reduceBooleanResolveResults(
+  results: Iterable[BooleanResolveResult]
+): BooleanResolveResult =
+  try {
+    if (results.isEmpty) (true, Nil)
+    else results.reduce(combineBooleanResolveResults)
+  } catch {
+    case e: UnsupportedOperationException => throw RuntimeException(s"results=${results}, $e")
+  }
+
+/** Take two BooleanResolveResults and return another result that has failed if
+  * either of them failed, and contains compiler messages from both.
+  */
+private[resolve] def combineBooleanResolveResults(
+  result1: BooleanResolveResult,
+  result2: BooleanResolveResult
+): BooleanResolveResult = {
+  val (success1, msgs1) = result1
+  val (success2, msgs2) = result2
+  (success1 && success2, msgs1 ++ msgs2)
 }

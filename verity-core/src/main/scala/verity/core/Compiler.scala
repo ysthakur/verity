@@ -32,10 +32,15 @@ object Compiler {
     //Do some initial checks (see if modifiers are okay, resolve imports, references to types, etc.)
     verity.checks.InitialPass.initialPass(rootPkg)
     //Resolve expressions inside methods
-    resolve.resolveAndCheck(rootPkg)
+    var allPassed = true
+    for ((file -> res) <- resolve.resolveAndCheck(rootPkg)) {
+      allPassed = allPassed && res._1
+    }
 
-    //Code generation
-    OutputJava.outputJavaPkg(rootPkg, options.javaOutputDir)
+    if (allPassed) {
+      //Code generation
+      OutputJava.outputJavaPkg(rootPkg, options.javaOutputDir)
+    }
   }
 
   def parsePkg(

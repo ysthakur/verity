@@ -61,7 +61,7 @@ private class Core(implicit offsetToPos: collection.mutable.ArrayBuffer[(Int, In
 
   def GIVEN[_: P]: P[Unit] = P("given" ~~ !CharPred(_.isUnicodeIdentifierPart))
   def PROOF[_: P]: P[Unit] = P("proof" ~~ !CharPred(_.isUnicodeIdentifierPart))
-  
+
   def modifier[_: P]: P[Modifier] = P(
     StringIn(
       "final",

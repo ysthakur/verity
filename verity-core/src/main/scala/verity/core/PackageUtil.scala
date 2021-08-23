@@ -1,15 +1,28 @@
 package verity.core
 
 import verity.ast.{FileNode, Pkg, RootPkg}
-//import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.collection.mutable
 
 object PackageUtil {
-  def walk(pkg: Pkg, f: FileNode => RootPkg ?=> Unit)(using RootPkg): Unit = {
-    pkg.subPkgs.foreach { p => walk(p, f) }
+  def walk[T](pkg: Pkg, f: FileNode => RootPkg ?=> T)(using RootPkg): mutable.Map[FileNode, T] = {
+    val results = mutable.Map[FileNode, T]()
+    walk(pkg, f, results)
+    results
+  }
 
-    pkg.files.foreach(f)
+  private def walk[T](pkg: Pkg, f: FileNode => RootPkg ?=> T, results: mutable.Map[FileNode, T])(using
+    root: RootPkg
+  ): Unit = {
+    //The try-catch is to prevent exceptions from being lost if I ever run these in parallel
+    try {
+      pkg.subPkgs.foreach { p => walk(p, f, results) }
+
+      pkg.files.foreach(file => results.put(file, f(file)(using root)))
+    } catch {
+      case e => e.printStackTrace; throw e
+    }
   }
 
   /** Recursively walk down a package and all its subpackages, and for every file encountered, run
@@ -19,27 +32,32 @@ object PackageUtil {
     *   Execute on a file, also given the list of packages the file is in (in reverse) and the
     *   file's path
     */
-  def walkWithPath(
+  def walkWithPath[T](
     pkg: Pkg,
-    f: (FileNode, List[Pkg], String) => RootPkg ?=> Unit
-  )(using root: RootPkg): Unit = {
+    f: (FileNode, List[Pkg], String) => RootPkg ?=> T
+  )(using root: RootPkg): mutable.Map[FileNode, T] = {
     val parents = pkg.parents
-    walkWithPath(pkg, parents, canonicalName(pkg.name, parents), f)(using root)
+    val results = mutable.Map[FileNode, T]()
+    walkWithPath(pkg, parents, canonicalName(pkg.name, parents), f, results)(using root)
+    results
   }
 
-  private def walkWithPath(
+  private def walkWithPath[T](
     pkg: Pkg,
     parents: List[Pkg],
     path: String,
-    f: (FileNode, List[Pkg], String) => RootPkg ?=> Unit
+    f: (FileNode, List[Pkg], String) => RootPkg ?=> T,
+    results: mutable.Map[FileNode, T]
   )(using root: RootPkg): Unit = {
     val newParents = pkg :: parents
     val newPath = path + pkg.name
-    pkg.subPkgs.foreach { p =>
-      PackageUtil.walkWithPath(p, newParents, newPath, f)(using root)
-    }
+
+    //The try-catch is to prevent exceptions from being lost if I ever run these in parallel
     try {
-      pkg.files.foreach(f(_, newParents, newPath))
+      pkg.subPkgs.foreach { p =>
+        PackageUtil.walkWithPath(p, newParents, newPath, f, results)(using root)
+      }
+      pkg.files.foreach(file => results.put(file, f(file, newParents, newPath)))
     } catch {
       case x => x.printStackTrace; throw x
     }
