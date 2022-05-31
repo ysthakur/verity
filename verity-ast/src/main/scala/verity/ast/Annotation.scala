@@ -1,6 +1,6 @@
-package verity.ast.infile
+package verity.ast
 
-import verity.ast._
+import verity.ast.*
 // import verity.ast.ToJava.given
 
 case class Annotation(name: String, args: ArgList, appliedTo: Tree, startOffset: Int)

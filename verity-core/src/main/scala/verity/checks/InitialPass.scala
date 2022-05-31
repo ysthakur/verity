@@ -1,7 +1,7 @@
 package verity.checks
 
 import verity.ast._
-import verity.ast.infile._
+
 import verity.util._
 import verity.core.Context.Defs
 import verity.core.resolve.ReferenceResolve

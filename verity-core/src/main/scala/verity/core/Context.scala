@@ -1,7 +1,7 @@
 package verity.core
 
 import verity.ast._
-import verity.ast.infile._
+
 import verity.core.Context.Defs
 
 type GivenDef = VariableDecl | Methodlike

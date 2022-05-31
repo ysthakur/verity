@@ -1,4 +1,4 @@
-package verity.ast.infile
+package verity.ast
 
 import verity.ast.TextRange
 

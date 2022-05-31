@@ -12,8 +12,8 @@ import verity.core.Context.Defs
 //import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
-import verity.ast.infile.unresolved.UnresolvedMethodCall
-import verity.ast.infile.unresolved.UnresolvedExpr
+
+
 
 //todo make a proper solver for this stuff
 private def resolveStmt(

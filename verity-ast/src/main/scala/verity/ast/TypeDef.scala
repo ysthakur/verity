@@ -1,6 +1,6 @@
-package verity.ast.infile
+package verity.ast
 
-import verity.ast._
+import verity.ast.*
 
 trait TypeDef extends NamedTree {
 
@@ -32,8 +32,6 @@ trait TypeDef extends NamedTree {
     this != sup && superTypes.exists {
       case `sup`                          => true
       case ResolvedTypeRef(_, _, typeDef) => typeDef.strictSubTypeDefOf(sup)
-      case unresolved.UnresolvedTypeRef(_, _, typeDef) =>
-        typeDef.fold(false)(_.strictSubTypeDefOf(sup))
     }
 }
 
@@ -44,7 +42,7 @@ object TypeDef {
     def methods: Iterable[Method] = Nil
     def superTypes: Iterable[Type] = Nil
 
-    def typeParams: TypeParamList = new TypeParamList(Nil, TextRange.synthetic)
+    def typeParams: TypeParamList = TypeParamList(Nil, TextRange.synthetic)
   }
 }
 

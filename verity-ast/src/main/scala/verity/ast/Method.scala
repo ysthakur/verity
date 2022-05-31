@@ -1,6 +1,6 @@
-package verity.ast.infile
+package verity.ast
 
-import verity.ast._
+import verity.ast.*
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -19,14 +19,13 @@ trait Methodlike extends NamedTree {
   def nameRange: TextRange
   def body: Option[Block] //Option[Block|Expr]
 
-  def isCtor: Boolean =
-    this.isInstanceOf[Constructor] || this.isInstanceOf[unresolved.UnresolvedConstructor]
+  def isCtor: Boolean = this.isInstanceOf[Constructor]
   // def body_=(newBody: Option[Block] /*Option[Block|Expr]*/ ): Unit
 }
 
 trait Method extends Methodlike, ClassChild, HasText, HasModifiers {
   private[verity] var _proofs: Iterable[Type]
-  override def proofs: scala.Iterable[_root_.verity.ast.infile.Type] = _proofs
+  override def proofs: scala.Iterable[Type] = _proofs
 }
 object Method {
 
@@ -61,7 +60,7 @@ class NormMethod(
   private[verity] def returnType_=(typ: Type): Unit = _returnType = typ
 
   def name: String = methodName.text
-  override def nameRange = methodName.textRange
+  override def nameRange: TextRange = methodName.textRange
 }
 
 class Constructor(
@@ -79,7 +78,7 @@ class Constructor(
   override lazy val returnType: Type = cls.makeRef
   private[verity] var _proofs: Iterable[Type] = Nil
 
-  override def proofs = Nil
+  override def proofs: Iterable[Type] = Nil
 
   val body: Option[Block] = Some(_body)
 

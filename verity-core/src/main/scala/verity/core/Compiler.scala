@@ -2,11 +2,11 @@ package verity.core
 
 //import scala.language.unsafeNulls
 
-import verity.ast._
+import verity.ast.*
 import verity.checks.InitialPass
 import verity.core.resolve
 import verity.codegen.OutputJava
-import verity.util._
+import verity.util.*
 import verity.parser.Parser
 import verity.readbytecode.ReadBytecode
 //import com.typesafe.scalalogging.Logger
@@ -24,7 +24,7 @@ object Compiler {
     //Load JDK classes such as java.lang.Object
     ReadBytecode.readJdk(rootPkg, Paths.get(options.jdkDir).unsafeNN, options.modulesToRead)
     //Set the Object and String builtins
-    infile.BuiltinTypes.refreshBuiltins(rootPkg)
+    verity.ast.BuiltinTypes.refreshBuiltins(rootPkg)
 
     //Parse Verity sources
     parsePkg(pkgs, files, rootPkg)

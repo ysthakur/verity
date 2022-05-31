@@ -1,6 +1,4 @@
-package verity.ast.infile
-
-import verity.ast._
+package verity.ast
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -41,9 +39,12 @@ object Type {
   def equal(t1: Type, t2: Type): Boolean = ???
 
   /** Fill in type arguments
-    * @param params The type parameters to a class or method
-    * @param typeArgs The values of those type parameters
-    * @param typ A type that uses references to type parameters `params`
+    * @param params
+    *   The type parameters to a class or method
+    * @param typeArgs
+    *   The values of those type parameters
+    * @param typ
+    *   A type that uses references to type parameters `params`
     */
   def fillArgs(params: Iterable[TypeParam], typeArgs: Iterable[Type])(typ: Type): Type = {
     //Keys are parameters, values are arguments
@@ -77,9 +78,18 @@ class VoidTypeRef(override val textRange: TextRange) extends Type, HasTextRange 
 
 // given ToJava[NothingType.type] = _ => "Type Nothing"
 
-case class PrimitiveType(typ: PrimitiveTypeDef, override val textRange: TextRange)
+enum PrimitiveType(val typ: PrimitiveTypeDef, override val textRange: TextRange)
     extends Type,
       HasTextRange {
+  case BooleanType extends PrimitiveType(PrimitiveTypeDef.Boolean, TextRange.synthetic)
+  case ByteType extends PrimitiveType(PrimitiveTypeDef.Byte, TextRange.synthetic)
+  case CharType extends PrimitiveType(PrimitiveTypeDef.Char, TextRange.synthetic)
+  case ShortType extends PrimitiveType(PrimitiveTypeDef.Short, TextRange.synthetic)
+  case IntType extends PrimitiveType(PrimitiveTypeDef.Int, TextRange.synthetic)
+  case FloatType extends PrimitiveType(PrimitiveTypeDef.Float, TextRange.synthetic)
+  case LongType extends PrimitiveType(PrimitiveTypeDef.Long, TextRange.synthetic)
+  case DoubleType extends PrimitiveType(PrimitiveTypeDef.Double, TextRange.synthetic)
+
   override def fields: Iterable[Field] = Nil
   override def methods: Iterable[Method] = Nil
 
@@ -90,28 +100,17 @@ case class PrimitiveType(typ: PrimitiveTypeDef, override val textRange: TextRang
   override def strictSuperTypeOf(other: Type): Boolean = false
   override def strictSubTypeOf(other: Type): Boolean = false
 
-  override def equals(other: Any): Boolean =
-    other match {
-      case PrimitiveType(t, _) =>
-//        println(s"${this.typ == t}, this=$this, ${this.getClass}, other=$other, ${other.getClass}")
-        this.typ == t
-      case _ => false
-    }
   override def text: String = typ.text
 }
+
 object PrimitiveType {
-  val BooleanType = PrimitiveType(PrimitiveTypeDef.BOOLEAN, TextRange.synthetic)
-  val ByteType = PrimitiveType(PrimitiveTypeDef.BYTE, TextRange.synthetic)
-  val CharType = PrimitiveType(PrimitiveTypeDef.CHAR, TextRange.synthetic)
-  val ShortType = PrimitiveType(PrimitiveTypeDef.SHORT, TextRange.synthetic)
-  val IntType = PrimitiveType(PrimitiveTypeDef.INT, TextRange.synthetic)
-  val FloatType = PrimitiveType(PrimitiveTypeDef.FLOAT, TextRange.synthetic)
-  val LongType = PrimitiveType(PrimitiveTypeDef.LONG, TextRange.synthetic)
-  val DoubleType = PrimitiveType(PrimitiveTypeDef.DOUBLE, TextRange.synthetic)
+  lazy val numericTypes: Set[PrimitiveType] =
+    Set(ByteType, CharType, ShortType, IntType, FloatType, LongType, DoubleType)
+  lazy val numericType: TypeUnion = TypeUnion(numericTypes)
 }
 
 enum PrimitiveTypeDef extends TypeDef, Synthetic {
-  case BOOLEAN, BYTE, SHORT, CHAR, INT, FLOAT, LONG, DOUBLE
+  case Boolean, Byte, Short, Char, Int, Float, Long, Double
 
 //  override def subTypeDefOf(sup: Type): Boolean = this == sup
 //  override def superTypeOf(sub: Type): Boolean = this == sub
@@ -130,11 +129,6 @@ enum PrimitiveTypeDef extends TypeDef, Synthetic {
   override def name: String = this.toString.toLowerCase.nn
 }
 object PrimitiveTypeDef {
-  lazy val numericTypes: Set[PrimitiveTypeDef] = Set(BYTE, CHAR, SHORT, INT, FLOAT, LONG, DOUBLE)
-  lazy val numericType: TypeUnion = TypeUnion(
-    numericTypes.map(pt => PrimitiveType(pt, TextRange.synthetic))
-  )
-
   val fromName: String => Option[PrimitiveTypeDef] =
     PrimitiveTypeDef.values.view.map(typ => typ.name -> typ).toMap.get
 }

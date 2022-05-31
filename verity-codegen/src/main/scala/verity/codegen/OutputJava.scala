@@ -1,7 +1,7 @@
 package verity.codegen
 
 import verity.ast._
-import verity.ast.infile._
+
 
 import scala.util.Using
 import java.io.{File, FileWriter, Writer}

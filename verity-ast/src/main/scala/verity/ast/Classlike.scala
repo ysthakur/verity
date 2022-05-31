@@ -1,7 +1,6 @@
-package verity.ast.infile
+package verity.ast
 
-import verity.ast._
-import verity.ast.infile.{unresolved => ur}
+import verity.ast.*
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -50,8 +49,10 @@ sealed trait Classlike(val defType: ClasslikeType)
     methods.groupBy(_.name).map(MethodGroup(_, _))
 
   /** Find members inside a class given by a path, e.g. List("foo") to access field foo
-    * @param cls The class inside which the fields/methods/classes to be found lie
-    * @param path A nonempty Iterable denoting the path of the member
+    * @param cls
+    *   The class inside which the fields/methods/classes to be found lie
+    * @param path
+    *   A nonempty Iterable denoting the path of the member
     */
   def findMember(path: Iterable[String]): Option[ClassChild] = {
     val childName = path.head
@@ -68,7 +69,6 @@ trait ClassChild extends NamedTree
 
 trait HasCtors extends Classlike {
   def ctors: Iterable[Constructor]
-  private[verity] def addCtor(ctor: Constructor): Unit
 }
 
 enum ClasslikeType(val text: String) extends Tree {
@@ -78,8 +78,10 @@ enum ClasslikeType(val text: String) extends Tree {
 }
 
 /** A class definition (not an interface, enum, or annotation)
-  * @param metaclassTokTR The `TextRange` of the "class" keyword token
-  * @param bodyRange The `TextRange` of the braces
+  * @param metaclassTokTR
+  *   The `TextRange` of the "class" keyword token
+  * @param bodyRange
+  *   The `TextRange` of the braces
   */
 case class ClassDef(
   annotations: ArrayBuffer[Annotation],
@@ -97,14 +99,14 @@ case class ClassDef(
       HasCtors {
   def children = fields ++ methods
 
-  override def methods = ctors ++ normMethods
-
   override def superTypes: Iterable[Type] =
     superInterfaces.toSeq :+ superClass
 
   //todo also add fields (no need to preserve order)
   override def text: String =
     s"${HasText.seqText(modifiers, " ")} class $name{${HasText.seqText(fields)}${HasText.seqText(methods)}}"
+
+  override def methods = ctors ++ normMethods
 
   private[verity] def addCtor(ctor: Constructor) = ctors += ctor
 }
@@ -132,7 +134,7 @@ case class EnumDef(
   modifiers: ArrayBuffer[Modifier],
   name: String,
   typeParams: TypeParamList,
-  superInterfaces: Seq[ur.UnresolvedTypeRef],
+  superInterfaces: Seq[Type],
   constants: List[EnumConstant],
   fields: ArrayBuffer[Field],
   ctors: ArrayBuffer[Constructor],
@@ -141,15 +143,13 @@ case class EnumDef(
   bodyRange: TextRange
 ) extends Classlike(ClasslikeType.ENUM),
       HasCtors {
-  def children = (constants ++ fields: Iterable[ClassChild]) ++ methods
+  def children: Iterable[ClassChild] = constants ++ fields ++ methods
 
-  override def superTypes: Iterable[Type] =
-    BuiltinTypes.objectType +: superInterfaces.map(_.resolved.get.makeRef)
+  override def superTypes: Iterable[Type] = BuiltinTypes.objectType +: superInterfaces
 
   override def text: String =
-    s"${modifiers.map(_.text).mkString(" ")} enum $name { ${methods.mkString(" ")}}"
-
-  private[verity] def addCtor(ctor: Constructor) = ctors += ctor
+    annotations.map(_.text).mkString("\n") + 
+      s"${modifiers.map(_.text).mkString(" ")} enum $name { ${methods.mkString(" ")}}"
 }
 
 case class EnumConstant(name: String) extends ClassChild
@@ -189,26 +189,26 @@ object NothingTypeDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
   }
 }
 
-/** The definition of the type `verity.lang.NotGiven`, which is treated specially.
-  * Proofs of type `NotGiven<T>` are provided if no givens of type `T` are found.
+/** The definition of the type `verity.lang.NotGiven`, which is treated specially. Proofs of type
+  * `NotGiven<T>` are provided if no givens of type `T` are found.
   */
 object NotGivenDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
-  override def name = "NotGiven"
-
-  override lazy val typeParams = TypeParamList(
+  override lazy val typeParams: TypeParamList = TypeParamList(
     List(TypeParam("T", BuiltinTypes.objectType, NothingTypeDef.makeRef, TextRange.synthetic)),
     TextRange.synthetic
   )
+
+  override def name = "NotGiven"
 }
 
-/** The definition of the type `verity.lang.NotProven`, which is treated specially.
-  * Proofs of type `NotProven<T>` are provided if no proofs of type `T` are found.
+/** The definition of the type `verity.lang.NotProven`, which is treated specially. Proofs of type
+  * `NotProven<T>` are provided if no proofs of type `T` are found.
   */
 object NotProvenDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
-  override def name = "NotProven"
-
-  override lazy val typeParams = TypeParamList(
+  override lazy val typeParams: TypeParamList = TypeParamList(
     List(TypeParam("T", BuiltinTypes.objectType, NothingTypeDef.makeRef, TextRange.synthetic)),
     TextRange.synthetic
   )
+
+  override def name = "NotProven"
 }

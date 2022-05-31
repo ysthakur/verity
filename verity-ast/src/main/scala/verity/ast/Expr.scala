@@ -1,6 +1,6 @@
-package verity.ast.infile
+package verity.ast
 
-import verity.ast._
+import verity.ast.*
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -73,8 +73,7 @@ case class VarRef(varName: Text, decl: VariableDecl) extends Expr {
   override def textRange: TextRange = varName.textRange
 }
 
-/** TODO figure out a way to avoid the var
-  * Used for referring to classes when calling static methods or accessing static
+/** Used for referring to classes when calling static methods or accessing static
   * fields, NOT used like ResolvedTypeRef or UnresolvedTypeRef
   */
 case class ClassRef(cls: Classlike, path: Iterable[Text]) extends Tree, HasTextRange {

@@ -1,8 +1,8 @@
 package verity.core.resolve
 
 import verity.ast._
-import verity.ast.infile._
-import verity.ast.infile.unresolved.UnresolvedTypeRef
+
+
 import verity.core._
 import verity.core.Context.Defs
 //import cats.data.{OptionT, Writer}

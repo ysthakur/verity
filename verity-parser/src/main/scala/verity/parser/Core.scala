@@ -1,8 +1,8 @@
 package verity.parser
 
 import verity.ast._
-import verity.ast.infile._
-import verity.ast.infile.unresolved._
+
+
 import Parser.ps2tr
 
 import fastparse.JavaWhitespace._

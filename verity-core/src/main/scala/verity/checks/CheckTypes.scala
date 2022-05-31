@@ -1,8 +1,8 @@
 package verity.checks
 
-import verity.ast.TextRange
-import verity.ast.infile._
-import verity.core._
+import verity.ast.{TextRange, Type, TypeParam}
+import verity.ast.infile.*
+import verity.core.*
 
 object CheckTypes {
 
