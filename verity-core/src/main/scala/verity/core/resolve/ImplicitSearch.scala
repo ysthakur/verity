@@ -4,10 +4,10 @@ import verity.ast._
 import verity.ast.infile.{unresolved => ur, _}
 import verity.core._
 
-import cats.Traverse
-import cats.data.{OptionT, Writer}
-import cats.implicits._
-import cats.syntax.traverse._
+//import cats.Traverse
+//import cats.data.{OptionT, Writer}
+//import cats.implicits._
+//import cats.syntax.traverse._
 
 object ImplicitSearch {
 
@@ -15,7 +15,7 @@ object ImplicitSearch {
     argList: Option[ur.UnresolvedArgList],
     params: Option[ParamList],
     defaultTextRange: TextRange
-  )(using ctxt: Context): ResolveResult[Option[ArgList]] = {
+  )(using ctxt: Context): Option[Option[ArgList]] = {
     // println(s"givenDefs=${ctxt.givenDefs.map(_.asInstanceOf[HasText].text)}, proofDefs=${ctxt.proofDefs.map(_.asInstanceOf[HasText].text)}")
     argList match {
       case Some(origArgs) =>
@@ -62,7 +62,7 @@ object ImplicitSearch {
   }
 
   //TODO reduce code duplication (findGiven and findProof)
-  def findGiven(givenType: Type, tr: TextRange)(using ctxt: Context): ResolveResult[Expr] =
+  def findGiven(givenType: Type, tr: TextRange)(using ctxt: Context): Option[Expr] =
     val poss = findGivens(givenType)
 
     if (poss.isEmpty) {
@@ -75,10 +75,10 @@ object ImplicitSearch {
         )
       )
     } else {
-      OptionT.some(poss.head)
+      ResolveRes.fromRes(poss.head)
     }
 
-  def findProof(proofType: Type, tr: TextRange)(using ctxt: Context): ResolveResult[Expr] = {
+  def findProof(proofType: Type, tr: TextRange)(using ctxt: Context): Option[Expr] = {
     val poss = findProofs(proofType)
 
     if (poss.isEmpty) {
@@ -91,7 +91,7 @@ object ImplicitSearch {
         )
       )
     } else {
-      OptionT.some(poss.head)
+      ResolveRes.fromRes(poss.head)
     }
   }
 

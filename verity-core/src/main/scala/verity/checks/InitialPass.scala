@@ -158,7 +158,7 @@ object InitialPass {
     resolvedType.map { newType =>
       field.typ = newType
     }
-    resolvedType.value.written
+    resolvedType.value.logs
   }
 
   private def initialPassMthd(
@@ -203,13 +203,13 @@ object InitialPass {
 
     val resolvedParams = ReferenceResolve.resolveParamList(mthd.params)
     mthd.params = resolvedParams.value
-    val valParamLogs = bodyRes ::: resolvedParams.written
+    val valParamLogs = bodyRes ::: resolvedParams.logs
 
     val givenParamLogs = mthd.givenParams match {
       case Some(givenParams) =>
         val resolved = ReferenceResolve.resolveParamList(givenParams)
         mthd.givenParams = Some(resolved.value)
-        valParamLogs ::: resolved.written
+        valParamLogs ::: resolved.logs
       case None => valParamLogs
     }
 
@@ -217,14 +217,14 @@ object InitialPass {
       case Some(proofParams) =>
         val resolved = ReferenceResolve.resolveParamList(proofParams)
         mthd.proofParams = Some(resolved.value)
-        givenParamLogs ::: resolved.written
+        givenParamLogs ::: resolved.logs
       case None => givenParamLogs
     }
 
     val proofClauseLogs = proofParamLogs.to(scala.collection.mutable.ListBuffer)
     mthd._proofs = mthd.proofs.map { proofType =>
       val resolved = ReferenceResolve.resolveTypeIfNeeded(proofType).value
-      proofClauseLogs ++= resolved.written
+      proofClauseLogs ++= resolved.logs
       resolved.value.getOrElse(proofType)
     }
 
@@ -236,7 +236,7 @@ object InitialPass {
             nm.returnType = typ
           }
           .value
-          .written
+          .logs
       case _ => proofClauseLogs
     }
   }

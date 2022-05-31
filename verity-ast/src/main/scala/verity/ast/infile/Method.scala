@@ -26,7 +26,7 @@ trait Methodlike extends NamedTree {
 
 trait Method extends Methodlike, ClassChild, HasText, HasModifiers {
   private[verity] var _proofs: Iterable[Type]
-  override def proofs = _proofs
+  override def proofs: scala.Iterable[_root_.verity.ast.infile.Type] = _proofs
 }
 object Method {
 
