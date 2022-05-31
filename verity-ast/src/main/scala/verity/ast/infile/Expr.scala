@@ -7,9 +7,7 @@ import scala.collection.mutable.ArrayBuffer
 trait ResolvedOrUnresolvedExpr extends HasTextRange, HasType, Tree
 
 sealed trait Expr extends Tree, HasText, HasTextRange, HasType, ResolvedOrUnresolvedExpr {
-  // private var _exprType: Type = ToBeInferred(ObjectType, NothingType, List.empty)
   def typ: Type
-  // private[verity] def exprType_=(typ: Type) = _exprType = typ
 }
 
 object Expr {
@@ -63,7 +61,7 @@ class ThisRef(val cls: Classlike, override val textRange: TextRange) extends Exp
 }
 
 class SuperRef(val superCls: Classlike, override val textRange: TextRange) extends Expr {
-  override val typ: Type = superCls.makeRef
+  override var typ: Type = superCls.makeRef
   override def text: String = "super"
 }
 
