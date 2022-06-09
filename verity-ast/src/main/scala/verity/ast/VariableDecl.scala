@@ -15,7 +15,8 @@ trait VariableDecl extends Tree, HasText, HasType, NamedTree, HasModifiers {
   def initExpr: Option[ResolvedOrUnresolvedExpr]
 
   /** Whether or not this is simply a declaration
-    * @return True if only a declaration, false if also intialized
+    * @return
+    *   True if only a declaration, false if also intialized
     */
   def declarationOnly: Boolean = initExpr == None
 

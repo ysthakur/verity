@@ -32,7 +32,7 @@ object Modifier {
 
 enum ModifierType extends Tree {
   case PUBLIC, PRIVATE, PROTECTED, DEFAULT, STATIC, ABSTRACT, FINAL, NATIVE, TRANSIENT, VOLATILE,
-  SYNCHRONIZED, CONST, GIVEN, PROOF
+    SYNCHRONIZED, CONST, GIVEN, PROOF
 }
 
 object ModifierType {

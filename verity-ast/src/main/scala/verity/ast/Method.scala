@@ -17,7 +17,7 @@ trait Methodlike extends NamedTree {
   var proofParams: Option[ParamList]
 
   def nameRange: TextRange
-  def body: Option[Block] //Option[Block|Expr]
+  def body: Option[Block] // Option[Block|Expr]
 
   def isCtor: Boolean = this.isInstanceOf[Constructor]
   // def body_=(newBody: Option[Block] /*Option[Block|Expr]*/ ): Unit
@@ -29,12 +29,13 @@ trait Method extends Methodlike, ClassChild, HasText, HasModifiers {
 }
 object Method {
 
-  /** Merge a bunch of methods - if one is a subtype of another, keep the overridden method. Also return any methods
-    * that can't be merged.
-    * @return (mergedMethods, unmergeableMethods)
+  /** Merge a bunch of methods - if one is a subtype of another, keep the overridden method. Also
+    * return any methods that can't be merged.
+    * @return
+    *   (mergedMethods, unmergeableMethods)
     */
-  def mergeMethods(methods: Iterable[Method]): (Iterable[Method], Iterable[Iterable[Method]]) = {
-    (methods, Nil) //TODO implement this!!!
+  def mergeMethods(methods: Iterable[Method]): Iterable[Method] = {
+    methods // TODO implement this!!!
   }
 }
 
@@ -48,7 +49,6 @@ class NormMethod(
   var params: ParamList,
   var givenParams: Option[ParamList],
   var proofParams: Option[ParamList],
-  val thrownExceptions: Iterable[Type],
   val body: Option[Block]
 ) extends Method {
   override def text =
@@ -68,7 +68,6 @@ class Constructor(
   var params: ParamList,
   var givenParams: Option[ParamList],
   var proofParams: Option[ParamList],
-  val thrownExceptions: Iterable[Type],
   _body: Block,
   private[this] var _cls: () => HasCtors
 ) extends Method {
@@ -84,7 +83,7 @@ class Constructor(
 
   override def text =
     s"${modifiers.map(_.text).mkString(" ")} constructor${params.text}${givenParams.fold("")(_.text)}${proofParams
-      .fold("")(_.text)} ${body.fold(";")(_.text)}"
+        .fold("")(_.text)} ${body.fold(";")(_.text)}"
 
   override def name: String = "constructor"
   override def nameRange: TextRange = TextRange.synthetic
@@ -97,7 +96,6 @@ object Constructor {
       Empty[ParamList],
       None,
       None,
-      Nil,
       Block.empty(VoidTypeRef(TextRange.synthetic)),
       () => cls
     )

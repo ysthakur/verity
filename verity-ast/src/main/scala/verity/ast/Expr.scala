@@ -13,7 +13,7 @@ sealed trait Expr extends Tree, HasText, HasTextRange, HasType, ResolvedOrUnreso
 object Expr {
   def dummy(typ: Type, textRange: TextRange = TextRange.synthetic): Expr = typ match {
     case pt: PrimitiveType => ???
-    case _                 => UpcastExpr(NullLiteral(textRange), typ, textRange)
+    case _ => UpcastExpr(NullLiteral(textRange), typ, textRange)
   }
 }
 
@@ -73,8 +73,8 @@ case class VarRef(varName: Text, decl: VariableDecl) extends Expr {
   override def textRange: TextRange = varName.textRange
 }
 
-/** Used for referring to classes when calling static methods or accessing static
-  * fields, NOT used like ResolvedTypeRef or UnresolvedTypeRef
+/** Used for referring to classes when calling static methods or accessing static fields, NOT used
+  * like ResolvedTypeRef or UnresolvedTypeRef
   */
 case class ClassRef(cls: Classlike, path: Iterable[Text]) extends Tree, HasTextRange {
   override def text: String = HasText.seqText(path, ".", "", "")
@@ -183,12 +183,12 @@ case class MethodCall(
   methodName: Text,
   valArgs: ArgList,
   typeArgs: Option[TypeArgList],
-  givenArgs: Option[ArgList] = None, //TODO do givenArgs!!
-  proofArgs: Option[ArgList] = None, //TODO do proofArgs!!
+  givenArgs: Option[ArgList] = None, // TODO do givenArgs!!
+  proofArgs: Option[ArgList] = None, // TODO do proofArgs!!
   typ: Type,
   resolved: Method
 ) extends Expr {
-  //TODO figure out how to print types
+  // TODO figure out how to print types
   override def text: String = caller.fold("")(_.text + ".")
     + typeArgs.fold("")(_.text)
     + methodName.text
@@ -202,7 +202,8 @@ case class MethodCall(
 }
 
 /** A constructor call that has been resolved
-  * @param cls The class this is trying to construct
+  * @param cls
+  *   The class this is trying to construct
   */
 class CtorCall(
   val cls: ClassRef,

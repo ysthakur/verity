@@ -1,7 +1,5 @@
 package verity.ast
 
-
-
 import java.io.File
 import scala.annotation.{tailrec, targetName}
 import scala.collection.mutable.ArrayBuffer
@@ -60,7 +58,7 @@ object Pkg {
 
       pkg.subPkgs.find(_.name == subName) match {
         case Some(subPkg) => findPkgRel(subPkg, pkgPath.tail)
-        case None         => (pkg, pkgPath)
+        case None => (pkg, pkgPath)
       }
     }
 

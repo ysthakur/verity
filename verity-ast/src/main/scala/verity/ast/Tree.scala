@@ -5,7 +5,7 @@ trait Tree {
 }
 
 object Tree {
-  val hardKeywords = Array(
+  val hardKeywords: List[String] = List(
     "class",
     "interface",
     "enum",

@@ -1,5 +1,5 @@
 val projectName = "verity"
-val scala3version = "3.0.2"
+val scala3version = "3.1.1"
 val scala2version = "2.13.6"
 val verityVersion = "0.1.0"
 

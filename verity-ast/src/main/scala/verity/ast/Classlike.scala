@@ -102,7 +102,7 @@ case class ClassDef(
   override def superTypes: Iterable[Type] =
     superInterfaces.toSeq :+ superClass
 
-  //todo also add fields (no need to preserve order)
+  // todo also add fields (no need to preserve order)
   override def text: String =
     s"${HasText.seqText(modifiers, " ")} class $name{${HasText.seqText(fields)}${HasText.seqText(methods)}}"
 
@@ -148,7 +148,7 @@ case class EnumDef(
   override def superTypes: Iterable[Type] = BuiltinTypes.objectType +: superInterfaces
 
   override def text: String =
-    annotations.map(_.text).mkString("\n") + 
+    annotations.map(_.text).mkString("\n") +
       s"${modifiers.map(_.text).mkString(" ")} enum $name { ${methods.mkString(" ")}}"
 }
 
@@ -182,7 +182,7 @@ object NothingTypeDef extends MagicTypeDef, Classlike(ClasslikeType.CLASS) {
     override def strictSubTypeOf(sup: Type) = true
     override def strictSuperTypeOf(sub: Type): Boolean = false
 
-    //todo figure out how to deal with this
+    // todo figure out how to deal with this
     override def superTypes: Iterable[Type] = Nil
 
     override def text = "Type Nothing"

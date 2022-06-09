@@ -27,10 +27,10 @@ trait TypeDef extends NamedTree {
 
   def typeParams: TypeParamList
 
-  //todo work on this
+  // todo work on this
   def strictSubTypeDefOf(sup: TypeDef): Boolean =
     this != sup && superTypes.exists {
-      case `sup`                          => true
+      case `sup` => true
       case ResolvedTypeRef(_, _, typeDef) => typeDef.strictSubTypeDefOf(sup)
     }
 }
