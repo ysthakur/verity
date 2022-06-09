@@ -14,8 +14,8 @@ private class Parser(inputFile: File)(implicit offsetToPos: ArrayBuffer[(Int, In
   val methods = new Methods(core, types, exprs)
   val classlikes = new Classlikes(core, types, exprs, methods)
 
-  def file[_: P]: P[FileNode] =
-    P(core.packageStmt.? ~ core.importStmt.rep ~ classlikes.classlike.rep ~ End).map {
+  def file[_: Parser]: Parser[FileNode] =
+    Parser(core.packageStmt.? ~ core.importStmt.rep ~ classlikes.classlike.rep ~ End).map {
       case (pkgStmt, imptStmts, templateDefs) =>
         FileNode(inputFile.getName, pkgStmt, imptStmts, templateDefs, Some(inputFile), offsetToPos)
     }

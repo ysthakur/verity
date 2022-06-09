@@ -61,7 +61,7 @@ class ThisRef(val cls: Classlike, override val textRange: TextRange) extends Exp
 }
 
 class SuperRef(val superCls: Classlike, override val textRange: TextRange) extends Expr {
-  override var typ: Type = superCls.makeRef
+  var typ: Type = superCls.makeRef
   override def text: String = "super"
 }
 
@@ -97,14 +97,6 @@ case class ParenExpr(expr: Expr, override val textRange: TextRange) extends Expr
 //   override lazy val textRange = TextRange(expr.textRange.start, propertyName.textRange.end)
 // }
 
-case class ArraySelect(arr: Expr, index: Expr, bracketsTextRange: TextRange) extends Expr {
-  override def typ: Type = (arr.typ: @unchecked) match {
-    case at: ArrayType => at.elemType
-  }
-  override def text: String = s"${arr.text}[${index.text}]"
-  override def textRange = TextRange(arr.textRange.start, bracketsTextRange.end)
-}
-
 case class BinaryExpr(left: Expr, op: Op, right: Expr, typ: Type) extends Expr {
   override def text: String = s"(${left.text} ${op.text} ${right.text})"
   override def textRange: TextRange = TextRange(left.textRange.start, right.textRange.end)
@@ -118,17 +110,6 @@ case class UnaryPreExpr(op: Op, expr: Expr, typ: Type) extends Expr {
 case class UnaryPostExpr(expr: Expr, op: Op, typ: Type) extends Expr {
   override def text: String = s"(${expr.text}${op.text})"
   override def textRange: TextRange = TextRange(expr.textRange.start, op.textRange.end)
-}
-
-case class AssignmentExpr(lhs: Expr, rhs: Expr, extraOp: Option[Text]) extends Expr {
-  override def typ: Type = lhs.typ
-  override def text: String = lhs.text + extraOp.fold("")(_.text) + "=" + rhs.text
-  override def textRange: TextRange = TextRange(lhs.textRange.start, rhs.textRange.end)
-}
-
-class InstanceOf(val expr: Expr, override val textRange: TextRange) extends Expr {
-  override val typ: Type = PrimitiveType.BooleanType
-  override def text = s"${expr.text} instanceof ${typ.text}"
 }
 
 /** An operator

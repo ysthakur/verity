@@ -27,8 +27,6 @@ object Type {
     def helper(typ: Type): Type = typ match {
       case typeRef: ResolvedTypeRef =>
         typeRef.copy(args = typeRef.args.copy(args = typeRef.args.args.map(helper)))
-      case arrayType: ArrayType =>
-        arrayType.copy(elemType = helper(arrayType.elemType))
       case _ => typ
     }
 
@@ -41,13 +39,6 @@ object Type {
 // given ToJava[ObjectType.type] = _ => "Type Object"
 
 class VoidTypeRef(override val textRange: TextRange) extends Type, HasTextRange {
-  override def strictSubTypeOf(sup: Type): Boolean = false
-  override def strictSuperTypeOf(sub: Type): Boolean = false
-
-  override def superTypes: Iterable[Type] = Nil
-
-  override def fields: Iterable[Field] = Nil
-  override def methods: Iterable[Method] = Nil
   override def text = "void"
 }
 
@@ -71,13 +62,14 @@ enum PrimitiveType(val typ: PrimitiveTypeDef) extends Type, HasTextRange {
 object PrimitiveType {
   lazy val numericTypes: Set[Type] =
     Set(ByteType, CharType, ShortType, IntType, FloatType, LongType, DoubleType)
-  lazy val numericType: TypeUnion = TypeUnion(numericTypes)
 }
 
 enum PrimitiveTypeDef extends TypeDef, Synthetic {
   case Boolean, Byte, Short, Char, Int, Float, Long, Double
 
   override def text: String = this.name
+
+  override def typeParams = TypeParamList(Nil, TextRange.synthetic)
 
   override def name: String = this.toString.toLowerCase.nn
 }
@@ -91,8 +83,7 @@ case class ResolvedTypeRef(
   path: Seq[Text],
   args: TypeArgList,
   typeDef: TypeDef
-) extends Type,
-      TypeRef {
+) extends Type {
   override def text: String = HasText.seqText(path, ".") + args.text
 
   /*override def textRange: TextRange =

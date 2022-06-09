@@ -21,27 +21,12 @@ trait TypeDef extends NamedTree {
     )
   def makeRef: Type = cachedTypeRef.getOrElse(_makeRef)
 
-  def fields: Iterable[Field]
-  def methods: Iterable[Method]
-  def superTypes: Iterable[Type]
-
   def typeParams: TypeParamList
-
-  // todo work on this
-  def strictSubTypeDefOf(sup: TypeDef): Boolean =
-    this != sup && superTypes.exists {
-      case `sup` => true
-      case ResolvedTypeRef(_, _, typeDef) => typeDef.strictSubTypeDefOf(sup)
-    }
 }
 
 object TypeDef {
   val placeholder = new TypeDef {
     def name: String = "PLACEHOLDER"
-    def fields: Iterable[Field] = Nil
-    def methods: Iterable[Method] = Nil
-    def superTypes: Iterable[Type] = Nil
-
     def typeParams: TypeParamList = TypeParamList(Nil, TextRange.synthetic)
   }
 }

@@ -47,13 +47,13 @@ lazy val `verity-parser` = project
   .in(file("verity-parser"))
   .settings(
     name := "verity-parser",
-    scalaVersion := scala2version,
-    scalacOptions ++= commonScala2Options,
+    scalaVersion := scala3version,
+    scalacOptions ++= commonScala3Options,
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.2.3" % Test,
-      "com.lihaoyi" %% "fastparse" % "2.2.2"
+      "org.scalatest" %% "scalatest" % "3.2.12" % "test",
+      "org.typelevel" %% "cats-parse" % "0.3.6"
     ),
-    scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true)))
+    // scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true)))
   )
   .dependsOn(`verity-ast`)
 
