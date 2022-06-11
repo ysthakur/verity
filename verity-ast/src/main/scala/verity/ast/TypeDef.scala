@@ -10,14 +10,14 @@ trait TypeDef extends NamedTree {
     ResolvedTypeRef(path, typeArgs, this)
 
   def makeRef(path: Seq[Text]): ResolvedTypeRef =
-    ResolvedTypeRef(path, TypeArgList(typeParams.params.map(_.makeRef), TextRange.synthetic), this)
+    ResolvedTypeRef(path, TypeArgList(typeParams.params.map(_.makeRef)), this)
 
   private lazy val cachedTypeRef: Option[ResolvedTypeRef] =
     Option.when(typeParams.params.isEmpty)(_makeRef)
   private def _makeRef: ResolvedTypeRef =
     makeRef(
       Text(this.name) :: Nil,
-      TypeArgList(typeParams.params.map(_.makeRef), TextRange.synthetic)
+      TypeArgList(typeParams.params.map(_.makeRef))
     )
   def makeRef: Type = cachedTypeRef.getOrElse(_makeRef)
 
@@ -27,7 +27,7 @@ trait TypeDef extends NamedTree {
 object TypeDef {
   val placeholder = new TypeDef {
     def name: String = "PLACEHOLDER"
-    def typeParams: TypeParamList = TypeParamList(Nil, TextRange.synthetic)
+    def typeParams: TypeParamList = TypeParamList(Nil)
   }
 }
 

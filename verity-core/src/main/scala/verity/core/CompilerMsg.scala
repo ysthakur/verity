@@ -1,6 +1,6 @@
 package verity.core
 
-import verity.ast.{HasTextRange, TextRange}
+import verity.ast.TextRange
 import cats.data.{OptionT, Writer}
 
 //type ResWithLogs[T] = Writer[List[CompilerMsg], T]

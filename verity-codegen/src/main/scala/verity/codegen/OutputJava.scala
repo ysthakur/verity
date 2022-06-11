@@ -72,7 +72,7 @@ object OutputJava {
     write("}")
   }
 
-  given OutputJava[ResolvedOrUnresolvedExpr] = expr => write(expr.text) //todo
+  given OutputJava[Expr] = expr => write(expr.text) //todo
 
   given OutputJava[Block] = block => {
     write("{")

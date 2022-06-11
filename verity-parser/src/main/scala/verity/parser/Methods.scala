@@ -21,7 +21,7 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
   import exprs._
 
   private def param[_: Parser]: Parser[Parameter] =
-    Parser(identifierText ~ ":" ~ nonWildcardType).map { case (name, typ) =>
+    (identifierText ~ ":" ~ nonWildcardType).map { case (name, typ) =>
       Parameter(
         List.empty, // TODO Add annotations!
         typ,

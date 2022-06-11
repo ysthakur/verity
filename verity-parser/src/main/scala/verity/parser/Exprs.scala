@@ -1,6 +1,6 @@
 package verity.parser
 
-import verity.ast.{ResolvedOrUnresolvedExpr as RoUExpr, *}
+import verity.ast.{Expr as RoUExpr, *}
 
 // import verity.parser.Core._
 // import verity.parser.Types._

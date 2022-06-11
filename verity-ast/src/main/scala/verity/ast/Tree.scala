@@ -55,10 +55,7 @@ object Tree {
   )
 }
 
-trait Synthetic extends Tree, HasTextRange {
-  override def textRange = TextRange.synthetic
-  override def synthetic = true
-}
+trait Synthetic extends Tree
 
 trait ParentNode extends Tree {
   type Child <: Tree

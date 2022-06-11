@@ -96,7 +96,7 @@ private[resolve] def resolveAndCheckCls(
   mthdRefs: Defs[MethodGroup],
   file: FileNode
 )(using Messages): Boolean = {
-  val fieldDefs: Defs[VariableDecl] = cls.fields.view.map(f => f.name -> f).toMap
+  val fieldDefs: Defs[VarDef] = cls.fields.view.map(f => f.name -> f).toMap
 
   if (file.isSource) {
     cls match {
@@ -160,7 +160,7 @@ private def resolveAndCheckField(field: Field)(using Messages, Context): Boolean
 
 private def resolveAndCheckMthd(
   mthd: Method,
-  fieldDefs: Defs[VariableDecl],
+  fieldDefs: Defs[VarDef],
   mthdRefs: Defs[MethodGroup],
   givenDefs: List[GivenDef],
   proofDefs: List[GivenDef],

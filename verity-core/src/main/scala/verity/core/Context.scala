@@ -4,11 +4,11 @@ import verity.ast._
 
 import verity.core.Context.Defs
 
-type GivenDef = VariableDecl | Methodlike
-type ProofDef = VariableDecl | Methodlike | Expr
+type GivenDef = VarDef | Methodlike
+type ProofDef = VarDef | Methodlike | Expr
 
 case class Context(
-  varDefs: Defs[VariableDecl],
+  varDefs: Defs[VarDef],
   mthdDefs: Defs[MethodGroup],
   givenDefs: List[GivenDef],
   proofDefs: List[ProofDef],

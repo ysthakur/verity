@@ -2,14 +2,10 @@ package verity.ast
 
 import scala.collection.mutable.ArrayBuffer
 
-trait Type extends Tree, HasText {
-  override def toString = text
-}
+trait Type extends Tree
 
 object Type {
-  val placeholder: Type = new Type {
-    override def text = ???
-  }
+  val placeholder: Type = new Type {}
 
   def equal(t1: Type, t2: Type): Boolean = ???
 
@@ -34,17 +30,9 @@ object Type {
   }
 }
 
-// given ToJava[AnyType.type] = _ => "Type Any"
+class VoidTypeRef(using file: FileNode) extends Type
 
-// given ToJava[ObjectType.type] = _ => "Type Object"
-
-class VoidTypeRef(override val textRange: TextRange) extends Type, HasTextRange {
-  override def text = "void"
-}
-
-// given ToJava[NothingType.type] = _ => "Type Nothing"
-
-enum PrimitiveType(val typ: PrimitiveTypeDef) extends Type, HasTextRange {
+enum PrimitiveType(val typ: PrimitiveTypeDef) extends Type {
   case BooleanType extends PrimitiveType(PrimitiveTypeDef.Boolean)
   case ByteType extends PrimitiveType(PrimitiveTypeDef.Byte)
   case CharType extends PrimitiveType(PrimitiveTypeDef.Char)
@@ -53,10 +41,6 @@ enum PrimitiveType(val typ: PrimitiveTypeDef) extends Type, HasTextRange {
   case FloatType extends PrimitiveType(PrimitiveTypeDef.Float)
   case LongType extends PrimitiveType(PrimitiveTypeDef.Long)
   case DoubleType extends PrimitiveType(PrimitiveTypeDef.Double)
-
-  override val textRange = TextRange.synthetic
-
-  override def text: String = typ.text
 }
 
 object PrimitiveType {
@@ -67,9 +51,7 @@ object PrimitiveType {
 enum PrimitiveTypeDef extends TypeDef, Synthetic {
   case Boolean, Byte, Short, Char, Int, Float, Long, Double
 
-  override def text: String = this.name
-
-  override def typeParams = TypeParamList(Nil, TextRange.synthetic)
+  override def typeParams = TypeParamList(Nil)
 
   override def name: String = this.toString.toLowerCase.nn
 }
@@ -84,14 +66,6 @@ case class ResolvedTypeRef(
   args: TypeArgList,
   typeDef: TypeDef
 ) extends Type {
-  override def text: String = HasText.seqText(path, ".") + args.text
-
-  /*override def textRange: TextRange =
-    TextRange(
-      path.head.textRange.start,
-      (if (args.isEmpty || args.isSynthetic) path.last else args).textRange.end
-    )*/
-
   override def equals(other: Any): Boolean = other match {
     case tr: ResolvedTypeRef =>
       typeDef == tr.typeDef && this.args == tr.args
@@ -99,52 +73,18 @@ case class ResolvedTypeRef(
   }
 }
 
-object UnknownType extends Type {
-  override def text = "<Unknown Type>"
-}
+object UnknownType extends Type
 
-case class TypeParamList(params: Iterable[TypeParam], override val textRange: TextRange)
-    extends Tree,
-      HasTextRange {
-  override def text: String = HasText.seqText(params, ",", "<", ">")
-}
+case class TypeParamList(params: Iterable[TypeParam]) extends Tree
 
 given Empty[TypeParamList] with
-  val empty: TypeParamList = TypeParamList(Seq.empty, TextRange.synthetic)
+  val empty: TypeParamList = TypeParamList(Seq.empty)
 
 class TypeParam(
-  val name: String,
-  val upperBound: Type,
-  val lowerBound: Type,
-  val nameRange: TextRange
-) extends HasText,
-      NamedTree,
-      TypeDef {
+  val name: String
+) extends NamedTree, TypeDef {
 
   /** No higher-kinded types, at least for now
     */
   def typeParams: TypeParamList = Empty[TypeParamList]
-
-  override def text = s"$name extends ${upperBound.text} super ${lowerBound.text}"
-  /*override def textRange: TextRange = TextRange(
-    nameRange.start,
-    if (!lowerBound.textRange.isSynthetic) lowerBound.textRange.end
-    else if (!upperBound.textRange.isSynthetic) upperBound.textRange.end
-    else nameRange.end
-  )*/
 }
-
-case class TypeArgList(args: Iterable[Type], override val textRange: TextRange)
-    extends Tree,
-      HasTextRange {
-  def isEmpty: Boolean = args.isEmpty
-  override def text: String = if (args.isEmpty) "" else HasText.seqText(args, ",", "<", ">")
-  override def equals(other: Any): Boolean = other match {
-    case TypeArgList(otherArgs, _) =>
-      args.size == otherArgs.size && args.lazyZip(otherArgs).forall(_ == _)
-    case _ => false
-  }
-}
-
-given Empty[TypeArgList] with
-  def empty: TypeArgList = TypeArgList(Nil, TextRange.synthetic)

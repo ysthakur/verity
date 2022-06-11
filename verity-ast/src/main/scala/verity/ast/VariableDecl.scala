@@ -6,13 +6,13 @@ import scala.collection.mutable.ArrayBuffer
 
 /** A variable declaration (local variable or field)
   */
-trait VariableDecl extends Tree, HasText, HasType, NamedTree, HasModifiers {
+trait VarDef extends Tree, HasText, HasType, NamedTree, HasModifiers {
   def name: String
 
   /** What it gets initialized to, unless it's just declared
     * @return
     */
-  def initExpr: Option[ResolvedOrUnresolvedExpr]
+  def initExpr: Option[Expr]
 
   /** Whether or not this is simply a declaration
     * @return
@@ -27,27 +27,20 @@ class Field(
   val fieldName: Text,
   override val modifiers: ArrayBuffer[Modifier],
   var typ: Type,
-  var initExpr: Option[ResolvedOrUnresolvedExpr] = None,
+  var initExpr: Option[Expr] = None,
   override val isFinal: Boolean
-) extends VariableDecl,
-      ClassChild,
-      HasModifiers,
-      HasType {
+) extends VarDef, HasModifiers, HasType {
   override def name = fieldName.text
-  override def text =
-    s"${Modifier.modifiersText(modifiers)} ${typ.text} ${fieldName.text}${initExpr.fold("")("=" + _.text)};"
-  // override def textRange = ???
 }
 
 class LocalVar(
   override val modifiers: Iterable[Modifier],
   val varName: Text,
   var typ: Type,
-  var initExpr: Option[ResolvedOrUnresolvedExpr] = None,
+  var initExpr: Option[Expr] = None,
   val endInd: Int,
   override val isFinal: Boolean
-) extends VariableDecl,
-      Statement {
+) extends VarDef {
 
   override def equals(obj: Any): Boolean = obj match {
     case other: LocalVar =>
@@ -55,8 +48,4 @@ class LocalVar(
     case _ => false
   }
   override def name: String = varName.text
-  override def text: String = {
-    s"${HasText.seqText(modifiers)} $typ $name${initExpr.fold("")("=" + _.text)};"
-  }
-  override def textRange = ???
 }

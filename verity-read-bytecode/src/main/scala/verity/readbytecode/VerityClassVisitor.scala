@@ -220,7 +220,7 @@ def asmTypeToVType(typ: asm.Type): Type = {
     case asm.Type.VOID    => VoidTypeRef(TextRange.synthetic)
     case asm.Type.ARRAY   => ArrayType(asmTypeToVType(typ.getElementType), TextRange.synthetic)
     case asm.Type.OBJECT =>
-      ur.UnresolvedTypeRef(
+      TypeRef(
         typ.getClassName.split("[/.]").toSeq.map(Text(_)),
         TypeArgList(ArrayBuffer(), TextRange.synthetic)
       )
@@ -256,7 +256,7 @@ private def typeSignatureVisitor(onFind: Type => Unit): SignatureVisitor =
       */
     override def visitTypeArgument(): Unit = {
       this.isTypeRef = true
-      this.typeArgs += ur.UnresolvedWildcard(None, None)
+      this.typeArgs += Wildcard(None, None)
 //      println(s"typesigvisitor typearg")
     }
 
@@ -266,8 +266,8 @@ private def typeSignatureVisitor(onFind: Type => Unit): SignatureVisitor =
       this.isTypeRef = true
       typeSignatureVisitor { typ =>
         this.typeArgs += ((wildcard: @unchecked) match {
-          case '+' => ur.UnresolvedWildcard(Some(typ), None)
-          case '-' => ur.UnresolvedWildcard(Some(typ), None)
+          case '+' => Wildcard(Some(typ), None)
+          case '-' => Wildcard(Some(typ), None)
           case '=' => typ
         })
 //        println(s"typesigvisitor typearg, wildcard=$wildcard, name=$typePath,args=$typeArgs")
@@ -286,7 +286,7 @@ private def typeSignatureVisitor(onFind: Type => Unit): SignatureVisitor =
       } else if (this.isTypeRef) {
 //        println(s"returning typeref $typePath")
         onFind(
-          ur.UnresolvedTypeRef(
+          TypeRef(
             //Make a path by splitting on '/'
             this.typePath.split("[/.]").toSeq.map(Text(_)),
             TypeArgList(this.typeArgs, TextRange.synthetic),

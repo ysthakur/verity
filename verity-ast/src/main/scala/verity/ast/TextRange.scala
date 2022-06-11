@@ -27,7 +27,7 @@ object Position {
   val synthetic = Position(-1, -1, -1)
 }
 
-case class Text(text: String, textRange: TextRange) extends HasTextRange {
+case class Text(text: String, textRange: TextRange) {
   override def toString = text
 }
 object Text {

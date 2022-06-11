@@ -1,6 +1,6 @@
 package verity.core
 
-import verity.ast.{FileNode, HasText, HasTextRange, TextRange}
+import verity.ast.{FileNode, TextRange}
 //import com.typesafe.scalalogging.Logger
 
 class Messages private (
@@ -13,7 +13,7 @@ object Messages {
 }
 
 object LogUtils {
-  def logMsg(msg: String, pos: TextRange | HasTextRange, file: FileNode): Unit =
+  def logMsg(msg: String, pos: TextRange, file: FileNode): Unit =
     val TextRange(start, end) = getPosRange(pos, file)
     println(s"$msg (from $start to $end in file ${file.name})")
 

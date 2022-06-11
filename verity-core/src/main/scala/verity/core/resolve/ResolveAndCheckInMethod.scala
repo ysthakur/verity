@@ -23,7 +23,7 @@ private def resolveStmt(
 )(using msgs: Messages, ctxt: Context): Option[(Statement, List[ProofDef])] = {
 //  logger.debug(s"Resolving statement ${stmt.text}, ${stmt.getClass}")
   stmt match {
-    case ues: ur.UnresolvedExprStmt =>
+    case ues: ExprStmt =>
       resolveAndCheckExpr(ues.expr, UnknownType).map { (expr, proofs) =>
         (new ExprStmt(expr), proofs)
       }
@@ -126,20 +126,20 @@ private def resolveStmt(
   * resolved expression and new proofs introduced by method calls
   */
 private def resolveAndCheckExpr(
-  expr: ResolvedOrUnresolvedExpr,
+  expr: Expr,
   expectedType: Type
 )(using msgs: Messages, ctxt: Context): Option[(Expr, List[Expr])] = {
 //  logger.debug(s"Resolving expr ${expr.text}")
 
   val resolved: Option[(Expr, List[Expr])] = expr match {
-    case ur.UnresolvedAssignmentExpr(lhs, rhs, extraOp) =>
+    case AssignmentExpr(lhs, rhs, extraOp) =>
       //TODO use extraOp
       resolveAndCheckExpr(lhs, UnknownType).flatMapR { (newLhs, proofs) =>
         resolveAndCheckExpr(rhs, newLhs.typ).map { (newRhs, proofs) =>
           (AssignmentExpr(newLhs, newRhs, extraOp), proofs)
         }
       }
-    case ur.UnresolvedFieldAccess(obj, fieldName) =>
+    case FieldAccess(obj, fieldName) =>
       resolveAndCheckExpr(obj, BuiltinTypes.objectType).flatMapR { (owner, proofs) =>
         ReferenceResolve.findField(owner.typ, fieldName.text) match {
           case Some(field) =>
@@ -147,20 +147,20 @@ private def resolveAndCheckExpr(
           case None => singleMsg(errorMsg(s"No such field ${fieldName.text}", fieldName))
         }
       }
-    case ctorCall: ur.UnresolvedCtorCall => resolveUnresolvedCtorCall(ctorCall)
-    case mc: ur.UnresolvedMethodCall     => resolveUnresolvedMethodCall(mc)
+    case ctorCall: CtorCall => resolveUnresolvedCtorCall(ctorCall)
+    case mc: MethodCall     => resolveUnresolvedMethodCall(mc)
     case ur.MultiDotRefExpr(path) =>
       ReferenceResolve.resolveDotChainedRef(path).flatMapR {
         case e: Expr => ResolveRes.fromRes((e, Nil))
         case c       => singleMsg(errorMsg(s"${c.text} is a class, not an expression", c))
       }
-    case b: ur.UnresolvedBinaryExpr => resolveBinaryExpr(b)
-    case upe: ur.UnresolvedParenExpr =>
+    case b: BinaryExpr => resolveBinaryExpr(b)
+    case upe: ParenExpr =>
       resolveAndCheckExpr(upe.expr, expectedType).map { (expr, proofs) =>
         (ParenExpr(expr, upe.textRange), proofs)
       }
-    case t: ur.UnresolvedThisRef => ResolveRes.fromRes(ThisRef(ctxt.cls, t.textRange) -> Nil)
-    case s: ur.UnresolvedSuperRef =>
+    case t: ThisRef => ResolveRes.fromRes(ThisRef(ctxt.cls, t.textRange) -> Nil)
+    case s: SuperRef =>
       ctxt.cls match {
         case cd: ClassDef =>
           ResolveRes.fromRes(
@@ -195,11 +195,11 @@ private def resolveAndCheckExpr(
 }
 
 private def resolveUnresolvedCtorCall(
-  ctorCall: ur.UnresolvedCtorCall
+  ctorCall: CtorCall
 )(using msgs: Messages, ctxt: Context): Option[(Expr, List[Expr])] = {
   ReferenceResolve.resolveCls(ctorCall.cls.path, ctxt.typeDefs, ctxt.pkgDefs).flatMap { cls =>
     ctorCall.typ = cls.makeRef
-    // ReferenceResolve.resolveDotChainedRef(mthdCall.asInstanceOf[ur.UnresolvedCtorCall].cls.path)
+    // ReferenceResolve.resolveDotChainedRef(mthdCall.asInstanceOf[CtorCall].cls.path)
 
     resolveUnresolvedMethodCall(
       ctorCall,
@@ -213,9 +213,9 @@ private def resolveUnresolvedCtorCall(
 
 //TODO Deal with overloading first!!!
 private def resolveUnresolvedMethodCall(
-  mthdCall: ur.UnresolvedMethodCall
+  mthdCall: MethodCall
 )(using ctxt: Context): Option[(Expr, List[Expr])] = {
-  val ur.UnresolvedMethodCall(
+  val MethodCall(
     _,
     nameText @ Text(mthdName),
     valArgs,
@@ -242,7 +242,7 @@ private def resolveUnresolvedMethodCall(
 
   (mthdCall.objOrCls: @unchecked) match {
     case None => resolveHelper(None, Nil)
-    case Some(e: ResolvedOrUnresolvedExpr) =>
+    case Some(e: Expr) =>
       resolveAndCheckExpr(e, BuiltinTypes.objectType).flatMap { (c, proofs) =>
         resolveHelper(Some(c), proofs)
       }
@@ -273,7 +273,7 @@ private def possibleMthdsBasic(
   )
 
 private def resolveUnresolvedMethodCall(
-  mthdCall: ur.UnresolvedMethodCall,
+  mthdCall: MethodCall,
   caller: Option[Expr | ClassRef],
   possibleMthds: Iterable[Method],
   prevProofs: List[Expr],
@@ -338,24 +338,24 @@ private def resolveUnresolvedMethodCall(
 }
 
 private def resolveArgList(
-  origArgs: ur.UnresolvedArgList,
+  origArgs: ArgList,
   expectedTypes: Iterable[Type]
 )(using Messages, Context): Option[(ArgList, List[Expr])] = {
 //  println(s"resolving arglist ${origArgs.text}, ${expectedTypes.map(_.text)}")
   //Resolves all arguments, and keeps track of whether or not all of them were resolved
-  val resolvedArgs: ResLogged[(List[(ResolvedOrUnresolvedExpr, List[Expr])], Boolean)] =
+  val resolvedArgs: ResLogged[(List[(Expr, List[Expr])], Boolean)] =
     origArgs.args
       .lazyZip(expectedTypes)
       .foldLeft(
         ResLogged[
-          (List[(ResolvedOrUnresolvedExpr, List[Expr])], Boolean)
+          (List[(Expr, List[Expr])], Boolean)
         ]((Nil, false), Nil)
       ) { case (acc, (origArg, expectedType)) =>
         acc.flatMap { case (prevArgs, allResolved) =>
           resolveAndCheckExpr(origArg, expectedType)
             .map(resolved => (resolved :: prevArgs, allResolved))
             .getOrElse(((origArg, Nil) :: prevArgs, false)): ResLogged[
-            (List[(ResolvedOrUnresolvedExpr, List[Expr])], Boolean)
+            (List[(Expr, List[Expr])], Boolean)
           ]
         }
       }
@@ -368,9 +368,9 @@ private def resolveArgList(
 }
 
 private def resolveBinaryExpr(
-  expr: ur.UnresolvedBinaryExpr
+  expr: BinaryExpr
 )(using Messages, Context): Option[(Expr, List[Expr])] = {
-  val ur.UnresolvedBinaryExpr(lhs, op, rhs) = expr
+  val BinaryExpr(lhs, op, rhs) = expr
   import OpType._
   op.opType match {
     case SUBTRACT | MULTIPLY | DIVIDE =>

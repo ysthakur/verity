@@ -1,6 +1,6 @@
 package verity.checks
 
-import verity.ast.{TextRange, Type, TypeParam}
+import verity.ast.{Type, TypeParam}
 import verity.ast.infile.*
 import verity.core.*
 
@@ -10,8 +10,7 @@ object CheckTypes {
     */
   def checkTypeArgs(
     args: Iterable[Type],
-    params: Iterable[TypeParam],
-    typeArgsRange: TextRange
+    params: Iterable[TypeParam]
   ): List[CompilerMsg] = {
     val numParams = params.size
     val numArgs = args.size

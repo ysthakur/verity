@@ -1,18 +1,12 @@
 package verity.core.resolve
 
 import verity.ast._
-import verity.ast.infile.{unresolved => ur, _}
 import verity.core._
-
-//import cats.Traverse
-//import cats.data.{OptionT, Writer}
-//import cats.implicits._
-//import cats.syntax.traverse._
 
 object ImplicitSearch {
 
   private[resolve] def resolveImplicitArgList(
-    argList: Option[ur.UnresolvedArgList],
+    argList: Option[ArgList],
     params: Option[ParamList],
     defaultTextRange: TextRange
   )(using ctxt: Context): Option[Option[ArgList]] = {
@@ -37,7 +31,7 @@ object ImplicitSearch {
                 OptionT(
                   paramList.params
                     .map(param =>
-                      findGiven(param.typ, defaultTextRange).getOrElse(ur.UnresolvedImplicit(param))
+                      findGiven(param.typ, defaultTextRange).getOrElse(Implicit(param))
                     )
                     .sequence
                     .map(givenArgs =>
@@ -48,7 +42,7 @@ object ImplicitSearch {
                 OptionT(
                   paramList.params
                     .map(param =>
-                      findProof(param.typ, defaultTextRange).getOrElse(ur.UnresolvedImplicit(param))
+                      findProof(param.typ, defaultTextRange).getOrElse(Implicit(param))
                     )
                     .sequence
                     .map(proofArgs =>
@@ -98,7 +92,7 @@ object ImplicitSearch {
   def findGivens(givenType: Type)(using ctxt: Context): Iterable[Expr] =
     ctxt.givenDefs.view
       .map {
-        case vd: VariableDecl =>
+        case vd: VarDef =>
           // println(s"vd=${vd.text}, vd.typ=${vd.typ.text}, vdtypcls=${vd.typ.getClass}")
           Option.when(vd.typ.subTypeOf(givenType))(VarRef(Text(vd.name), vd))
         case mthd: Methodlike => ???
@@ -128,7 +122,7 @@ object ImplicitSearch {
             case expr: Expr =>
               // println(s"checking if ${expr.text} subtype of ${proofType.text}, ${expr.typ.subTypeOf(proofType)}, ${expr.typ.getClass}, ${proofType.getClass}")
               Option.when(expr.typ.subTypeOf(proofType))(expr)
-            case vd: VariableDecl =>
+            case vd: VarDef =>
               // println(s"vd=${vd.text}, vd.typ=${vd.typ.text}, vdtypcls=${vd.typ.getClass}")
               Option.when(vd.typ.subTypeOf(proofType))(VarRef(Text(vd.name), vd))
             case mthd: Methodlike => ???
