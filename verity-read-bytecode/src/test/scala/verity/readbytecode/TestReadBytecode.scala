@@ -33,18 +33,18 @@ class TestReadBytecode {
           "TestASM.class"
         ).mkString(File.separator)
       )
-    val rootPkg = verity.ast.RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
+    val rootPkg = verity.ast.Package(ArrayBuffer.empty, ArrayBuffer.empty)
     ReadBytecode.readClassFile(rootPkg, file)
   }
 
   @Test def readJar(): Unit = {
     val file = java.io.File(s"$jdkPath${S}lib${S}jrt-fs.jar")
-    val rootPkg = verity.ast.RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
+    val rootPkg = verity.ast.Package(ArrayBuffer.empty, ArrayBuffer.empty)
     ReadBytecode.readJar(rootPkg, file)
   }
 
   @Test def readJdk(): Unit = {
-    val rootPkg = verity.ast.RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
+    val rootPkg = verity.ast.Package(ArrayBuffer.empty, ArrayBuffer.empty)
     val p = Paths.get(jdkPath)
     ReadBytecode.readJdk(rootPkg, p, Seq("java.base"))
     assert(

@@ -6,7 +6,7 @@ import verity.util._
 import verity.core.Context.Defs
 import verity.core.resolve.ReferenceResolve
 import verity.core._
-import verity.ast.Pkg.Importable
+import verity.ast.Def
 //import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
@@ -19,8 +19,8 @@ object InitialPass {
     * @param parentPkgs A list of this package's parents (in reverse)
     * @param logger The logger to use
     */
-  def initialPass(root: RootPkg): Unit = {
-    given RootPkg = root
+  def initialPass(root: Package): Unit = {
+    given Package = root
     verity.core.PackageUtil.walkWithPath(
       root,
       (file, parentPkgs, pkgName) => if (file.isSource) initialPassFile(file, parentPkgs, pkgName)
@@ -35,9 +35,9 @@ object InitialPass {
     */
   private def initialPassFile(
     file: FileNode,
-    parentPkgs: List[Pkg],
+    parentPkgs: List[Package],
     pkgName: String
-  )(using rootPkg: RootPkg): Unit = {
+  )(using rootPkg: Package): Unit = {
     val currPkg = parentPkgs.head
     val FileNode(name, pkgRef, imports, _, _, _) = file
 
@@ -45,7 +45,7 @@ object InitialPass {
 
     val resolvedImports = resolveImports(imports, file).toSeq
 
-    val pkgMap = mutable.HashMap[String, Pkg]()
+    val pkgMap = mutable.HashMap[String, Package]()
     val clsMap = mutable.HashMap[String, Classlike]()
 
     //todo find a way to reduce code duplication
@@ -54,10 +54,10 @@ object InitialPass {
 
     file.resolvedImports = resolvedImports.map { case (name, imported, imptStmt) =>
       imported match {
-        case pkg: Pkg =>
+        case pkg: Package =>
           if (pkgMap.contains(name)) {
             LogUtils.logMsg(
-              s"Cannot import package $name: Pkg of same name already in scope",
+              s"Cannot import package $name: Package of same name already in scope",
               imptStmt,
               file
             )
@@ -77,7 +77,7 @@ object InitialPass {
         case _ =>
       }
 
-      imported.asInstanceOf[Pkg.Importable]
+      imported.asInstanceOf[Def]
     }
 
     val pkgIMap = pkgMap.toMap
@@ -104,7 +104,7 @@ object InitialPass {
   private def initialPassCls(
     cls: Classlike,
     clsRefs: Defs[Classlike],
-    pkgRefs: Defs[Pkg],
+    pkgRefs: Defs[Package],
     file: FileNode
   ): Iterable[CompilerMsg] = {
     cls match {
@@ -164,7 +164,7 @@ object InitialPass {
   private def initialPassMthd(
     mthd: Method,
     clsRefs: Defs[Classlike],
-    pkgRefs: Defs[Pkg],
+    pkgRefs: Defs[Package],
     cls: Classlike,
     file: FileNode
   ): Iterable[CompilerMsg] = {
@@ -263,10 +263,10 @@ object InitialPass {
   private[verity] def resolveImports(
     imports: Iterable[ImportStmt],
     file: FileNode
-  )(using rootPkg: RootPkg): Iterable[(String, Importable, ImportStmt)] =
+  )(using rootPkg: Package): Iterable[(String, Def, ImportStmt)] =
     imports.view.flatMap { case imptStmt @ ImportStmt(DotPath(dotPath), _, wildcard) =>
       val path = dotPath.view.map(_._1)
-      Pkg
+      Package
         .findImptableAbs(path)
         .fold {
           LogUtils.log(errorMsg(s"Not found $dotPath", imptStmt), file)
@@ -276,11 +276,11 @@ object InitialPass {
             Seq((path.last, impt, imptStmt))
           } else {
             impt match {
-              case pkg: Pkg =>
+              case pkg: Package =>
                 pkg.subPkgs.view.map(p => (p.name, p, imptStmt))
                   ++ pkg.classlikes.map(c => (c.name, c, imptStmt))
               case cls: Classlike =>
-                cls.importableChildren.map(c => (c.name, c, imptStmt))
+                cls.DefChildren.map(c => (c.name, c, imptStmt))
               case _ =>
                 LogUtils.log(errorMsg(s"Cannot import members of ${impt.name}", imptStmt), file)
                 Nil

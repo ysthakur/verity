@@ -30,36 +30,6 @@ object Type {
   }
 }
 
-class VoidTypeRef(using file: FileNode) extends Type
-
-enum PrimitiveType(val typ: PrimitiveTypeDef) extends Type {
-  case BooleanType extends PrimitiveType(PrimitiveTypeDef.Boolean)
-  case ByteType extends PrimitiveType(PrimitiveTypeDef.Byte)
-  case CharType extends PrimitiveType(PrimitiveTypeDef.Char)
-  case ShortType extends PrimitiveType(PrimitiveTypeDef.Short)
-  case IntType extends PrimitiveType(PrimitiveTypeDef.Int)
-  case FloatType extends PrimitiveType(PrimitiveTypeDef.Float)
-  case LongType extends PrimitiveType(PrimitiveTypeDef.Long)
-  case DoubleType extends PrimitiveType(PrimitiveTypeDef.Double)
-}
-
-object PrimitiveType {
-  lazy val numericTypes: Set[Type] =
-    Set(ByteType, CharType, ShortType, IntType, FloatType, LongType, DoubleType)
-}
-
-enum PrimitiveTypeDef extends TypeDef, Synthetic {
-  case Boolean, Byte, Short, Char, Int, Float, Long, Double
-
-  override def typeParams = TypeParamList(Nil)
-
-  override def name: String = this.toString.toLowerCase.nn
-}
-object PrimitiveTypeDef {
-  val fromName: String => Option[PrimitiveTypeDef] =
-    PrimitiveTypeDef.values.view.map(typ => typ.name -> typ).toMap.get
-}
-
 //TODO deal with covariance and contravariance?
 case class ResolvedTypeRef(
   path: Seq[Text],
@@ -75,16 +45,6 @@ case class ResolvedTypeRef(
 
 object UnknownType extends Type
 
-case class TypeParamList(params: Iterable[TypeParam]) extends Tree
+case class Record(fields: Seq[Field]) extends Type
 
-given Empty[TypeParamList] with
-  val empty: TypeParamList = TypeParamList(Seq.empty)
-
-class TypeParam(
-  val name: String
-) extends NamedTree, TypeDef {
-
-  /** No higher-kinded types, at least for now
-    */
-  def typeParams: TypeParamList = Empty[TypeParamList]
-}
+case class Field(name: String, typ: Type) extends NamedTree, Def

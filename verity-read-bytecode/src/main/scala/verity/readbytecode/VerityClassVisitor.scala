@@ -13,7 +13,7 @@ private inline val asmApi = asm.Opcodes.ASM9
 private type PreField = Field // (Int, String, String, Object)
 private type PreMethod = NormMethod //(Int, String, String, Array[String])
 
-private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmApi) {
+private class VerityClassVisitor(rootPkg: Package) extends asm.ClassVisitor(asmApi) {
   private val fields = ArrayBuffer.empty[PreField]
   private val methods = ArrayBuffer[PreMethod]()
   private var access: Int = 0
@@ -191,14 +191,14 @@ private class VerityClassVisitor(rootPkg: RootPkg) extends asm.ClassVisitor(asmA
 }
 
 @annotation.tailrec
-def getOrMakePkg(parent: Pkg, path: Iterator[String]): Option[(Pkg, String)] = {
+def getOrMakePkg(parent: Package, path: Iterator[String]): Option[(Package, String)] = {
   val name = path.next()
   if (path.isEmpty) {
     //Since the rest of the path is empty, return (<parent package>, <this class's name>)
     Some(parent -> name)
   } else {
     val child = parent.subPkgs.find(_.name == name).getOrElse {
-      val pkg = PkgNode(name, ArrayBuffer.empty, ArrayBuffer.empty, parent)
+      val pkg = Package(name, ArrayBuffer.empty, ArrayBuffer.empty, parent)
       parent.subPkgs += pkg
       pkg
     }

@@ -13,7 +13,7 @@ import java.util.Collections
 import scala.collection.mutable.ArrayBuffer
 
 object ReadBytecode {
-  def readClassFile(rootPkg: RootPkg, classFile: File): Unit = {
+  def readClassFile(rootPkg: Package, classFile: File): Unit = {
 //    try {
     readClass(rootPkg, new FileInputStream(classFile))
 //    } catch {
@@ -23,7 +23,7 @@ object ReadBytecode {
   }
 
   private def readClass(
-    rootPkg: RootPkg,
+    rootPkg: Package,
     input: java.io.InputStream
   ): Unit = {
     try {
@@ -34,7 +34,7 @@ object ReadBytecode {
     }
   }
 
-  def readJar(rootPkg: RootPkg, jarFile: File): Unit = {
+  def readJar(rootPkg: Package, jarFile: File): Unit = {
     try {
       val jar = new JarFile(jarFile)
       jar.stream().forEach(jarEntry => readEntry(rootPkg, jar, jarEntry))
@@ -44,7 +44,7 @@ object ReadBytecode {
   }
 
   private def readEntry(
-    rootPkg: RootPkg,
+    rootPkg: Package,
     jar: JarFile,
     entry: JarEntry
   ): Unit = {
@@ -57,7 +57,7 @@ object ReadBytecode {
     * @param jdkPath The path to the jdk directory (C:\Program Files\Java\jdk-11.0.5)
     * @param modules The list of modules to read ("java.base", etc.)
     */
-  def readJdk(rootPkg: RootPkg, jdkPath: Path, modules: Seq[String]): Unit = {
+  def readJdk(rootPkg: Package, jdkPath: Path, modules: Seq[String]): Unit = {
     val loader = URLClassLoader(Array(jdkPath.toUri.toURL))
     val fs = FileSystems.newFileSystem(URI.create("jrt:/"), Collections.emptyMap, loader)
 

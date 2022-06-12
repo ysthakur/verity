@@ -13,7 +13,7 @@ case class Context(
   givenDefs: List[GivenDef],
   proofDefs: List[ProofDef],
   typeDefs: Defs[TypeDef],
-  pkgDefs: Defs[Pkg],
+  pkgDefs: Defs[Package],
   cls: Classlike,
   file: FileNode
 )

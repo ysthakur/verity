@@ -35,7 +35,7 @@ case class VarRef(varName: Text, decl: VarDef) extends Expr {
 
 /** Used for referring to references to packages such as `foo.bar.baz`
   */
-case class PkgRef(path: Seq[Text], pkg: Pkg)
+case class PkgRef(path: Seq[Text], pkg: Package)
 
 case class ParenExpr(expr: Expr) extends Expr {
   def typ: Type = expr.typ
@@ -61,23 +61,20 @@ case class FnCall(
 sealed trait ArgList
 
 /** A list of type arguments */
-case class TypeArgList(
-  args: List[Type]
-) extends ArgList
+case class TypeArgList(args: List[Type]) extends ArgList
+
+/** A list of actual arguments (as opposed to type arguments) */
+sealed trait ValArgList extends ArgList {
+  def args: List[Expr]
+}
 
 /** A list of normal arguments */
-case class NormArgList(
-  args: List[Expr]
-) extends ArgList
+case class NormArgList(args: List[Expr]) extends ValArgList
 
 /** A list of non-erased implicit arguments */
-case class GivenArgList(
-  args: List[Expr]
-) extends ArgList
+case class GivenArgList(args: List[Expr]) extends ValArgList
 
 /** A list of erased implicit arguments */
-case class ProofArgList(
-  args: List[Expr],
-) extends ArgList
+case class ProofArgList(args: List[Expr]) extends ValArgList
 
 case class UpcastExpr(expr: Expr, typ: Type) extends Expr

@@ -11,8 +11,8 @@ case class FileNode(
   offsetToPos: Iterable[(Int, Int, Int)]
 ) {
   val textRanges: mutable.Map[Tree, TextRange] = mutable.HashMap()
-  private[verity] var pkg: Pkg | Null = null
-  private[verity] var resolvedImports: Iterable[Pkg.Importable] = List.empty
+  private[verity] var pkg: Package | Null = null
+  private[verity] var resolvedImports: Iterable[Def] = List.empty
 
   def getPos(targetOffset: Int): Position = FileNode.getPos(offsetToPos, targetOffset)
 
@@ -52,11 +52,9 @@ object FileNode {
 /** @param path
   *   The path of the package this file is in
   */
-case class PackageStmt(val path: DotPath) extends Tree
+case class PackageStmt(val path: Iterable[String]) extends Tree
 
 /** @param path
   *   The path of the import (excluding the wildcard)
   */
-case class ImportStmt(path: DotPath, wildCard: Boolean = false) extends Tree
-
-case class DotPath(path: Iterable[String]) extends Tree
+case class ImportStmt(path: Iterable[String], wildCard: Boolean = false) extends Tree

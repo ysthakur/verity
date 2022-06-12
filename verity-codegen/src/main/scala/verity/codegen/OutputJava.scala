@@ -11,7 +11,7 @@ opaque type OutputJava[-T] = T => Writer ?=> Unit
 object OutputJava {
   def output[T](tree: T)(using oj: OutputJava[T], w: Writer) = oj(tree)(using w)
 
-  def outputJavaPkg(pkg: Pkg, outputDir: File): Unit = {
+  def outputJavaPkg(pkg: Package, outputDir: File): Unit = {
 //    if (!outputDir.exists) outputDir.mkdir()
 
     /*println(

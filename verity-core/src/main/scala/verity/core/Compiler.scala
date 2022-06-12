@@ -19,7 +19,7 @@ import java.io.FilenameFilter
 object Compiler {
   def compile(pkgs: Iterable[File], files: Iterable[File], options: Options): Unit = {
 //    given Logger = Logger(".")
-    given rootPkg: RootPkg = RootPkg(ArrayBuffer.empty, ArrayBuffer.empty)
+    given rootPkg: Package = Package(ArrayBuffer.empty, ArrayBuffer.empty)
 
     //Load JDK classes such as java.lang.Object
     ReadBytecode.readJdk(rootPkg, Paths.get(options.jdkDir).unsafeNN, options.modulesToRead)
@@ -46,7 +46,7 @@ object Compiler {
   def parsePkg(
     pkgs: Iterable[File],
     files: Iterable[File],
-    parent: Pkg
+    parent: Package
   ): Unit = {
     parent.files ++= files
       .map { file =>
@@ -61,7 +61,7 @@ object Compiler {
       .collect { case Right(file) => file }
 
     pkgs.foreach { pkg =>
-      val pkgNode = PkgNode(pkg.getName.unsafeNN, ArrayBuffer.empty, ArrayBuffer.empty, parent)
+      val pkgNode = Package(pkg.getName.unsafeNN, ArrayBuffer.empty, ArrayBuffer.empty, parent)
       parent.subPkgs += pkgNode
 
       val foobar: File = pkg

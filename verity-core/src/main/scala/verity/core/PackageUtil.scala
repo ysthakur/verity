@@ -1,19 +1,19 @@
 package verity.core
 
-import verity.ast.{FileNode, Pkg, RootPkg}
+import verity.ast.{FileNode, Package, Package}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.mutable
 
 object PackageUtil {
-  def walk[T](pkg: Pkg, f: FileNode => RootPkg ?=> T)(using RootPkg): mutable.Map[FileNode, T] = {
+  def walk[T](pkg: Package, f: FileNode => Package ?=> T)(using Package): mutable.Map[FileNode, T] = {
     val results = mutable.Map[FileNode, T]()
     walk(pkg, f, results)
     results
   }
 
-  private def walk[T](pkg: Pkg, f: FileNode => RootPkg ?=> T, results: mutable.Map[FileNode, T])(using
-    root: RootPkg
+  private def walk[T](pkg: Package, f: FileNode => Package ?=> T, results: mutable.Map[FileNode, T])(using
+    root: Package
   ): Unit = {
     //The try-catch is to prevent exceptions from being lost if I ever run these in parallel
     try {
@@ -33,9 +33,9 @@ object PackageUtil {
     *   file's path
     */
   def walkWithPath[T](
-    pkg: Pkg,
-    f: (FileNode, List[Pkg], String) => RootPkg ?=> T
-  )(using root: RootPkg): mutable.Map[FileNode, T] = {
+    pkg: Package,
+    f: (FileNode, List[Package], String) => Package ?=> T
+  )(using root: Package): mutable.Map[FileNode, T] = {
     val parents = pkg.parents
     val results = mutable.Map[FileNode, T]()
     walkWithPath(pkg, parents, canonicalName(pkg.name, parents), f, results)(using root)
@@ -43,12 +43,12 @@ object PackageUtil {
   }
 
   private def walkWithPath[T](
-    pkg: Pkg,
-    parents: List[Pkg],
+    pkg: Package,
+    parents: List[Package],
     path: String,
-    f: (FileNode, List[Pkg], String) => RootPkg ?=> T,
+    f: (FileNode, List[Package], String) => Package ?=> T,
     results: mutable.Map[FileNode, T]
-  )(using root: RootPkg): Unit = {
+  )(using root: Package): Unit = {
     val newParents = pkg :: parents
     val newPath = path + pkg.name
 
@@ -63,6 +63,6 @@ object PackageUtil {
     }
   }
 
-  private def canonicalName(pkgName: String, parents: Iterable[Pkg]) =
+  private def canonicalName(pkgName: String, parents: Iterable[Package]) =
     parents.foldLeft(pkgName)((endName, parentName) => s"$parentName.$endName")
 }

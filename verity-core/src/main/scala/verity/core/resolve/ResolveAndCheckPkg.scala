@@ -1,7 +1,7 @@
 package verity.core.resolve
 
 import verity.ast.*
-import verity.ast.Pkg.Importable
+import verity.ast.Def
 import verity.ast.infile.*
 import verity.checks.InitialPass
 import verity.core.Context.Defs
@@ -26,7 +26,7 @@ type BooleanResolveResult = (Boolean, Iterable[CompilerMsg])
   * @return
   *   Whether or not all the files succeeded, and all their accompanying compiler messages
   */
-def resolveAndCheck(root: RootPkg): Map[FileNode, BooleanResolveResult] =
+def resolveAndCheck(root: Package): Map[FileNode, BooleanResolveResult] =
   verity.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root).toMap
 
 /** Resolve all references to classes and type parameters in a file
@@ -43,9 +43,9 @@ def resolveAndCheck(root: RootPkg): Map[FileNode, BooleanResolveResult] =
   */
 private def resolveAndCheckFile(
   file: FileNode,
-  parentPkgs: List[Pkg],
+  parentPkgs: List[Package],
   pkgName: String
-)(using rootPkg: RootPkg): Boolean = {
+)(using rootPkg: Package): Boolean = {
   val currPkg = parentPkgs.head
   val FileNode(name, pkgRef, imports, classlikes, jFile, _) = file
 
@@ -56,7 +56,7 @@ private def resolveAndCheckFile(
       .map(c => c.name -> c)
       .toMap
   val pkgDefs =
-    (resolvedImports.collect { case p: Pkg => p }.view ++ rootPkg.subPkgs)
+    (resolvedImports.collect { case p: Package => p }.view ++ rootPkg.subPkgs)
       .map(p => p.name -> p)
       .toMap
 
@@ -91,7 +91,7 @@ private def resolveAndCheckFile(
   */
 private[resolve] def resolveAndCheckCls(
   cls: Classlike,
-  pkgDefs: Defs[Pkg],
+  pkgDefs: Defs[Package],
   typeDefs: Defs[TypeDef],
   mthdRefs: Defs[MethodGroup],
   file: FileNode
@@ -165,7 +165,7 @@ private def resolveAndCheckMthd(
   givenDefs: List[GivenDef],
   proofDefs: List[GivenDef],
   typeDefs: Defs[TypeDef],
-  pkgDefs: Defs[Pkg],
+  pkgDefs: Defs[Package],
   cls: Classlike,
   file: FileNode
 )(using msgs: Messages): Boolean = {

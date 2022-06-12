@@ -39,7 +39,7 @@ private[verity] object ReferenceResolve {
   def resolveTypeIfNeeded(
     typ: Type,
     typeDefs: Defs[TypeDef],
-    pkgDefs: Defs[Pkg]
+    pkgDefs: Defs[Package]
   )(using msgs: Messages, ctxt: Context): Option[Type] = typ match {
     case tr: UnresolvedTypeRef => resolveTypeRef(tr, typeDefs, pkgDefs)
     case _                     => ResolveRes.fromRes(typ)
@@ -51,7 +51,7 @@ private[verity] object ReferenceResolve {
   def resolveTypeRef(
     typ: UnresolvedTypeRef,
     typeDefs: Defs[TypeDef],
-    pkgDefs: Defs[Pkg]
+    pkgDefs: Defs[Package]
   )(using msgs: Messages, ctxt: Context): Option[Type] = {
     // println(s"resolving typeref=$typ")
     val typeArgsRange = typ.args.textRange
@@ -104,7 +104,7 @@ private[verity] object ReferenceResolve {
   def resolveCls(
     path: Seq[Text],
     typeDefs: Defs[TypeDef],
-    pkgDefs: Defs[Pkg]
+    pkgDefs: Defs[Package]
   )(using msgs: Messages, ctxt: Context): Option[Classlike] = {
     val head +: tail = path
     typeDefs.find(_._1 == head.text) match {
@@ -145,7 +145,7 @@ private[verity] object ReferenceResolve {
 
   @tailrec
   private def resolveClsInPkg(
-    prev: Pkg,
+    prev: Package,
     prevPath: List[Text],
     path: Seq[Text]
   )(using msgs: Messages, ctxt: Context): Option[Classlike] = path match {
@@ -186,7 +186,7 @@ private[verity] object ReferenceResolve {
 
   @tailrec
   private def resolveExprOrCls(
-    prev: Pkg,
+    prev: Package,
     prevPath: List[Text],
     path: Seq[Text]
   )(using msgs: Messages, ctxt: Context): Option[Expr | ClassRef] = path match {
