@@ -7,9 +7,10 @@ case class FileNode(
   name: String,
   packageRef: Option[PackageStmt],
   imports: Seq[ImportStmt],
+  typedefs: List[TypeDef],
   origFile: Option[File],
   offsetToPos: Iterable[(Int, Int, Int)]
-) {
+)(using val root: Package) {
   val textRanges: mutable.Map[Tree, TextRange] = mutable.HashMap()
   private[verity] var pkg: Package | Null = null
   private[verity] var resolvedImports: Iterable[Def] = List.empty

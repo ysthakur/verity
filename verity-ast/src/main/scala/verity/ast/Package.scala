@@ -7,18 +7,28 @@ case class Package(
   name: String,
   children: List[Package],
   files: List[FileNode]
-) extends NamedTree, Def {
-  override def toString = s"package $name"
+) extends Def {
+  /** Find a child package given its relative path */
+  def findChild(path: String*): Option[Package] = {
+    val (child, remaining) = Package.findPkgRel(this, path)
+    Option.when(remaining.isEmpty)(child)
+  }
+
+  /** Find a typedef directly inside this package */
+  def findType(name: String): Option[TypeDef] = files.view.flatMap(_.typedefs).find(_.name == name)
 }
 
 object Package {
+
+  given rootFromFile(using file: FileNode): Package = file.root
+
   /** Find a subpackage given the relative path of the package. The last found subpackage and the
     * remaining path are returned.
     * @param pkgPath
     *   The path of a subpackage or class or other tree somewhere inside this package. The Iterable
     *   is *not* in reverse order.
     */
-  @tailrec def findPkgRel(
+  @tailrec private def findPkgRel(
     pkg: Package,
     pkgPath: Iterable[String]
   ): (Package, Iterable[String]) =

@@ -3,7 +3,7 @@ package verity.ast
 case class TextRange(start: Position, end: Position) {
   def isEmpty: Boolean = start == end
   def isSynthetic: Boolean = this == TextRange.synthetic
-  def length: Int = ??? // end - start
+  def length: Int = end.offset - start.offset
   def to(other: TextRange) = TextRange(this.start, other.end)
 }
 

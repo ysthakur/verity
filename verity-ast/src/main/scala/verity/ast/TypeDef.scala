@@ -2,27 +2,39 @@ package verity.ast
 
 import verity.ast.*
 
-trait TypeDef extends NamedTree {
-  def typeParams: List[TypeParam] = Nil
-  def proofParams: List[ValParam] = Nil
-}
-
-object TypeDef {
-  val placeholder = new TypeDef {}
+trait TypeDef extends Def {
+  /**
+  * The type parameters and proof parameters for this typedef. None of the param lists should be normal or given parameters.
+  */
+  def paramLists: List[TypeParamList | ValParamList] = Nil
 }
 
 object BuiltinTypes {
-  case class Void() extends TypeDef
-  case class Boolean() extends TypeDef
-  case class Number() extends TypeDef
-  case class Char() extends TypeDef
-  case class String() extends TypeDef
+  def boolType(using root: Package): TypeDef = verityPkg.findType("Bool").get
+
+  def verityPkg(using root: Package): Package = root.findChild("verity").get
+
+  def numType(using root: Package): TypeDef = verityPkg.findType("Num").get
+
+  def charType(using root: Package): TypeDef = verityPkg.findType("Char").get
+
+  def stringType(using root: Package): TypeDef = verityPkg.findType("String").get
 }
 
-object NotGivenDef extends TypeDef
+/** todo make a copy for every root */
+object NotGivenDef extends TypeDef {
+  def name = "NotGiven"
+}
 
-object NotProvenDef extends TypeDef
+object NotProvenDef extends TypeDef {
+  def name = "NotProven"
+}
 
-class TypeParam(val name: String) extends NamedTree, TypeDef
+case class TypeParam(override val name: String) extends TypeDef
 
-case class TypeAlias(override val typeParams: List[TypeParam], override val proofParams: List[ValParam]) extends TypeDef
+case class TypeParamList(params: List[TypeParam]) extends Tree
+
+case class TypeAlias(
+  override val name: String,
+  override val paramLists: List[TypeParamList | ValParamList]
+) extends TypeDef
