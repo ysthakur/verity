@@ -2,29 +2,29 @@ package verity.parser
 
 import verity.ast.{FileNode, TextRange, Position}
 
-import fastparse._, JavaWhitespace._
+import cats.parse.Parser
 
 import java.io.{File, FileInputStream, InputStream}
 import collection.mutable.ArrayBuffer
 
-private class Parser(inputFile: File)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]) {
+private class VerityParser(inputFile: File)(implicit offsetToPos: ArrayBuffer[(Int, Int, Int)]) {
   val core = new Core
   val types = new Types(core)
   val exprs = new Exprs(core, types)
   val methods = new Methods(core, types, exprs)
   val classlikes = new Classlikes(core, types, exprs, methods)
 
-  def file[_: Parser]: Parser[FileNode] =
+  def file: Parser[FileNode] =
     Parser(core.packageStmt.? ~ core.importStmt.rep ~ classlikes.classlike.rep ~ End).map {
       case (pkgStmt, imptStmts, templateDefs) =>
         FileNode(inputFile.getName, pkgStmt, imptStmts, templateDefs, Some(inputFile), offsetToPos)
     }
 }
 
-object Parser {
+object VerityParser {
   def parseFile(name: String, input: File): Either[(String, Int), FileNode] = {
     val offsetToPos = ArrayBuffer.empty[(Int, Int, Int)]
-    val parser = new Parser(input)(offsetToPos)
+    val parser = new VerityParser(input)(offsetToPos)
     val tis = new TrackingInputStream(new FileInputStream(input), offsetToPos)
 
     (parse(tis, parser.file(_), verboseFailures = true): @unchecked) match {

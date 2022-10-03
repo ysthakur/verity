@@ -4,45 +4,63 @@ import verity.ast.*
 
 import scala.collection.mutable.ArrayBuffer
 
-sealed trait Expr extends Tree {
-  def typ: Type
-}
+sealed trait Expr extends Tree
 
-sealed trait Literal extends Expr
-
-trait BoolLiteral(using file: FileNode) extends Literal {
+class BoolLiteral(value: Boolean, textRange: TextRange)(using file: FileNode)
+    extends Expr {
   def typ: Type = TypeRef(BuiltinTypes.boolType)
 }
-class TrueLiteral(using file: FileNode) extends BoolLiteral
-class FalseLiteral(using file: FileNode) extends BoolLiteral
 
-class NumLiteral(value: Double)(using file: FileNode) extends Literal {
-  def typ: Type = TypeRef(BuiltinTypes.numType)
+class IntLiteral(value: Int, textRange: TextRange)(using file: FileNode)
+    extends Expr {
+  def typ: Type = TypeRef(BuiltinTypes.intType)
 }
 
-class CharLiteral(char: Char)(using file: FileNode) extends Literal {
+class DoubleLiteral(value: Double, textRange: TextRange)(using file: FileNode)
+    extends Expr {
+  def typ: Type = TypeRef(BuiltinTypes.doubleType)
+}
+
+class CharLiteral(char: Char, textRange: TextRange)(using file: FileNode)
+    extends Expr {
   def typ: Type = TypeRef(BuiltinTypes.charType)
 }
 
-case class StringLiteral(text: String)(using file: FileNode) extends Expr {
+case class StringLiteral(text: String, textRange: TextRange)(using
+  file: FileNode
+) extends Expr {
   def typ: Type = TypeRef(BuiltinTypes.stringType)
 }
 
+case class NullLiteral(textRange: TextRange)(using file: FileNode) extends Expr
+
+case class ThisRef(textRange: TextRange)(using file: FileNode) extends Expr
+
+case class SuperRef(textRange: TextRange)(using file: FileNode) extends Expr
+
 /** A resolved reference to a variable
   */
-case class VarRef(varName: Text, decl: VarDef) extends Expr {
-  override def typ: Type = decl.typ
-}
+case class VarRef(varName: String, decl: VarDef, textRange: TextRange)
+    extends Expr
+
+case class UnresolvedIdentifier(id: String, textRange: TextRange) extends Expr
 
 /** Used for referring to references to packages such as `foo.bar.baz`
   */
 case class PkgRef(path: Seq[Text], pkg: Package)
 
-case class ParenExpr(expr: Expr) extends Expr {
-  def typ: Type = expr.typ
-}
+/** Used for accessing a property on an object like `foo.bar`.
+  *
+  * @param obj
+  *   The object whose property is being accessed
+  * @param prop
+  *   The property name
+  */
+case class PropAccess(obj: Expr, prop: String) extends Expr
 
-case class BinaryExpr(left: Expr, op: Op, right: Expr, typ: Type)(using
+case class ParenExpr(expr: Expr, textRange: TextRange) extends Expr
+
+case class BinExpr(left: Expr, op: Op, right: Expr)(using
   file: FileNode
 ) extends Expr
 
@@ -54,12 +72,14 @@ case class UnaryPreExpr(op: Op, expr: Expr, typ: Type)(using file: FileNode)
   * @param startOffset
   * @param endOffset
   */
-case class Op(symbol: String, var typ: Type)(using file: FileNode) extends Expr
+case class Op(symbol: String)(using file: FileNode) extends Expr
 
 case class FnCall(
   fn: Expr,
-  argLists: List[ArgList],
-  typ: Type
+  typeArgs: Option[TypeArgList],
+  normArgs: NormArgList,
+  givenArgs: Option[GivenArgList],
+  proofArgs: Option[ProofArgList]
 ) extends Expr
 
 sealed trait ArgList
@@ -85,9 +105,7 @@ case class UpcastExpr(expr: Expr, typ: Type) extends Expr
 
 /** An expression like `let foo = bar in baz` */
 case class LetExpr(vars: List[VarDef], body: Expr, rec: Boolean = false)
-    extends Expr {
-  def typ = body.typ
-}
+    extends Expr
 
 /** A local variable
   */
@@ -115,3 +133,5 @@ case class ValParamList(
 enum ParamListKind {
   case Normal, Given, Proof
 }
+
+case class Modifier(mod: String, textRange: TextRange) extends Tree

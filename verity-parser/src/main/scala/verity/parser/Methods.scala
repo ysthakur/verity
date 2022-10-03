@@ -6,10 +6,9 @@ import unresolved._
 // import Core._
 // import Exprs._
 // import Types._
-import Parser.ps2tr
+import VerityParser.ps2tr
 
-import fastparse._
-import JavaWhitespace._
+import cats.parse.Parser
 
 import collection.mutable.ArrayBuffer
 
@@ -20,7 +19,7 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
   import types._
   import exprs._
 
-  private def param[_: Parser]: Parser[Parameter] =
+  private def param: Parser[Parameter] =
     (identifierText ~ ":" ~ nonWildcardType).map { case (name, typ) =>
       Parameter(
         List.empty, // TODO Add annotations!
@@ -31,46 +30,46 @@ private class Methods(core: Core, types: Types, exprs: Exprs)(implicit
       )
     }
 
-  private def params[_: Parser]: Parser[List[Parameter]] =
+  private def params: Parser[List[Parameter]] =
     Parser((param ~ ("," ~/ param).rep).?).map {
       case None => Nil
       case Some((firstParam, otherParams)) => firstParam :: otherParams.toList
     }
 
-  def normParamList[_: Parser]: Parser[ParamList] = Parser("(" ~ Index ~ params ~ ")" ~ Index).map {
+  def normParamList: Parser[ParamList] = Parser("(" ~ Parser.index ~ params ~ ")" ~ Parser.index).map {
     case (start, params, end) =>
       ParamList(params, ps2tr(start, end), ParamListKind.NORMAL)
   }
-  def givenParamList[_: Parser]: Parser[ParamList] =
-    Parser("(" ~ Index ~ "given" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index)
+  def givenParamList: Parser[ParamList] =
+    Parser("(" ~ Parser.index ~ "given" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Parser.index)
       .map { case (start, params, end) =>
         ParamList(params, ps2tr(start, end), ParamListKind.GIVEN)
       }
-  def proofParamList[_: Parser]: Parser[ParamList] =
-    Parser("(" ~ Index ~ "proof" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Index)
+  def proofParamList: Parser[ParamList] =
+    Parser("(" ~ Parser.index ~ "proof" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ params ~ ")" ~ Parser.index)
       .map { case (start, params, end) =>
         ParamList(params, ps2tr(start, end), ParamListKind.PROOF)
       }
 
-  def proofClause[_: Parser]: Parser[Seq[Type]] =
+  def proofClause: Parser[Seq[Type]] =
     Parser("proof" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ typeRef ~ ("," ~ typeRef).rep).map {
       case (firstType, restTypes) => firstType +: restTypes
     }
 
   // todo allow final modifier
-  def letDecl[_: Parser]: Parser[LocalVar] =
-    Parser(identifier("let") ~ modifiers ~ identifierText ~ ":" ~ typeRef ~ "=" ~ expr ~ Index)
+  def letDecl: Parser[LocalVar] =
+    Parser(identifier("let") ~ modifiers ~ identifierText ~ ":" ~ typeRef ~ "=" ~ expr ~ Parser.index)
       .map { case (name, mods, typ, expr, end) =>
         new LocalVar(name, mods, typ, expr, end)
       }
 
   def lambda: Parser[Lambda] = (
-    Parser.char('{') ~ Index
+    Parser.char('{') ~ Parser.index
       ~ typeParamList.?
       ~ normParamList
       ~ givenParamList.?
       ~ proofParamList.?
-      ~ Parser.char('}') ~ Index
+      ~ Parser.char('}') ~ Parser.index
   ).map { case (start, expr, end) =>
     new Lambda(expr, ps2tr(start, end))
   }

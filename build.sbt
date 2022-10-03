@@ -51,7 +51,7 @@ lazy val `verity-parser` = project
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= Seq(
       "org.scalatest" %% "scalatest" % "3.2.12" % "test",
-      "org.typelevel" %% "cats-parse" % "0.3.6"
+      "org.typelevel" %% "cats-parse" % "0.3.7"
     ),
     // scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true)))
   )

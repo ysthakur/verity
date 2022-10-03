@@ -1,13 +1,13 @@
 package verity.parser
 
-import verity.ast.{Expr as RoUExpr, *}
+import verity.ast.{Expr, *}
 
 // import verity.parser.Core._
 // import verity.parser.Types._
-import Parser.ps2tr
+import VerityParser.ps2tr
 
-import fastparse._
-import fastparse.JavaWhitespace._
+import cats.parse.{Parser as P, Parser0 as P0}
+import cats.parse.Rfc5234.digit
 
 private class Exprs(core: Core, types: Types)(implicit
   offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]
@@ -15,237 +15,131 @@ private class Exprs(core: Core, types: Types)(implicit
   import core._
   import types._
 
-  /** **************************BEGIN ATOMS***************************************
-    */
-  def boolLiteral[_: Parser]: Parser[BoolLiteral] =
-    Parser(Index ~ ("true".! | "false".!) ~ Index).map { case (start, text, end) =>
-      if (text(0) == 't') new TrueLiteral(ps2tr(start, end))
-      else new FalseLiteral(ps2tr(start, end))
+  val boolLiteral: P[BoolLiteral] =
+    (P.index ~ (identifier("true")
+      .as(true) | identifier("false").as(false)) ~ P.index).map {
+      case (start -> value -> end) =>
+        val text = if (value) "true" else "false"
+        BoolLiteral(value, ps2tr(start, end))
     }
+
   // TODO merge int and float literals, and allow underscores
-  def intLiteral[_: Parser]: Parser[IntegerLiteral] =
-    Parser(Index ~ CharsWhileIn("0-9").! ~ CharIn("bBsSlL").?.! ~ Index).map {
-      case (start, num, suffix, end) =>
-        val range = ps2tr(start, end)
-        import IntegerLiteral._
-        suffix match {
-          case "l" | "L" => LongLiteral(num, range)
-          case "s" | "S" => ShortLiteral(num, range)
-          case "b" | "B" => ByteLiteral(num, range)
-          case _ => IntLiteral(num, range)
-        }
+  val intLiteral: P[IntLiteral] =
+    (P.index ~ digit.rep ~ P.index).map { case (start -> num -> end) =>
+      IntLiteral(num, ps2tr(start, end))
     }
-  def numLiteral[_: Parser]: Parser[IntegerLiteral] = Parser(intLiteral)
-  def nullLiteral[_: Parser]: Parser[NullLiteral] =
-    Parser("null" ~ Index).map { endInd => new NullLiteral(ps2tr(endInd - 4, endInd)) }
-  def stringLiteral[_: Parser]: Parser[StringLiteral] =
-    Parser("\"" ~/ Index ~ (("\\" ~/ AnyChar) | (!"\"" ~ AnyChar)).rep.! ~ "\"" ~ Index).map {
-      case (start, text, end) => StringLiteral("\"" + text + "\"", ps2tr(start, end))
+
+  val nullLiteral: P[NullLiteral] =
+    (identifier("null") *> P.index).map { endInd =>
+      NullLiteral(ps2tr(endInd - "null".length, endInd))
     }
-  def thisRef[_: Parser]: Parser[UnresolvedThisRef] = Parser(Index ~ "this" ~ nid ~/ Index).map {
-    case (start, end) =>
-      new UnresolvedThisRef(ps2tr(start, end))
+
+  val stringLiteral: P[StringLiteral] =
+    withRange(
+      ((P.char('\\') ~ P.anyChar) | (P.charWhere(_ != '"'))).rep.string
+        .surroundedBy(P.char('"'))
+    ).map { case (start, text, end) =>
+      StringLiteral("\"" + text + "\"", ps2tr(start, end))
+    }
+
+  val thisRef: P[Expr] =
+    (P.index.with1 ~ (identifier("this") *> P.index)).map { case (start, end) =>
+      ThisRef(ps2tr(start, end))
+    }
+
+  val superRef: P[Expr] =
+    (P.index.with1 ~ (identifier("super") *> P.index)).map {
+      case (start, end) =>
+        SuperRef(ps2tr(start, end))
+    }
+
+  val literal: P[Expr] =
+    intLiteral | boolLiteral | nullLiteral | stringLiteral
+
+  val varRef: P[Expr] = identifierWithTextRange.map { case (name, textRange) =>
+    UnresolvedIdentifier(name, textRange)
   }
-  def superRef[_: Parser]: Parser[UnresolvedSuperRef] = Parser(Index ~ "super" ~ nid ~/ Index).map {
-    case (start, end) =>
-      new UnresolvedSuperRef(ps2tr(start, end))
-  }
-  def literal[_: Parser]: Parser[RoUExpr] = Parser(
-    numLiteral | boolLiteral | nullLiteral | stringLiteral | thisRef | superRef
-  )
-  // def varRef[_: Parser] = Parser(Index ~ identifier ~ Index).map { case (start, varName, end) =>
-  //   new VarRef(varName, ps2tr(start, end))
-  // }
-  def parenExpr[_: Parser]: Parser[UnresolvedParenExpr] =
-    Parser(Index ~ "(" ~ expr ~/ ")" ~ Index).map { case (start, expr, end) =>
-      new UnresolvedParenExpr(expr, ps2tr(start, end))
+
+  val parenExpr: P[Expr] =
+    P.defer(withRange(expr.between(P.char('(') ~ ws, ws ~ P.char(')')))).map {
+      case (start, expr, end) =>
+        ParenExpr(expr, ps2tr(start, end))
     }
 
-  /** A constructor call in the form `new Foo.Bar<Type, Arguments>(other, arguments)` TODO use
-    * negative lookahead instead of requiring a space after `new`
-    */
-  def ctorCall[_: Parser]: Parser[UnresolvedCtorCall] =
-    Parser(
-      "new " ~/ Index ~ multiDotRef ~ typeArgList.? ~ valArgList ~ givenArgList.? ~ proofArgList.?
-    ).map { case (newTokEnd, classPath, typeArgs, valArgs, givenArgs, proofArgs) =>
-      new UnresolvedCtorCall(
-        classPath,
-        valArgs,
-        typeArgs,
-        givenArgs,
-        proofArgs,
-        Parser.getPos(newTokEnd - 4)
-      )
-    }
-
-  // TODO parse given and proof arguments!!!
-  /** A method call without a caller (method is either in same class or is imported), e.g. `foo(bar,
-    * baz)`.
-    */
-  def noObjMethodCall[_: Parser]: Parser[UnresolvedMethodCall] =
-    Parser(typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).map {
-      case (typeArgs, name, valArgs, givenArgs, proofArgs) =>
-        UnresolvedMethodCall(None, name, valArgs, Some(typeArgs), givenArgs, proofArgs)
-    }
-
-  /** Either a reference to a field/local variable or a method call, e.g. `com.foo.Foo` or `foo` or
-    * `foo.bleh.bar(baz, foobar)`.
-    */
-  def varRefOrMethodCall[_: Parser]: Parser[RoUExpr] =
-    Parser(
-      identifierText ~ ("." ~ identifierText ~ !"(").rep ~ ("." ~/ typeArgList.? ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?).?
-    ).map {
-      case (first, rest, Some((typeArgs, name, valArgs, givenArgs, proofArgs))) =>
-        UnresolvedMethodCall(
-          Some(MultiDotRef(first +: rest)),
-          name,
-          valArgs,
-          typeArgs,
-          givenArgs,
-          proofArgs
-        )
-      case (first, rest, None) => MultiDotRefExpr(first +: rest)
-    }
-
-  def selectable[_: Parser]: Parser[RoUExpr] = Parser(
-    parenExpr | literal | ctorCall | noObjMethodCall | varRefOrMethodCall | ctorCall
+  /** Something with higher precedence than `.` */
+  val selectable: P[Expr] = P.defer(
+    parenExpr | literal | thisRef | superRef | varRef
   )
 
-  /** **************************END ATOMS***************************************
-    */
-
-  /** **************************BEGIN TOP-LEVEL STUFF AFTER
-    * ATOMS***************************************
-    */
-  def fieldAccessOrMethodCall[_: Parser]: Parser[RoUExpr => RoUExpr] =
-    Parser(
-      "." ~ identifierText ~/ (valArgList ~/ givenArgList.? ~ proofArgList.?).?
-    ).map {
-      case (name, Some((valArgs, givenArgs, proofArgs))) =>
-        obj =>
-          new UnresolvedMethodCall(
-            Some(obj),
-            name,
-            valArgs,
-            None,
-            givenArgs,
-            proofArgs
-          )
-      case (name, _) =>
-        prev => UnresolvedFieldAccess(prev, name)
+  /** `foo.bar` */
+  val propAccess: P[Expr] =
+    P.defer(selectable ~ (P.char('.').surroundedBy(ws) *> identifier).rep).map {
+      case (obj, props) =>
+        props.foldLeft(obj) { (obj, prop) => PropAccess(obj, prop) }
     }
 
-  def typeParamsFirstMethodCall[_: Parser]: Parser[HasTextRange => RoUExpr] = Parser(
-    "." ~ typeArgList ~ identifierText ~ valArgList ~ givenArgList.? ~ proofArgList.?
-  ).map { case (typeArgs, name, valArgs, givenArgs, proofArgs) =>
-    caller =>
-      UnresolvedMethodCall(
-        Some(caller),
-        name,
-        valArgs,
-        Some(typeArgs),
-        givenArgs,
-        proofArgs
-      )
-  }
-  def arrayAccess[_: Parser]: Parser[RoUExpr => RoUExpr] =
-    Parser("[" ~/ Index ~ expr ~ "]" ~ Index).map { case (start, index, end) =>
-      arr => UnresolvedArraySelect(arr, index, ps2tr(start, end))
-    }
+  /** Helper to make parsers for different kinds of argument lists */
+  def argList(start: P0[Unit]): P[List[Expr]] =
+    P.defer(
+      P.char('(') *> start *> ws *> expr.repSep0(ws ~ P.char(',') ~ ws) <* P
+        .char(')')
+    )
 
-  def topExpr[_: Parser]: Parser[RoUExpr] =
-    Parser(selectable ~ (fieldAccessOrMethodCall | typeParamsFirstMethodCall | arrayAccess).rep)
-      .map { case (expr, ctors) =>
-        ctors.foldLeft(expr)((e, f) => f(e))
-      }
+  val normArgList: P[NormArgList] = argList(P.unit).map(NormArgList(_))
 
-  /** **************************END TOP-LEVEL STUFF AFTER
-    * ATOMS***************************************
-    */
+  val givenArgList = argList(identifier("given")).map(GivenArgList(_))
 
-  /** **************************BEGIN OPERATORS***************************************
-    */
-  def mulDivMod[_: Parser]: Parser[RoUExpr] =
-    Parser(topExpr ~ (Index ~ CharIn("*/%").! ~/ Index ~ topExpr).rep).map(foldBinExpr)
-  // noinspection MutatorLikeMethodIsParameterless
-  // def mulDivMod[_: Parser] = binExpr(CharIn("*/%").!, topExpr)
-  def addSub[_: Parser]: Parser[RoUExpr] =
-    Parser(mulDivMod ~ (Index ~ CharIn("+\\-").! ~/ Index ~ mulDivMod).rep).map(foldBinExpr)
-  def bitShift[_: Parser]: Parser[RoUExpr] =
-    Parser(addSub ~ (Index ~ StringIn(">>>", ">>", "<<").! ~/ Index ~ addSub).rep).map(foldBinExpr)
-  def relational[_: Parser]: Parser[RoUExpr] =
-    Parser(
-      bitShift ~
-        ((StringIn("<=", "<", ">=", ">").! ~/ Index ~ bitShift)
-          | ("instanceof".! ~ Index ~/ nonWildcardType)).rep
-    ).map { case (first, reps) =>
-      reps.foldLeft(first) { case (lhs, (op, opEnd, rhs)) =>
-        val opRange = ps2tr(opEnd - op.length, opEnd)
-        op match {
-          case "instanceof" =>
-            new UnresolvedInstanceOf(lhs, rhs.asInstanceOf[UnresolvedTypeRef], opRange)
-          case _ =>
-            UnresolvedBinaryExpr(
-              lhs,
-              Op(OpType.findBySymbol(op).get, opRange),
-              rhs.asInstanceOf[RoUExpr]
-            )
-        }
+  val proofArgList = argList(identifier("proof")).map(ProofArgList(_))
+
+  val methodCall: P[Expr] = P
+    .defer(
+      propAccess <* (ws.with1 *> typeArgList.? ~ normArgList ~
+        (ws *> givenArgList).? ~ (ws *> proofArgList).?).rep0
+    )
+    .map { case (obj, argLists) =>
+      argLists.foldLeft(obj) {
+        case (obj, (typeArgs, normArgs, givenArgs, proofArgs)) =>
+          FnCall(obj, typeArgs, normArgs, givenArgs, proofArgs)
       }
     }
-  def eqNoteq[_: Parser]: Parser[RoUExpr] =
-    Parser(relational ~ (Index ~ StringIn("==", "!=").! ~/ Index ~ relational).rep).map(foldBinExpr)
-  def bitAnd[_: Parser]: Parser[RoUExpr] =
-    Parser(eqNoteq ~ (Index ~ "&".! ~ !"&" ~/ Index ~ eqNoteq).rep).map(foldBinExpr)
-  def bitXor[_: Parser]: Parser[RoUExpr] =
-    Parser(bitAnd ~ (Index ~ "^".! ~/ Index ~ bitAnd).rep).map(foldBinExpr)
-  def bitOr[_: Parser]: Parser[RoUExpr] =
-    Parser(bitXor ~ (Index ~ "|".! ~ !"|" ~/ Index ~ bitXor).rep).map(foldBinExpr)
-  def logicAnd[_: Parser]: Parser[RoUExpr] =
-    Parser(bitOr ~ (Index ~ "&&".! ~/ Index ~ bitOr).rep).map(foldBinExpr)
-  def logicOr[_: Parser]: Parser[RoUExpr] =
-    Parser(logicAnd ~ (Index ~ "||".! ~/ Index ~ logicAnd).rep).map(foldBinExpr)
-  def assignment[_: Parser]: Parser[RoUExpr] = Parser(logicOr ~ ("=" ~/ assignment).?) /*.filter {
-    case (_, None) => true
-    case (expr, _) => expr.isInstanceOf[UnresolvedArraySelect] || expr.isInstanceOf[UnresolvedFieldAccess]
-  }*/.map {
+
+  val mulDivMod: P[Expr] = binOp(methodCall, List("*", "/", "%"))
+  val addSub: P[Expr] = binOp(mulDivMod, List("+", "-"))
+  val relational: P[Expr] = binOp(addSub, List("<=", "<", ">=", ">"))
+  val eqNotEq: P[Expr] = binOp(relational, List("==", "!="))
+  val logicAnd: P[Expr] = binOp(eqNotEq, List("&&"))
+  val logicOr: P[Expr] = binOp(logicAnd, List("||"))
+
+  val assignment: P[Expr] = P.defer(logicOr ~ (P.string("=") ~ logicOr).?).map {
     case (expr, None) => expr
     case (property, Some(value)) =>
-      UnresolvedAssignmentExpr(property, value, None) // todo extraOp such as +=, -=
+      UnresolvedAssignmentExpr(
+        property,
+        value,
+        None
+      ) // todo extraOp such as +=, -=
   }
 
-  // TODO add ternary and assignment
-  def expr[_: Parser]: Parser[RoUExpr] = Parser(assignment)
+  // TODO add if expressions
+  val expr: P[Expr] = assignment
 
-  /** **************************END OPERATORS***************************************
+  /** Helper to make a parser for a binary expression
+    * @param prev
+    *   The parser for the operator that has higher precedence than this one
+    * @param ops
+    *   The operators that the current parser should parse
     */
-
-  // todo allow accessing fields and modifying arrays
-  // def assignExpr[_: Parser] = Parser(identifierText ~ (Index ~ "=".! ~/ Index ~ logicAnd).rep).map(foldBinExpr)
-
-  val foldBinExpr: ((RoUExpr, Seq[(Int, String, Int, RoUExpr)])) => RoUExpr = { case (left, reps) =>
-    reps.foldLeft(left) { case (lhs, (opStart, op, opEnd, rhs)) =>
-      UnresolvedBinaryExpr(lhs, Op(OpType.findBySymbol(op).get, ps2tr(opStart, opEnd)), rhs)
-    }
-  }
-
-  def valArgList[_: Parser]: Parser[UnresolvedArgList] =
-    Parser("(" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
-      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Normal, ps2tr(start, end))
-      case (start, Some((firstArg, args)), end) =>
-        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Normal, ps2tr(start, end))
-    }
-  // TODO make sure the character after "given" isn't a unicode identifier part
-  def givenArgList[_: Parser]: Parser[UnresolvedArgList] =
-    Parser("(" ~ "given" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
-      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Given, ps2tr(start, end))
-      case (start, Some((firstArg, args)), end) =>
-        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Given, ps2tr(start, end))
-    }
-  def proofArgList[_: Parser]: Parser[UnresolvedArgList] =
-    Parser("(" ~ "proof" ~/ Index ~ (expr ~ ("," ~ expr).rep).? ~ ")" ~ Index).map {
-      case (start, None, end) => UnresolvedArgList(Nil, ArgsKind.Proof, ps2tr(start, end))
-      case (start, Some((firstArg, args)), end) =>
-        UnresolvedArgList(firstArg :: args.toList, ArgsKind.Proof, ps2tr(start, end))
+  def binOp(prev: P[Expr], ops: List[String]) =
+    P.defer(
+      prev ~ ((P.index ~ P.stringIn(ops) ~ P.index)
+        .surroundedBy(ws) ~ prev).rep0
+    ).map { case (left, reps) =>
+      reps.foldLeft(left) { case (lhs, (opStart, op, opEnd, rhs)) =>
+        BinExpr(
+          lhs,
+          Op(OpType.findBySymbol(op).get, ps2tr(opStart, opEnd)),
+          rhs
+        )
+      }
     }
 }

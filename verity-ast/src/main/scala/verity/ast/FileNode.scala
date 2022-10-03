@@ -53,9 +53,9 @@ object FileNode {
 /** @param path
   *   The path of the package this file is in
   */
-case class PackageStmt(val path: Iterable[String]) extends Tree
+case class PackageStmt(val path: Iterable[(String, TextRange)]) extends Tree
 
 /** @param path
   *   The path of the import (excluding the wildcard)
   */
-case class ImportStmt(path: Iterable[String], wildCard: Boolean = false) extends Tree
+case class ImportStmt(path: Iterable[(String, TextRange)], wildcard: Boolean = false) extends Tree

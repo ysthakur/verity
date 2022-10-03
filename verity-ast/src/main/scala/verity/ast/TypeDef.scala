@@ -10,11 +10,13 @@ trait TypeDef extends Def {
 }
 
 object BuiltinTypes {
-  def boolType(using root: Package): TypeDef = verityPkg.findType("Bool").get
-
   def verityPkg(using root: Package): Package = root.findChild("verity").get
 
-  def numType(using root: Package): TypeDef = verityPkg.findType("Num").get
+  def boolType(using root: Package): TypeDef = verityPkg.findType("Bool").get
+
+  def intType(using root: Package): TypeDef = verityPkg.findType("Int").get
+
+  def doubleType(using root: Package): TypeDef = verityPkg.findType("Double").get
 
   def charType(using root: Package): TypeDef = verityPkg.findType("Char").get
 
