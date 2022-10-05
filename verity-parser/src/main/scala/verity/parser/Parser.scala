@@ -9,31 +9,16 @@ import java.nio.file.{Files, Path}
 import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
 
-private class VerityParser(inputFile: File) {
-  val core = new Core
-  val types = new Types(core)
-  val exprs = new Exprs(core, types)
-  val methods = new Methods(core, types, exprs)
-
-  def file: Parser[FileNode] =
-    (core.packageStmt.? ~ core.importStmt.rep ~ Parser.end).map {
-      case (pkgStmt -> imptStmts -> templateDefs) =>
-        FileNode(inputFile.getName.nn, pkgStmt, imptStmts, templateDefs, Some(inputFile))
-    }
-}
-
 object VerityParser {
   def parseFile(name: String, input: File): Either[(String, Int), FileNode] = {
-    val parser = new VerityParser(input)
-    
     val core = new Core
     val types = new Types(core)
     val exprs = new Exprs(core, types)
     val methods = new Methods(core, types, exprs)
 
-    val fileParser = (core.packageStmt.? ~ core.importStmt.rep0 ~ Parser.end).map {
-      case (pkgStmt -> imptStmts -> templateDefs) =>
-        FileNode(input.getName.nn, pkgStmt, imptStmts, templateDefs, Some(input))
+    val fileParser = (core.packageStmt.? ~ core.importStmt.rep0 <* Parser.end).map {
+      case (pkgStmt -> imptStmts) =>
+        FileNode(input.getName.nn, pkgStmt, imptStmts, ???, Some(input))
     }
 
     fileParser.parse(Files.readString(input.toPath(), Charset.defaultCharset()).nn) match {

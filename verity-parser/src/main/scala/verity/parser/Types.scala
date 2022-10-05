@@ -2,7 +2,6 @@ package verity.parser
 
 import verity.ast._
 
-// import verity.parser.Core.{argList, identifierText, identifierWithTextRange}
 import VerityParser.tr
 
 import cats.data.NonEmptyList
@@ -71,8 +70,8 @@ private class Types(core: Core) {
       case (name -> nameRange -> upperBound -> lowerBound) =>
         TypeParam(
           name,
-          upperBound.getOrElse(BuiltinTypes.objectType),
-          lowerBound.getOrElse(NothingTypeDef.makeRef),
+          upperBound,
+          lowerBound,
           nameRange
         )
     }

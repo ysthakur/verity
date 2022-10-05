@@ -14,17 +14,16 @@ private class Exprs(core: Core, types: Types) {
   import types._
 
   val boolLiteral: P[BoolLiteral] =
-    (P.index ~ (identifier("true")
-      .as(true) | identifier("false").as(false)) ~ P.index).map {
-      case (start -> value -> end) =>
+    ((identifier("true").as(true) | identifier("false").as(false)) ~ P.index)
+      .map { case (value -> end) =>
         val text = if (value) "true" else "false"
-        BoolLiteral(value, tr(start, end))
-    }
+        BoolLiteral(value, tr(end - text.length, end))
+      }
 
   // TODO merge int and float literals, and allow underscores
   val intLiteral: P[IntLiteral] =
-    (P.index ~ digit.rep ~ P.index).map { case (start -> num -> end) =>
-      IntLiteral(num, tr(start, end))
+    (digit.rep.string ~ P.index).map { case (num -> end) =>
+      IntLiteral(num.toInt, tr(end - num.length, end))
     }
 
   val nullLiteral: P[NullLiteral] =
@@ -91,11 +90,11 @@ private class Exprs(core: Core, types: Types) {
 
   val methodCall: P[Expr] = P
     .defer(
-      propAccess <* (ws.with1 *> typeArgList.?.with1 ~ normArgList ~ (ws *> givenArgList).? ~ (ws *> proofArgList).?).rep0
+      propAccess ~ (ws.with1 *> typeArgList.?.with1 ~ normArgList ~ (ws *> givenArgList).? ~ (ws *> proofArgList).?).rep0
     )
     .map { case (obj, argLists) =>
       argLists.foldLeft(obj) {
-        case (obj, (typeArgs, normArgs, givenArgs, proofArgs)) =>
+        case (obj, typeArgs -> normArgs -> givenArgs -> proofArgs) =>
           FnCall(obj, typeArgs, normArgs, givenArgs, proofArgs)
       }
     }
@@ -107,18 +106,14 @@ private class Exprs(core: Core, types: Types) {
   val logicAnd: P[Expr] = binOp(eqNotEq, List("&&"))
   val logicOr: P[Expr] = binOp(logicAnd, List("||"))
 
-  val assignment: P[Expr] = P.defer(logicOr ~ (P.string("=") ~ logicOr).?).map {
-    case (expr, None) => expr
-    case (property, Some(value)) =>
-      UnresolvedAssignmentExpr(
-        property,
-        value,
-        None
-      ) // todo extraOp such as +=, -=
-  }
-
   // TODO add if expressions
-  val expr: P[Expr] = assignment
+  val expr: P[Expr] = logicOr
+
+  // todo augmented assignment such as +=, -=
+  // val assignment: P[AssignStmt] = P.defer(logicOr ~ (P.string("=").surroundedBy(ws) *> logicOr).rep).map {
+  //   case (property, Some(value)) =>
+  //     AssignStmt(property, value)
+  // }
 
   /** Helper to make a parser for a binary expression
     * @param prev
@@ -133,7 +128,7 @@ private class Exprs(core: Core, types: Types) {
       reps.foldLeft(left) { case (lhs, (opStart, op, opEnd) -> rhs) =>
         BinExpr(
           lhs,
-          op,
+          Op(op, tr(opStart, opEnd)),
           rhs
         )
       }

@@ -48,12 +48,8 @@ case class BinExpr(left: Expr, op: Op, right: Expr) extends Expr
 
 case class UnaryPreExpr(op: Op, expr: Expr, typ: Type) extends Expr
 
-/** An operator
-  * @param symbol
-  * @param startOffset
-  * @param endOffset
-  */
-case class Op(symbol: String) extends Expr
+/** An operator */
+case class Op(symbol: String, textRange: TextRange) extends Expr
 
 case class FnCall(
   fn: Expr,
@@ -99,7 +95,8 @@ case class Lambda(
   normParamList: Option[ValParamList],
   givenParamList: Option[ValParamList],
   proofParamList: Option[ValParamList],
-  body: Expr
+  body: Expr,
+  textRange: TextRange
 )
 
 case class ValParam(name: String, typ: Type)
@@ -114,3 +111,5 @@ enum ParamListKind {
 }
 
 case class Modifier(mod: String, textRange: TextRange) extends Tree
+
+case class AssignStmt(lvalue: Expr, rvalue: Expr) extends Tree

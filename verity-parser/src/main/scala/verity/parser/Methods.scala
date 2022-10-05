@@ -27,17 +27,17 @@ private class Methods(core: Core, types: Types, exprs: Exprs) {
     }
 
   private def params: P[List[Parameter]] =
-    P((param ~ ("," ~/ param).rep).?).map {
+    ((param ~ ("," ~/ param).rep).?).map {
       case None                            => Nil
       case Some((firstParam, otherParams)) => firstParam :: otherParams.toList
     }
 
   def normParamList: P[ParamList] =
-    P("(" ~ P.index ~ params ~ ")" ~ P.index).map { case (start, params, end) =>
+    ("(" ~ P.index ~ params ~ ")" ~ P.index).map { case (start, params, end) =>
       ParamList(params, tr(start, end), ParamListKind.NORMAL)
     }
   def givenParamList: P[ParamList] =
-    P(
+    (
       "(" ~ P.index ~ "given" ~~ !CharPred(
         _.isUnicodeIdentifierPart
       ) ~/ params ~ ")" ~ P.index
@@ -45,7 +45,7 @@ private class Methods(core: Core, types: Types, exprs: Exprs) {
       ParamList(params, tr(start, end), ParamListKind.GIVEN)
     }
   def proofParamList: P[ParamList] =
-    P(
+    (
       "(" ~ P.index ~ "proof" ~~ !CharPred(
         _.isUnicodeIdentifierPart
       ) ~/ params ~ ")" ~ P.index
@@ -54,8 +54,8 @@ private class Methods(core: Core, types: Types, exprs: Exprs) {
     }
 
   def proofClause: P[Seq[Type]] =
-    P(
-      "proof" ~~ !CharPred(
+    (
+      identifier("proof") ~~ !CharPred(
         _.isUnicodeIdentifierPart
       ) ~/ typeRef ~ ("," ~ typeRef).rep
     ).map { case (firstType, restTypes) =>
@@ -67,13 +67,13 @@ private class Methods(core: Core, types: Types, exprs: Exprs) {
     (
       identifier(
         "let"
-      ) ~ modifiers ~ identifierText ~ ":" ~ typeRef ~ "=" ~ expr ~ P.index
+      ) ~ identifierText ~ P.char(':') ~ typ ~ P.char('=') ~ expr ~ P.index
     ).map { case (name, mods, typ, expr, end) =>
       LocalVar(name, mods, typ, expr, end)
     }
 
   def lambda: P[Lambda] =
-    ((P.index <* identifier("fn") <* ws)
+    ((P.index <* identifier("fn") <* ws).with1
       ~ (typeParamList.? <* ws)
       ~ (normParamList.? <* ws)
       ~ (givenParamList.? <* ws)
