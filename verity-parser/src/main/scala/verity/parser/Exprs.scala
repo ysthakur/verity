@@ -4,14 +4,12 @@ import verity.ast.{Expr, *}
 
 // import verity.parser.Core._
 // import verity.parser.Types._
-import VerityParser.ps2tr
+import VerityParser.tr
 
 import cats.parse.{Parser as P, Parser0 as P0}
 import cats.parse.Rfc5234.digit
 
-private class Exprs(core: Core, types: Types)(implicit
-  offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]
-) {
+private class Exprs(core: Core, types: Types) {
   import core._
   import types._
 
@@ -20,18 +18,18 @@ private class Exprs(core: Core, types: Types)(implicit
       .as(true) | identifier("false").as(false)) ~ P.index).map {
       case (start -> value -> end) =>
         val text = if (value) "true" else "false"
-        BoolLiteral(value, ps2tr(start, end))
+        BoolLiteral(value, tr(start, end))
     }
 
   // TODO merge int and float literals, and allow underscores
   val intLiteral: P[IntLiteral] =
     (P.index ~ digit.rep ~ P.index).map { case (start -> num -> end) =>
-      IntLiteral(num, ps2tr(start, end))
+      IntLiteral(num, tr(start, end))
     }
 
   val nullLiteral: P[NullLiteral] =
     (identifier("null") *> P.index).map { endInd =>
-      NullLiteral(ps2tr(endInd - "null".length, endInd))
+      NullLiteral(tr(endInd - "null".length, endInd))
     }
 
   val stringLiteral: P[StringLiteral] =
@@ -39,18 +37,18 @@ private class Exprs(core: Core, types: Types)(implicit
       ((P.char('\\') ~ P.anyChar) | (P.charWhere(_ != '"'))).rep.string
         .surroundedBy(P.char('"'))
     ).map { case (start, text, end) =>
-      StringLiteral("\"" + text + "\"", ps2tr(start, end))
+      StringLiteral("\"" + text + "\"", tr(start, end))
     }
 
   val thisRef: P[Expr] =
     (P.index.with1 ~ (identifier("this") *> P.index)).map { case (start, end) =>
-      ThisRef(ps2tr(start, end))
+      ThisRef(tr(start, end))
     }
 
   val superRef: P[Expr] =
     (P.index.with1 ~ (identifier("super") *> P.index)).map {
       case (start, end) =>
-        SuperRef(ps2tr(start, end))
+        SuperRef(tr(start, end))
     }
 
   val literal: P[Expr] =
@@ -63,7 +61,7 @@ private class Exprs(core: Core, types: Types)(implicit
   val parenExpr: P[Expr] =
     P.defer(withRange(expr.between(P.char('(') ~ ws, ws ~ P.char(')')))).map {
       case (start, expr, end) =>
-        ParenExpr(expr, ps2tr(start, end))
+        ParenExpr(expr, tr(start, end))
     }
 
   /** Something with higher precedence than `.` */
@@ -93,8 +91,7 @@ private class Exprs(core: Core, types: Types)(implicit
 
   val methodCall: P[Expr] = P
     .defer(
-      propAccess <* (ws.with1 *> typeArgList.? ~ normArgList ~
-        (ws *> givenArgList).? ~ (ws *> proofArgList).?).rep0
+      propAccess <* (ws.with1 *> typeArgList.?.with1 ~ normArgList ~ (ws *> givenArgList).? ~ (ws *> proofArgList).?).rep0
     )
     .map { case (obj, argLists) =>
       argLists.foldLeft(obj) {
@@ -131,13 +128,12 @@ private class Exprs(core: Core, types: Types)(implicit
     */
   def binOp(prev: P[Expr], ops: List[String]) =
     P.defer(
-      prev ~ ((P.index ~ P.stringIn(ops) ~ P.index)
-        .surroundedBy(ws) ~ prev).rep0
+      prev ~ (withRange(P.stringIn(ops)).surroundedBy(ws) ~ prev).rep0
     ).map { case (left, reps) =>
-      reps.foldLeft(left) { case (lhs, (opStart, op, opEnd, rhs)) =>
+      reps.foldLeft(left) { case (lhs, (opStart, op, opEnd) -> rhs) =>
         BinExpr(
           lhs,
-          Op(OpType.findBySymbol(op).get, ps2tr(opStart, opEnd)),
+          op,
           rhs
         )
       }

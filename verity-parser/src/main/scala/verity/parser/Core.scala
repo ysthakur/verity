@@ -2,15 +2,13 @@ package verity.parser
 
 import verity.ast._
 
-import VerityParser.ps2tr
+import VerityParser.tr
 
 import cats.parse.{Parser, Parser0}
 import cats.parse.Rfc5234.{sp, crlf, lf, wsp}
 import cats.data.NonEmptyList
 
-private class Core(implicit
-  offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]
-) {
+private class Core {
 
   /** Whitespace */
   def ws: Parser0[Unit] = (sp | crlf | lf).rep0.void
@@ -34,14 +32,14 @@ private class Core(implicit
     */
   def identifierText: Parser[Text] =
     (identifier ~ Parser.index).map { case (id, end) =>
-      Text(id, ps2tr(end - id.length, end))
+      Text(id, tr(end - id.length, end))
     }
 
   /** Like [[identifierWithTextRange]], but can be inlined
     */
   def identifierWithTextRange: Parser[(String, TextRange)] =
     (identifier ~ Parser.index).map { case (id, end) =>
-      id -> ps2tr(end - id.length, end)
+      id -> tr(end - id.length, end)
     }
 
   def withRange[A](parser: Parser[A]): Parser[(Int, A, Int)] =
@@ -69,7 +67,7 @@ private class Core(implicit
   ) ~ (idEnd *> Parser.index)).map { case (modifier, end) =>
     Modifier(
       modifier,
-      ps2tr(end - modifier.length, end)
+      tr(end - modifier.length, end)
     )
   }
 
@@ -86,9 +84,9 @@ private class Core(implicit
       }
 
   val importStmt: Parser[ImportStmt] =
-    (identifier("import") *> ws *> dotPath <* ws <* (Parser.string(
+    (identifier("import") *> dotPath.surroundedBy(ws) ~ (Parser.string(
       "."
-    ) *> ws *> Parser.string("*")).? ~ Parser.string(";")).map {
+    ) *> ws *> Parser.string("*")).? <* Parser.string(";")).map {
       case (path, None) =>
         ImportStmt(path, wildcard = false)
       case (path, Some(_)) =>

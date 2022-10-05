@@ -6,37 +6,21 @@ import scala.collection.mutable.ArrayBuffer
 
 sealed trait Expr extends Tree
 
-class BoolLiteral(value: Boolean, textRange: TextRange)(using file: FileNode)
-    extends Expr {
-  def typ: Type = TypeRef(BuiltinTypes.boolType)
-}
+class BoolLiteral(value: Boolean, textRange: TextRange) extends Expr
 
-class IntLiteral(value: Int, textRange: TextRange)(using file: FileNode)
-    extends Expr {
-  def typ: Type = TypeRef(BuiltinTypes.intType)
-}
+class IntLiteral(value: Int, textRange: TextRange) extends Expr
 
-class DoubleLiteral(value: Double, textRange: TextRange)(using file: FileNode)
-    extends Expr {
-  def typ: Type = TypeRef(BuiltinTypes.doubleType)
-}
+class DoubleLiteral(value: Double, textRange: TextRange) extends Expr
 
-class CharLiteral(char: Char, textRange: TextRange)(using file: FileNode)
-    extends Expr {
-  def typ: Type = TypeRef(BuiltinTypes.charType)
-}
+class CharLiteral(char: Char, textRange: TextRange) extends Expr
 
-case class StringLiteral(text: String, textRange: TextRange)(using
-  file: FileNode
-) extends Expr {
-  def typ: Type = TypeRef(BuiltinTypes.stringType)
-}
+case class StringLiteral(text: String, textRange: TextRange) extends Expr
 
-case class NullLiteral(textRange: TextRange)(using file: FileNode) extends Expr
+case class NullLiteral(textRange: TextRange) extends Expr
 
-case class ThisRef(textRange: TextRange)(using file: FileNode) extends Expr
+case class ThisRef(textRange: TextRange) extends Expr
 
-case class SuperRef(textRange: TextRange)(using file: FileNode) extends Expr
+case class SuperRef(textRange: TextRange) extends Expr
 
 /** A resolved reference to a variable
   */
@@ -60,19 +44,16 @@ case class PropAccess(obj: Expr, prop: String) extends Expr
 
 case class ParenExpr(expr: Expr, textRange: TextRange) extends Expr
 
-case class BinExpr(left: Expr, op: Op, right: Expr)(using
-  file: FileNode
-) extends Expr
+case class BinExpr(left: Expr, op: Op, right: Expr) extends Expr
 
-case class UnaryPreExpr(op: Op, expr: Expr, typ: Type)(using file: FileNode)
-    extends Expr
+case class UnaryPreExpr(op: Op, expr: Expr, typ: Type) extends Expr
 
 /** An operator
   * @param symbol
   * @param startOffset
   * @param endOffset
   */
-case class Op(symbol: String)(using file: FileNode) extends Expr
+case class Op(symbol: String) extends Expr
 
 case class FnCall(
   fn: Expr,
@@ -83,9 +64,6 @@ case class FnCall(
 ) extends Expr
 
 sealed trait ArgList
-
-/** A list of type arguments */
-case class TypeArgList(args: List[Type]) extends ArgList
 
 /** A list of actual arguments (as opposed to type arguments) */
 sealed trait ValArgList extends ArgList {
@@ -117,9 +95,11 @@ class VarDef(
 ) extends Def
 
 case class Lambda(
-  paramLists: List[TypeParamList | ValParamList],
-  body: Expr,
-  returnType: Type
+  typeParamList: Option[TypeParamList],
+  normParamList: Option[ValParamList],
+  givenParamList: Option[ValParamList],
+  proofParamList: Option[ValParamList],
+  body: Expr
 )
 
 case class ValParam(name: String, typ: Type)
@@ -127,8 +107,7 @@ case class ValParam(name: String, typ: Type)
 case class ValParamList(
   params: List[ValParam],
   kind: ParamListKind = ParamListKind.Normal
-)(using file: FileNode)
-    extends Tree
+) extends Tree
 
 enum ParamListKind {
   case Normal, Given, Proof

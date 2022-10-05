@@ -3,78 +3,83 @@ package verity.parser
 import verity.ast._
 
 // import verity.parser.Core.{argList, identifierText, identifierWithTextRange}
-import VerityParser.ps2tr
+import VerityParser.tr
 
+import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
 
-private class Types(core: Core)(implicit
-  offsetToPos: collection.mutable.ArrayBuffer[(Int, Int, Int)]
-) {
+private class Types(core: Core) {
   import core._
 
-  // todo clear this up?
-  def upperBound: P[UnresolvedTypeRef] = P("extends" ~/ typeRef)
-  def lowerBound: P[UnresolvedTypeRef] = P("super" ~/ typeRef)
-  // def typeBound = P(P.index ~ StringIn("super", "extends").! ~/ P.index ~ typeRef)
-
-  def typeRef: P[UnresolvedTypeRef] =
-    P(identifierText ~ ("." ~ identifierText).rep ~ typeArgList).map {
-      case (first, restPath, args) =>
-        UnresolvedTypeRef(
-          first +: restPath,
-          args,
-          None
-        )
-    }
-  def wildCard: P[UnresolvedWildcard] =
-    P("?" ~ ("extends" ~ typeRef).? ~ ("super" ~ typeRef).?).map { case (upper, lower) =>
-      UnresolvedWildcard(upper, lower)
-    }
-  def primitiveType: P[PrimitiveType] =
-    P(StringIn("boolean", "byte", "char", "short", "int", "float", "long", "double").! ~ P.index)
-      .map { case (typ, end) =>
-        PrimitiveType(PrimitiveTypeDef.fromName(typ).get, ps2tr(end - typ.length, end))
-      }
-
-  /** A type that isn't just a wildcard, possibly an array type
+  /** TODO find a better name for this A type like `foo` or `foo.bar.baz` (only
+    * names separated by dots)
     */
-  def nonWildcardType: P[Type] =
-    P((primitiveType | typeRef) ~ ("[" ~ P.index ~ "]" ~ P.index).rep).map {
-      case (innerType, brackets) =>
-        brackets.foldLeft(innerType: Type) { case (typ, (start, end)) =>
-          ArrayType(typ, ps2tr(start, end))
-        }
-    }
-  def typeArg: P[Type] = P(wildCard | nonWildcardType)
-  def typeArgList: P[TypeArgList] =
-    P(("[" ~/ P.index ~ typeArg ~ ("," ~ typeArg).rep ~ "]" ~ P.index).?).map {
-      case Some((start, firstArg, restArgs, end)) =>
-        // println(s"typearglist, ${firstArg +: restArgs}")
-        TypeArgList(firstArg +: restArgs, ps2tr(start, end))
-      case None => TypeArgList(Nil, TextRange.synthetic)
+  val idsWithDots: P[Type] = identifier.repSep(ws ~ P.char('.') ~ ws).map {
+    case (NonEmptyList(first, restPath)) => UnresolvedType(first +: restPath)
+  }
+
+  val parenType: P[Type] =
+    P.defer(withRange(typ.between(P.char('(') ~ ws, ws ~ P.char(')')))).map {
+      case (start, inner, end) => ParenType(inner, tr(start, end))
     }
 
-  def returnType: P[Type] =
-    P(("void" ~~ !CharPred(_.isUnicodeIdentifierPart) ~/ P.index) | nonWildcardType).map { t =>
-      (t: @unchecked) match {
-        case end: Int => new VoidTypeRef(ps2tr(end - 4, end))
-        case typ: Type => typ
-      }
+  val selectableType: P[Type] = idsWithDots | parenType
+
+  val typeArgList = P
+    .defer(
+      typ
+        .repSep(ws ~ P.char(',') ~ ws)
+        .between(P.char('[') ~ ws, ws ~ P.char(']'))
+    )
+    .map { case NonEmptyList(firstArg, restArgs) =>
+      TypeArgList(firstArg :: restArgs)
     }
+
+  val typeApply: P[Type => Type] = typeArgList.rep.map { case argLists =>
+    typ =>
+      argLists.foldLeft(typ) { (typeCtor, argList) =>
+        TypeApply(typeCtor, argList)
+      }
+  }
+
+  val typeDotAccess: P[Type => Type] =
+    identifierWithTextRange.between(P.char('.') ~ ws, ws).rep.map {
+      case argLists =>
+        typ =>
+          argLists.foldLeft(typ) { case (typ, (memberName, memberRange)) =>
+            TypeMemberAccess(typ, memberName)
+          }
+    }
+
+  /** Type application (`foo[bar]`) and type member access (`foo.bar`). Put in
+    * one parser because they have the same precedence.
+    */
+  val typeApplyOrDot: P[Type] =
+    P.defer((selectableType <* ws.?) ~ (typeApply | typeDotAccess).rep0).map {
+      case (firstType, dotsAndApplys) =>
+        dotsAndApplys.foldLeft(firstType) { (typ, fn) => fn(typ) }
+    }
+
+  val wildcard: P[Type] = P.char('?').map {
+    case _ => Wildcard(???, ???)
+  }
+
+  val typ: P[Type] = P.defer(wildcard | typeApplyOrDot)
 
   def typeParam: P[TypeParam] =
-    P(identifierWithTextRange ~ upperBound.? ~ lowerBound.?).map {
-      case (name, nameRange, upper, lower) =>
-        new TypeParam(
+    (identifierWithTextRange ~ typ.between(ws ~ P.string("<:") ~ ws, ws).? ~ typ.between(ws ~ P.string(">:") ~ ws, ws).?).map {
+      case (name -> nameRange -> upperBound -> lowerBound) =>
+        TypeParam(
           name,
-          upper.getOrElse(BuiltinTypes.objectType),
-          lower.getOrElse(NothingTypeDef.makeRef),
+          upperBound.getOrElse(BuiltinTypes.objectType),
+          lowerBound.getOrElse(NothingTypeDef.makeRef),
           nameRange
         )
     }
 
   def typeParamList: P[TypeParamList] =
-    (P.index ~ typeParam.repSep(P.char(',')).between(P.char('['), P.char(']')) ~ P.index).map {
-      case (start, NonEmptyList(first, last), end) => new TypeParamList(first +: rest, ps2tr(start, end))
-    }
+    withRange(typeParam.repSep(P.char(',')).between(P.char('['), P.char(']')))
+      .map { case (start, NonEmptyList(first, rest), end) =>
+        TypeParamList(first +: rest)
+      }
 }
