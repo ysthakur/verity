@@ -1,14 +1,17 @@
 package verity.parser
 
-import verity.ast._
+import verity.ast.*
 
-import VerityParser.tr
+import verity.parser.VerityParser.tr
 
 import cats.parse.{Parser, Parser0}
 import cats.parse.Rfc5234.{sp, crlf, lf, wsp}
 import cats.data.NonEmptyList
 
-private class Core {
+/**
+  * General purpose parsers
+  */
+object Core {
 
   /** Whitespace */
   def ws: Parser0[Unit] = (sp | crlf | lf).rep0.void

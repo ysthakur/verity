@@ -1,18 +1,19 @@
 package verity.parser
 
-import verity.ast.{Expr, *}
+import verity.ast.*
 
-// import verity.parser.Core._
-// import verity.parser.Types._
-import VerityParser.tr
+import verity.parser.Core.*
+import verity.parser.Types.*
+import verity.parser.VerityParser.tr
 
+import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
 import cats.parse.Rfc5234.digit
 
-private class Exprs(core: Core, types: Types) {
-  import core._
-  import types._
-
+/**
+  * Parsers for expressions
+  */
+object Exprs {
   val boolLiteral: P[BoolLiteral] =
     ((identifier("true").as(true) | identifier("false").as(false)) ~ P.index)
       .map { case (value -> end) =>
@@ -106,14 +107,13 @@ private class Exprs(core: Core, types: Types) {
   val logicAnd: P[Expr] = binOp(eqNotEq, List("&&"))
   val logicOr: P[Expr] = binOp(logicAnd, List("||"))
 
+  /** Has to be right-associative */
+  val assignment: P[Expr] = P.defer(logicOr.repSep(ws ~ P.string("<-") ~ ws)).map {
+    case NonEmptyList(first, rest) => rest.foldRight(first) { (rvalue, lvalue) => AssignExpr(lvalue, rvalue) }
+  }
+
   // TODO add if expressions
   val expr: P[Expr] = logicOr
-
-  // todo augmented assignment such as +=, -=
-  // val assignment: P[AssignStmt] = P.defer(logicOr ~ (P.string("=").surroundedBy(ws) *> logicOr).rep).map {
-  //   case (property, Some(value)) =>
-  //     AssignStmt(property, value)
-  // }
 
   /** Helper to make a parser for a binary expression
     * @param prev

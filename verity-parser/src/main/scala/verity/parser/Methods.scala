@@ -1,59 +1,39 @@
 package verity.parser
 
-import verity.ast._
-// import Core._
-// import Exprs._
-// import Types._
-import VerityParser.tr
+import verity.ast.*
+import verity.parser.Core.*
+import verity.parser.Exprs.*
+import verity.parser.Types.*
+import verity.parser.VerityParser.tr
 
 import cats.parse.{Parser as P, Parser0 as P0}
 
 import collection.mutable.ArrayBuffer
 
-private class Methods(core: Core, types: Types, exprs: Exprs) {
-  import core._
-  import types._
-  import exprs._
+/** Parsers for function-related stuff
+  */
+object Functions {
 
-  private def param: P[Parameter] =
-    (identifierText ~ ":" ~ nonWildcardType).map { case (name, typ) =>
-      Parameter(
-        List.empty, // TODO Add annotations!
-        typ,
-        name,
-        isGiven = false,
-        isProof = false
-      )
+  private val param: P[ValParam] =
+    (identifierText <* ws <* P.char(':') <* ws *> typ).map { case (name, typ) =>
+      ValParam(typ, name)
     }
 
-  private def params: P[List[Parameter]] =
-    ((param ~ ("," ~/ param).rep).?).map {
-      case None                            => Nil
-      case Some((firstParam, otherParams)) => firstParam :: otherParams.toList
+  /** Helper to make parsers for different kinds of parameter lists */
+  def paramList(start: P0[Unit], kind: ParamListKind): P[ValParamList] =
+    P.defer(
+      param.repSep0(ws ~ P.char(',') ~ ws).between(P.char('(') *> start *> ws, ws >* P.char(')'))
+    ).map { case params =>
+      ValParamList(params, kind)
     }
 
-  def normParamList: P[ParamList] =
-    ("(" ~ P.index ~ params ~ ")" ~ P.index).map { case (start, params, end) =>
-      ParamList(params, tr(start, end), ParamListKind.NORMAL)
-    }
-  def givenParamList: P[ParamList] =
-    (
-      "(" ~ P.index ~ "given" ~~ !CharPred(
-        _.isUnicodeIdentifierPart
-      ) ~/ params ~ ")" ~ P.index
-    ).map { case (start, params, end) =>
-      ParamList(params, tr(start, end), ParamListKind.GIVEN)
-    }
-  def proofParamList: P[ParamList] =
-    (
-      "(" ~ P.index ~ "proof" ~~ !CharPred(
-        _.isUnicodeIdentifierPart
-      ) ~/ params ~ ")" ~ P.index
-    ).map { case (start, params, end) =>
-      ParamList(params, tr(start, end), ParamListKind.PROOF)
-    }
+  val normParamList = paramList(P.unit, ParamListKind.Normal)
 
-  def proofClause: P[Seq[Type]] =
+  val givenParamList = paramList(identifier("given"), ParamListKind.Given)
+
+  val proofParamList = paramList(identifier("proof"), ParamListKind.Proof)
+
+  val provenClause: P[Seq[Type]] =
     (
       identifier("proof") ~~ !CharPred(
         _.isUnicodeIdentifierPart
@@ -62,7 +42,6 @@ private class Methods(core: Core, types: Types, exprs: Exprs) {
       firstType +: restTypes
     }
 
-  // todo allow final modifier
   def letDecl: P[LocalVar] =
     (
       identifier(
@@ -71,6 +50,26 @@ private class Methods(core: Core, types: Types, exprs: Exprs) {
     ).map { case (name, mods, typ, expr, end) =>
       LocalVar(name, mods, typ, expr, end)
     }
+  
+  def fnDecl: P[Lambda] =
+    ((P.index <* identifier("fn") <* ws).with1
+      ~ identifier
+      ~ (typeParamList.? <* ws)
+      ~ (normParamList.? <* ws)
+      ~ (givenParamList.? <* ws)
+      ~ (proofParamList.? <* ws)
+      ~ (P.string("=") *> expr)
+      ~ P.index).map {
+      case (start -> typeParams -> normParams -> givenParams -> proofParams -> body -> end) =>
+        Lambda(
+          typeParams,
+          normParams,
+          givenParams,
+          proofParams,
+          body,
+          tr(start, end)
+        )
+    }
 
   def lambda: P[Lambda] =
     ((P.index <* identifier("fn") <* ws).with1
@@ -78,8 +77,16 @@ private class Methods(core: Core, types: Types, exprs: Exprs) {
       ~ (normParamList.? <* ws)
       ~ (givenParamList.? <* ws)
       ~ (proofParamList.? <* ws)
-      ~ (P.string("=>") *> expr)
-      ~ P.index).map { case (start -> typeParams -> normParams -> givenParams -> proofParams -> body -> end) =>
-      Lambda(typeParams, normParams, givenParams, proofParams, body, tr(start, end))
+      ~ (P.string("->") *> expr)
+      ~ P.index).map {
+      case (start -> typeParams -> normParams -> givenParams -> proofParams -> body -> end) =>
+        Lambda(
+          typeParams,
+          normParams,
+          givenParams,
+          proofParams,
+          body,
+          tr(start, end)
+        )
     }
 }

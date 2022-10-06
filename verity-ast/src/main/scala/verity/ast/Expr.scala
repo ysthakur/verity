@@ -112,4 +112,4 @@ enum ParamListKind {
 
 case class Modifier(mod: String, textRange: TextRange) extends Tree
 
-case class AssignStmt(lvalue: Expr, rvalue: Expr) extends Tree
+case class AssignExpr(lvalue: Expr, rvalue: Expr) extends Expr

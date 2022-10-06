@@ -1,14 +1,16 @@
 package verity.parser
 
-import verity.ast._
-
-import VerityParser.tr
+import verity.ast.*
+import verity.parser.Core.*
+import verity.parser.VerityParser.tr
 
 import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
 
-private class Types(core: Core) {
-  import core._
+/**
+  * Parsers for type-related stuff
+  */
+object Types {
 
   /** TODO find a better name for this A type like `foo` or `foo.bar.baz` (only
     * names separated by dots)
