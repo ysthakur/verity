@@ -10,8 +10,7 @@ import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
 import cats.parse.Rfc5234.digit
 
-/**
-  * Parsers for expressions
+/** Parsers for expressions
   */
 object Exprs {
   val boolLiteral: P[BoolLiteral] =
@@ -108,12 +107,28 @@ object Exprs {
   val logicOr: P[Expr] = binOp(logicAnd, List("||"))
 
   /** Has to be right-associative */
-  val assignment: P[Expr] = P.defer(logicOr.repSep(ws ~ P.string("<-") ~ ws)).map {
-    case NonEmptyList(first, rest) => rest.foldRight(first) { (rvalue, lvalue) => AssignExpr(lvalue, rvalue) }
+  val assignment: P[Expr] =
+    P.defer(logicOr.repSep(ws ~ P.string("<-") ~ ws)).map {
+      case NonEmptyList(first, rest) =>
+        rest.foldRight(first) { (rvalue, lvalue) => AssignExpr(lvalue, rvalue) }
+    }
+
+  val varDef: P[VarDef] = (identifier ~ (P
+    .char(':') *> typ).?.between(ws, P.char('=') ~ ws) ~ assignment).map {
+    case (varName -> typ -> value) => VarDef(varName, typ, value)
   }
 
+  val varDefs = varDef
+    .repSep(ws ~ P.char(',') ~ ws)
+    .between(identifier("val") ~ ws, ws ~ identifier("in") ~ ws)
+
+  val varDefExpr: P[Expr] =
+    P.defer(varDefs ~ expr).map { case (NonEmptyList(firstVar, rest), body) =>
+      LetExpr(firstVar :: rest, body)
+    }
+
   // TODO add if expressions
-  val expr: P[Expr] = logicOr
+  val expr: P[Expr] = varDefExpr
 
   /** Helper to make a parser for a binary expression
     * @param prev
@@ -132,5 +147,53 @@ object Exprs {
           rhs
         )
       }
+    }
+
+  private val param: P[ValParam] =
+    ((identifier <* ws <* P.char(':') <* ws) ~ typ).map { case (name, typ) =>
+      ValParam(name, typ)
+    }
+
+  /** Helper to make parsers for different kinds of parameter lists */
+  def paramList(start: P0[Unit], kind: ParamListKind): P[ValParamList] =
+    P.defer(
+      P.char('(') *> ws *> start *> ws *>
+        param.repSep0(ws ~ P.char(',') ~ ws) <* ws <* P.char(')')
+    ).map { case params =>
+      ValParamList(params, kind)
+    }
+
+  val normParamList = paramList(P.unit, ParamListKind.Normal)
+
+  val givenParamList = paramList(identifier("given"), ParamListKind.Given)
+
+  val proofParamList = paramList(identifier("proof"), ParamListKind.Proof)
+
+  // val provenClause: P[Seq[Type]] =
+  //   (
+  //     identifier("proof") ~~ !CharPred(
+  //       _.isUnicodeIdentifierPart
+  //     ) ~/ typeRef ~ ("," ~ typeRef).rep
+  //   ).map { case (firstType, restTypes) =>
+  //     firstType +: restTypes
+  //   }
+
+  def lambda: P[Lambda] =
+    (P.char('\\') *> P.index
+      ~ (typeParamList.? <* ws)
+      ~ (normParamList.? <* ws)
+      ~ (givenParamList.? <* ws)
+      ~ (proofParamList.? <* ws)
+      ~ (P.string("->") *> expr)
+      ~ P.index).map {
+      case (start -> typeParams -> normParams -> givenParams -> proofParams -> body -> end) =>
+        Lambda(
+          typeParams,
+          normParams,
+          givenParams,
+          proofParams,
+          body,
+          tr(start, end)
+        )
     }
 }

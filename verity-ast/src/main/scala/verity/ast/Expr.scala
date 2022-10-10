@@ -78,16 +78,14 @@ case class ProofArgList(args: List[Expr]) extends ValArgList
 case class UpcastExpr(expr: Expr, typ: Type) extends Expr
 
 /** An expression like `let foo = bar in baz` */
-case class LetExpr(vars: List[VarDef], body: Expr, rec: Boolean = false)
-    extends Expr
+case class LetExpr(vars: List[VarDef], body: Expr) extends Expr
 
 /** A local variable
   */
-class VarDef(
+case class VarDef(
   val name: String,
-  var typ: Type,
-  var initVal: Expr,
-  val isFinal: Boolean = true
+  val typ: Option[Type],
+  val value: Expr
 ) extends Def
 
 case class Lambda(

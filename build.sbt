@@ -1,5 +1,5 @@
 val projectName = "verity"
-val scala3version = "3.1.1"
+val scala3version = "3.2.0"
 val scala2version = "2.13.6"
 val verityVersion = "0.1.0"
 
@@ -50,8 +50,7 @@ lazy val `verity-parser` = project
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.2.12" % "test",
-      "org.typelevel" %% "cats-parse" % "0.3.7"
+      "org.typelevel" %% "cats-parse" % "0.3.8"
     ),
     // scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true)))
   )
@@ -89,18 +88,17 @@ lazy val `verity-core` = project
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
     libraryDependencies ++= (Seq(
-      "org.typelevel" %% "cats-core" % "2.6.1"
-//      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
+      "org.typelevel" %% "cats-core" % "2.8.0"
     ) ++ commonLibs3)
   )
   .dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`, `verity-read-bytecode`)
 
 lazy val commonLibs3 = Seq(
-//  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.3",
-  "junit" % "junit" % "4.11" % Test,
+  "junit" % "junit" % "4.13.2" % Test,
   "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
   "com.novocode" % "junit-interface" % "0.11" % "test",
-  "org.scala-lang" %% "scala3-library" % scala3version
+  "org.scala-lang" %% "scala3-library" % scala3version,
+  "org.scalatest" %% "scalatest" % "3.2.14" % Test,
 )
 
 val commonScala2Options = Seq(

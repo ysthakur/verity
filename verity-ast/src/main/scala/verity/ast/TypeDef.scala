@@ -7,8 +7,16 @@ trait TypeDef extends Def {
   /** The type parameters and proof parameters for this typedef. None of the
     * param lists should be normal or given parameters.
     */
-  def paramLists: List[TypeParamList | ValParamList] = Nil
+  def typeParams: TypeParamList = TypeParamList(Nil)
+  def givenParams: ValParamList = ValParamList(Nil)
+  def proofParams: ValParamList = ValParamList(Nil)
+
+  def props: List[Prop] = Nil
 }
+
+case class Prop(name: String, typ: Type, value: Option[Expr]) extends Tree
+
+case class Singleton(name: String, superTypes: Type, props: List[Prop])
 
 object BuiltinTypes {
   def verityPkg(using root: Package): Package = root.findChild("verity").get
@@ -53,5 +61,8 @@ case class TypeParamList(params: List[TypeParam]) extends Tree
 
 case class TypeAlias(
   override val name: String,
-  override val paramLists: List[TypeParamList | ValParamList]
+  override val typeParams: TypeParamList,
+  override val givenParams: ValParamList,
+  override val proofParams: ValParamList,
+  val body: Type
 ) extends TypeDef
