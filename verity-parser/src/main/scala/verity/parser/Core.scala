@@ -11,7 +11,7 @@ import cats.data.NonEmptyList
 /**
   * General purpose parsers
   */
-object Core {
+private[parser] object Core {
 
   /** Whitespace */
   def ws: Parser0[Unit] = (sp | crlf | lf).rep0.void

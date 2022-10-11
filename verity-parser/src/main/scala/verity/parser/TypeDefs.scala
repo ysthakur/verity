@@ -12,14 +12,21 @@ import collection.mutable.ArrayBuffer
 
 /** Parsers for stuff inside TypeDefs
   */
-object TypeDefs {
+private[parser] object TypeDefs {
 
-  def prop: P[Prop] =
+  val prop: P[Prop] =
     withRange(
       identifier("val") *> ws *> (identifier ~ (ws *> P.char(
         ':'
       ) *> typ) ~ (ws *> P.char('=') *> expr).?)
-    ).map { case  (start, (name -> typ -> value), end) =>
+    ).map { case (start, name -> typ -> value, end) =>
       Prop(name, typ, value)
+    }
+
+  // todo do supertypes and traits
+  val classOrTrait: P[TypeDef] =
+    (identifier("class") *> identifier.between(ws, ws ~ P.char('=') ~ ws) ~ prop
+      .repSep0(ws) <* ws <* identifier("end")).map { case (name, props) =>
+      VClass(name, Nil, props, false)
     }
 }

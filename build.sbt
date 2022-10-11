@@ -49,10 +49,9 @@ lazy val `verity-parser` = project
     name := "verity-parser",
     scalaVersion := scala3version,
     scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= Seq(
+    libraryDependencies ++= commonLibs3 ++ Seq(
       "org.typelevel" %% "cats-parse" % "0.3.8"
     ),
-    // scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true)))
   )
   .dependsOn(`verity-ast`)
 

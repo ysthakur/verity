@@ -70,16 +70,17 @@ object Exprs {
 
   /** `foo.bar` */
   val propAccess: P[Expr] =
-    P.defer(selectable ~ (P.char('.').surroundedBy(ws) *> identifier).rep).map {
-      case (obj, props) =>
+    P.defer(selectable ~ (P.char('.').surroundedBy(ws) *> identifier).backtrack.rep0)
+      .map { case (obj, props) =>
         props.foldLeft(obj) { (obj, prop) => PropAccess(obj, prop) }
-    }
+      }
 
   /** Helper to make parsers for different kinds of argument lists */
   def argList(start: P0[Unit]): P[List[Expr]] =
     P.defer(
-      P.char('(') *> start *> ws *> expr.repSep0(ws ~ P.char(',') ~ ws) <* P
-        .char(')')
+      P.char('(') *> start *> ws *> expr.backtrack.repSep0(
+        ws ~ P.char(',') ~ ws
+      ) <* P.char(')')
     )
 
   val normArgList: P[NormArgList] = argList(P.unit).map(NormArgList(_))
@@ -90,7 +91,7 @@ object Exprs {
 
   val methodCall: P[Expr] = P
     .defer(
-      propAccess ~ (ws.with1 *> typeArgList.?.with1 ~ normArgList ~ (ws *> givenArgList).? ~ (ws *> proofArgList).?).rep0
+      propAccess ~ (ws.with1 *> typeArgList.?.with1 ~ normArgList ~ (ws *> givenArgList).? ~ (ws *> proofArgList).?).backtrack.rep0
     )
     .map { case (obj, argLists) =>
       argLists.foldLeft(obj) {
@@ -118,17 +119,16 @@ object Exprs {
     case (varName -> typ -> value) => VarDef(varName, typ, value)
   }
 
-  val varDefs = varDef
-    .repSep(ws ~ P.char(',') ~ ws)
-    .between(identifier("val") ~ ws, ws ~ identifier("in") ~ ws)
+  val varDefs = identifier("val") *> ws *> varDef.repSep(ws ~ P.char(',') ~ ws)
 
   val varDefExpr: P[Expr] =
-    P.defer(varDefs ~ expr).map { case (NonEmptyList(firstVar, rest), body) =>
-      LetExpr(firstVar :: rest, body)
+    P.defer(varDefs ~ (ws *> identifier("in") *> ws *> expr)).map {
+      case (NonEmptyList(firstVar, rest), body) =>
+        LetExpr(firstVar :: rest, body)
     }
 
   // TODO add if expressions
-  val expr: P[Expr] = varDefExpr
+  val expr: P[Expr] = (varDefExpr.backtrack | assignment)
 
   /** Helper to make a parser for a binary expression
     * @param prev
@@ -137,13 +137,16 @@ object Exprs {
     *   The operators that the current parser should parse
     */
   def binOp(prev: P[Expr], ops: List[String]) =
+    // todo get rid of the backtrack? shouldn't be necessary
+    // maybe .soft can be used instead
     P.defer(
-      prev ~ (withRange(P.stringIn(ops)).surroundedBy(ws) ~ prev).rep0
+      prev ~ ((P.stringIn(ops) ~ P.index)
+        .surroundedBy(ws) ~ prev).backtrack.rep0
     ).map { case (left, reps) =>
-      reps.foldLeft(left) { case (lhs, (opStart, op, opEnd) -> rhs) =>
+      reps.foldLeft(left) { case (lhs, (op, opEnd) -> rhs) =>
         BinExpr(
           lhs,
-          Op(op, tr(opStart, opEnd)),
+          Op(op, tr(opEnd - op.length, opEnd)),
           rhs
         )
       }

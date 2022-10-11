@@ -10,7 +10,7 @@ import cats.parse.{Parser as P, Parser0 as P0}
 /**
   * Parsers for type-related stuff
   */
-object Types {
+private[parser] object Types {
 
   /** TODO find a better name for this A type like `foo` or `foo.bar.baz` (only
     * names separated by dots)
@@ -62,7 +62,7 @@ object Types {
     }
 
   val wildcard: P[Type] = P.char('?').map {
-    case _ => Wildcard(???, ???)
+    case _ => Wildcard(UnknownType, UnknownType)
   }
 
   val typ: P[Type] = P.defer(wildcard | typeApplyOrDot)

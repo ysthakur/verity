@@ -6,13 +6,13 @@ import scala.collection.mutable.ArrayBuffer
 
 sealed trait Expr extends Tree
 
-class BoolLiteral(value: Boolean, textRange: TextRange) extends Expr
+case class BoolLiteral(value: Boolean, textRange: TextRange) extends Expr
 
-class IntLiteral(value: Int, textRange: TextRange) extends Expr
+case class IntLiteral(value: Int, textRange: TextRange) extends Expr
 
-class DoubleLiteral(value: Double, textRange: TextRange) extends Expr
+case class DoubleLiteral(value: Double, textRange: TextRange) extends Expr
 
-class CharLiteral(char: Char, textRange: TextRange) extends Expr
+case class CharLiteral(char: Char, textRange: TextRange) extends Expr
 
 case class StringLiteral(text: String, textRange: TextRange) extends Expr
 
