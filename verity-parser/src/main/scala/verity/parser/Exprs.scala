@@ -70,10 +70,11 @@ object Exprs {
 
   /** `foo.bar` */
   val propAccess: P[Expr] =
-    P.defer(selectable ~ (P.char('.').surroundedBy(ws) *> identifier).backtrack.rep0)
-      .map { case (obj, props) =>
-        props.foldLeft(obj) { (obj, prop) => PropAccess(obj, prop) }
-      }
+    P.defer(
+      selectable ~ (P.char('.').surroundedBy(ws) *> identifier).backtrack.rep0
+    ).map { case (obj, props) =>
+      props.foldLeft(obj) { (obj, prop) => PropAccess(obj, prop) }
+    }
 
   /** Helper to make parsers for different kinds of argument lists */
   def argList(start: P0[Unit]): P[List[Expr]] =
@@ -91,7 +92,7 @@ object Exprs {
 
   val methodCall: P[Expr] = P
     .defer(
-      propAccess ~ (ws.with1 *> typeArgList.?.with1 ~ normArgList ~ (ws *> givenArgList).? ~ (ws *> proofArgList).?).backtrack.rep0
+      (propAccess <* ws) ~ (typeArgList.?.with1 ~ normArgList ~ (ws *> givenArgList).? ~ (ws *> proofArgList).?).backtrack.rep0
     )
     .map { case (obj, argLists) =>
       argLists.foldLeft(obj) {
@@ -114,21 +115,27 @@ object Exprs {
         rest.foldRight(first) { (rvalue, lvalue) => AssignExpr(lvalue, rvalue) }
     }
 
-  val varDef: P[VarDef] = (identifier ~ (P
-    .char(':') *> typ).?.between(ws, P.char('=') ~ ws) ~ assignment).map {
-    case (varName -> typ -> value) => VarDef(varName, typ, value)
-  }
+  val varDef: P[VarDef] =
+    (
+      identifier.surroundedBy(ws)
+        ~ (P.char(':') *> ws *> typ <* ws).?
+        ~ (P.char('=') *> ws *> assignment <* ws)
+    ).map { case (varName -> typ -> value) =>
+      VarDef(varName, typ, value)
+    }
 
-  val varDefs = identifier("val") *> ws *> varDef.repSep(ws ~ P.char(',') ~ ws)
+  val varDefs = identifier("val") *> ws *> varDef.repSep(P.char(',') ~ ws)
 
   val varDefExpr: P[Expr] =
-    P.defer(varDefs ~ (ws *> identifier("in") *> ws *> expr)).map {
-      case (NonEmptyList(firstVar, rest), body) =>
-        LetExpr(firstVar :: rest, body)
+    P.defer((varDefs <* ws <* identifier("in") <* ws).rep0.with1 ~ assignment).map {
+      case (varLists, body) =>
+        varLists.foldRight(body) {
+          case (NonEmptyList(firstVar, rest), body) => LetExpr(firstVar :: rest, body)
+        }
     }
 
   // TODO add if expressions
-  val expr: P[Expr] = (varDefExpr.backtrack | assignment)
+  val expr: P[Expr] = varDefExpr
 
   /** Helper to make a parser for a binary expression
     * @param prev

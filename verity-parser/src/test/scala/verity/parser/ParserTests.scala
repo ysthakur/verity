@@ -1,9 +1,14 @@
-import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.funspec.AnyFunSpec
 
 import verity.ast.*
-import verity.parser.Exprs
+import verity.parser.{Exprs, Types}
 
-class ParserTests extends AnyFunSuite {
+class ParserTests extends AnyFunSpec {
+  describe("A parser") {
+    describe("expressions") {
+      
+    }
+  }
   test("Basic arithmetic and stuff") {
     assert(
       Exprs.expr.parse("3 + 2 * 6 > abc == true") ==
@@ -25,6 +30,71 @@ class ParserTests extends AnyFunSuite {
               ),
               Op("==", TextRange(16, 18)),
               BoolLiteral(true, TextRange(19, 23))
+            )
+        )
+    )
+  }
+
+  test("Basic val expression without type") {
+    assert(
+      Exprs.expr.parse("val x = 5 in 3") ==
+        Right(
+          "" ->
+            LetExpr(
+              List(VarDef("x", None, IntLiteral(5, TextRange(8, 9)))),
+              IntLiteral(3, TextRange(13, 14))
+            )
+        )
+    )
+  }
+
+  test("Somewhat complex type") {
+    assert(
+      Types.typ.parse("(verity.lang).Int[A, B[D].Foo[C]]") ==
+        Right(
+          "" ->
+            TypeApply(
+              TypeMemberAccess(
+                ParenType(
+                  UnresolvedType(List("verity", "lang")),
+                  TextRange(0, 13)
+                ),
+                "Int"
+              ),
+              TypeArgList(
+                List(
+                  UnresolvedType(List("A")),
+                  TypeApply(
+                    TypeMemberAccess(
+                      TypeApply(
+                        UnresolvedType(List("B")),
+                        TypeArgList(List(UnresolvedType(List("D"))))
+                      ),
+                      "Foo"
+                    ),
+                    TypeArgList(List(UnresolvedType(List("C"))))
+                  )
+                )
+              )
+            )
+        )
+    )
+  }
+
+  test("Basic val expression with type") {
+    assert(
+      Exprs.expr.parse("val x : verity.lang.Int = 5 in 3") ==
+        Right(
+          "" ->
+            LetExpr(
+              List(
+                VarDef(
+                  "x",
+                  Some(UnresolvedType(List("verity", "lang", "Int"))),
+                  IntLiteral(5, TextRange(26, 27))
+                )
+              ),
+              IntLiteral(3, TextRange(31, 32))
             )
         )
     )

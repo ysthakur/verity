@@ -10,12 +10,12 @@ import cats.parse.{Parser as P, Parser0 as P0}
 /**
   * Parsers for type-related stuff
   */
-private[parser] object Types {
+object Types {
 
   /** TODO find a better name for this A type like `foo` or `foo.bar.baz` (only
     * names separated by dots)
     */
-  val idsWithDots: P[Type] = identifier.repSep(ws ~ P.char('.') ~ ws).map {
+  val idsWithDots: P[Type] = (identifier <* ws).repSep(P.char('.') ~ ws).map {
     case (NonEmptyList(first, restPath)) => UnresolvedType(first +: restPath)
   }
 

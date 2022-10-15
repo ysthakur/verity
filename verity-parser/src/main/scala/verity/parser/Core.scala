@@ -26,7 +26,7 @@ private[parser] object Core {
   )
 
   def identifier: Parser[String] =
-    (Parser.charWhere(_.isUnicodeIdentifierStart) ~ Parser.charsWhile(
+    (Parser.charWhere(_.isUnicodeIdentifierStart) ~ Parser.charsWhile0(
       _.isUnicodeIdentifierPart
     )).map { case (first, rest) => s"$first$rest" }
 
