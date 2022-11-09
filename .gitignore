@@ -1,12 +1,14 @@
+# IDE/editor stuff
 .bloop
 .bsp
-.dotty-ide-artifact
 .idea
 .metals
 .vscode
 metals.sbt
-target
-verity-parser/target
-verity-ast/target
-verity-codegen/target
+
+# Mill output
+out/
+
+# sbt output
+target/
 null

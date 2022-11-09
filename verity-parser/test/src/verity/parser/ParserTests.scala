@@ -1,14 +1,9 @@
-import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.funsuite.AnyFunSuite
 
 import verity.ast.*
 import verity.parser.{Exprs, Types}
 
-class ParserTests extends AnyFunSpec {
-  describe("A parser") {
-    describe("expressions") {
-      
-    }
-  }
+class ParserTests extends AnyFunSuite {
   test("Basic arithmetic and stuff") {
     assert(
       Exprs.expr.parse("3 + 2 * 6 > abc == true") ==
