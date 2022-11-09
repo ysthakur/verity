@@ -13,7 +13,7 @@ trait CommonModule extends ScalaModule with ScalafmtModule {
     "UTF-8",
     "-feature",
     "-Xfatal-warnings",
-    "-Yexplicit-nulls",
+    "-Yexplicit-nulls"
     // "-Ysafe-init"
     // "-explain", // explain warnings in LOTS of detail
   )
@@ -29,14 +29,22 @@ trait CommonModule extends ScalaModule with ScalafmtModule {
   }
 }
 
-object `verity-ast` extends CommonModule
+object `verity-ast` extends CommonModule {
+  object test extends CommonTests
+}
 
-object `verity-codegen` extends CommonModule
+object `verity-codegen` extends CommonModule {
+  object test extends CommonTests
+}
 
-object `verity-common` extends CommonModule
+object `verity-common` extends CommonModule {
+  object test extends CommonTests
+}
 
 object `verity-core` extends CommonModule {
   def moduleDeps = Seq(`verity-ast`, `verity-parser`)
+
+  object test extends CommonTests
 }
 
 object `verity-parser` extends CommonModule {
@@ -50,4 +58,6 @@ object `verity-parser` extends CommonModule {
 object `verity-read-bytecode` extends CommonModule {
   def scalacOptions =
     super[CommonModule].scalacOptions.filter(_ != "-Yexplicit-nulls")
+
+  object test extends CommonTests
 }

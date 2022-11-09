@@ -1,1 +1,0 @@
-public class Show<T> extends Object{public <T>Show(){}}
