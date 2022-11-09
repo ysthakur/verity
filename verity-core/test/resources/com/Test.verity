@@ -1,0 +1,26 @@
+package com;
+
+import java.lang.*;
+
+class ExecutionContext {
+  val ec: ExecutionContext;
+}
+/*
+//
+
+class Foo {
+  public def foo()(given ExecutionContext ec): void {
+    //do stuff here
+  }
+
+  public def bar()(given ExecutionContext ec): void {
+    //do stuff here
+  }
+
+  public def baz(): void {
+    given val ec: ExecutionContext = ExecutionContext.global;
+
+    foo();
+    bar();
+  }
+}*/
