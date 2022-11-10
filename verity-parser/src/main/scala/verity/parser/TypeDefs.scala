@@ -27,6 +27,6 @@ private[parser] object TypeDefs {
   val classOrTrait: P[TypeDef] =
     (identifier("class") *> identifier.between(ws, ws ~ P.char('=') ~ ws) ~ prop
       .repSep0(ws) <* ws <* identifier("end")).map { case (name, props) =>
-      VClass(name, Nil, props, false)
+      ClassDef(name, Nil, props, false)
     }
 }

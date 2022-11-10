@@ -1,6 +1,5 @@
 val projectName = "verity"
-val scala3version = "3.2.0"
-val scala2version = "2.13.6"
+val scala3Version = "3.2.0"
 val verityVersion = "0.1.0"
 
 name := projectName
@@ -12,9 +11,33 @@ Compile / mainClass := Some("Main")
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
+val commonSettings = Seq(
+  scalaVersion := scala3Version,
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-encoding",
+    "UTF-8",
+    "-feature",
+    "-Xfatal-warnings",
+    "-Yexplicit-nulls"
+    // "-explain",
+    // "-Ysafe-init",
+  ),
+  libraryDependencies ++= Seq(
+    // "junit" % "junit" % "4.13.2" % Test,
+    // "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
+    // "com.novocode" % "junit-interface" % "0.11" % Test,
+    "org.scala-lang" %% "scala3-library" % scala3Version,
+    "org.scalatest" %% "scalatest" % "3.2.14" % Test
+  )
+)
+
 lazy val root = project
   .in(file("."))
-  .settings(name := "verity", scalaVersion := scala3version, scalacOptions ++= commonScala3Options)
+  .settings(
+    name := "verity",
+    commonSettings
+  )
   .disablePlugins()
   .aggregate(
     `verity-common`,
@@ -30,28 +53,24 @@ lazy val `verity-common` = project
   .in(file("verity-common"))
   .settings(
     name := "verity-common",
-    scalaVersion := scala3version,
-    scalacOptions ++= commonScala3Options
+    commonSettings
   )
 
 lazy val `verity-ast` = project
   .in(file("verity-ast"))
   .settings(
     name := "verity-ast",
-    scalaVersion := scala3version,
-    scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= commonLibs3
+    commonSettings
   ) //.dependsOn(`verity-common`)
 
 lazy val `verity-parser` = project
   .in(file("verity-parser"))
   .settings(
     name := "verity-parser",
-    scalaVersion := scala3version,
-    scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= commonLibs3 ++ Seq(
+    commonSettings,
+    libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-parse" % "0.3.8"
-    ),
+    )
   )
   .dependsOn(`verity-ast`)
 
@@ -59,12 +78,11 @@ lazy val `verity-read-bytecode` = project
   .in(file("verity-read-bytecode"))
   .settings(
     name := "verity-read-bytecode",
-    scalaVersion := scala3version,
-    scalacOptions ++= commonScala3Options.filter(_ != "-Yexplicit-nulls"),
-    libraryDependencies ++= (Seq(
+    commonSettings,
+    libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "9.1",
       "org.ow2.asm" % "asm-util" % "9.1"
-    ) ++ commonLibs3)
+    )
   )
   .dependsOn(`verity-common`, `verity-ast`)
 
@@ -72,7 +90,7 @@ lazy val `verity-codegen` = project
   .in(file("verity-codegen"))
   .settings(
     name := "verity-codegen",
-    scalaVersion := scala3version,
+    commonSettings,
     libraryDependencies ++= Seq(
       "org.ow2.asm" % "asm" % "9.1",
       "org.ow2.asm" % "asm-util" % "9.1"
@@ -84,42 +102,14 @@ lazy val `verity-core` = project
   .in(file("verity-core"))
   .settings(
     name := "verity-core",
-    scalaVersion := scala3version,
-    scalacOptions ++= commonScala3Options,
-    libraryDependencies ++= (Seq(
+    commonSettings,
+    libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.8.0"
-    ) ++ commonLibs3)
+    )
   )
-  .dependsOn(`verity-ast`, `verity-codegen`, `verity-parser`, `verity-read-bytecode`)
-
-lazy val commonLibs3 = Seq(
-  "junit" % "junit" % "4.13.2" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
-  "com.novocode" % "junit-interface" % "0.11" % "test",
-  "org.scala-lang" %% "scala3-library" % scala3version,
-  "org.scalatest" %% "scalatest" % "3.2.14" % Test,
-)
-
-val commonScala2Options = Seq(
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-feature",
-  "-Xlint",
-  "-Xfatal-warnings",
-  "-Ywarn-dead-code",
-  "-Ywarn-value-discard",
-  "-Ytasty-reader",
-  "-Xsource:3"
-)
-
-val commonScala3Options = Seq(
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-feature",
-  "-Xfatal-warnings",
-  "-Yexplicit-nulls"
-  // "-explain",
-  //"-Ycheck-init", //"-Ysafe-init"
-)
+  .dependsOn(
+    `verity-ast`,
+    `verity-codegen`,
+    `verity-parser`,
+    `verity-read-bytecode`
+  )

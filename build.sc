@@ -1,8 +1,12 @@
 import mill._, scalalib._, scalafmt._
+import mill.contrib.bloop.Bloop
 
 def commonScalaVersion = "3.2.0"
 
-val commonDeps = Agg(ivy"org.scala-lang::scala3-library:$commonScalaVersion")
+val commonDeps = Agg(
+  ivy"org.scala-lang::scala3-library:$commonScalaVersion",
+  ivy"org.typelevel::cats-core:2.8.0",
+)
 
 trait CommonModule extends ScalaModule with ScalafmtModule {
   def scalaVersion = commonScalaVersion
