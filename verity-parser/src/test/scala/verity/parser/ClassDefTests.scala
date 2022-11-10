@@ -5,6 +5,6 @@ import verity.parser.TypeDefs
 
 class ClassDefTests extends AnyFunSuite {
   test("Basic class def") {
-    assert(TypeDefs)
+    assert(TypeDef)
   }
 }

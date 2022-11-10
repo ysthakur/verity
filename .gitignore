@@ -6,9 +6,10 @@
 .vscode
 metals.sbt
 
-# Mill output
+# Mill stuff
 out/
 
-# sbt output
+# sbt stuff
+project/
 target/
 null
