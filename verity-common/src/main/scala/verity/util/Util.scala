@@ -1,4 +1,4 @@
-package verity.util
+package verity.compiler.util
 
 import scala.collection.IterableOps
 

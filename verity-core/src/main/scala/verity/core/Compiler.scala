@@ -1,14 +1,14 @@
-package verity.core
+package verity.compiler.core
 
 //import scala.language.unsafeNulls
 
-import verity.ast.*
-import verity.checks.InitialPass
-import verity.core.resolve
-import verity.codegen.OutputJava
-import verity.util.*
-import verity.parser.Parser
-import verity.readbytecode.ReadBytecode
+import verity.compiler.ast.*
+import verity.compiler.checks.InitialPass
+import verity.compiler.core.resolve
+import verity.compiler.codegen.OutputJava
+import verity.compiler.util.*
+import verity.compiler.parser.Parser
+import verity.compiler.readbytecode.ReadBytecode
 //import com.typesafe.scalalogging.Logger
 
 import java.io.{File, FileFilter, FileInputStream}
@@ -24,13 +24,13 @@ object Compiler {
     //Load JDK classes such as java.lang.Object
     ReadBytecode.readJdk(rootPkg, Paths.get(options.jdkDir).unsafeNN, options.modulesToRead)
     //Set the Object and String builtins
-    verity.ast.BuiltinTypes.refreshBuiltins(rootPkg)
+    verity.compiler.ast.BuiltinTypes.refreshBuiltins(rootPkg)
 
     //Parse Verity sources
     parsePkg(pkgs, files, rootPkg)
 
     //Do some initial checks (see if modifiers are okay, resolve imports, references to types, etc.)
-    verity.checks.InitialPass.initialPass(rootPkg)
+    verity.compiler.checks.InitialPass.initialPass(rootPkg)
     //Resolve expressions inside methods
     var allPassed = true
     for ((file -> res) <- resolve.resolveAndCheck(rootPkg)) {

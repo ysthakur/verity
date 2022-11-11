@@ -1,12 +1,12 @@
-package verity.core.resolve
+package verity.compiler.core.resolve
 
-import verity.ast.*
-import verity.ast.Def
-import verity.ast.infile.*
-import verity.checks.InitialPass
-import verity.core.Context.Defs
-import verity.core.*
-import verity.util.*
+import verity.compiler.ast.*
+import verity.compiler.ast.Def
+import verity.compiler.ast.infile.*
+import verity.compiler.checks.InitialPass
+import verity.compiler.core.Context.Defs
+import verity.compiler.core.*
+import verity.compiler.util.*
 
 //import cats.implicits.*
 //import cats.catsInstancesForId
@@ -27,7 +27,7 @@ type BooleanResolveResult = (Boolean, Iterable[CompilerMsg])
   *   Whether or not all the files succeeded, and all their accompanying compiler messages
   */
 def resolveAndCheck(root: Package): Map[FileNode, BooleanResolveResult] =
-  verity.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root).toMap
+  verity.compiler.core.PackageUtil.walkWithPath(root, resolveAndCheckFile)(using root).toMap
 
 /** Resolve all references to classes and type parameters in a file
   * @param file

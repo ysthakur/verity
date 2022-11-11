@@ -1,6 +1,6 @@
-package verity.core
+package verity.compiler.core
 
-import verity.util.unsafeNN
+import verity.compiler.util.unsafeNN
 
 import java.io.File
 import java.nio.file.Path

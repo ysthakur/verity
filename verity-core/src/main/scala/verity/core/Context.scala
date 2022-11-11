@@ -1,8 +1,8 @@
-package verity.core
+package verity.compiler.core
 
-import verity.ast._
+import verity.compiler.ast._
 
-import verity.core.Context.Defs
+import verity.compiler.core.Context.Defs
 
 type GivenDef = VarDef | Methodlike
 type ProofDef = VarDef | Methodlike | Expr

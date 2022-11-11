@@ -1,6 +1,6 @@
-package verity.core
+package verity.compiler.core
 
-import verity.ast.{FileNode, Package, Package}
+import verity.compiler.ast.{FileNode, Package, Package}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.collection.mutable

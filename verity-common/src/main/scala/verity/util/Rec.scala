@@ -1,4 +1,4 @@
-package verity.util
+package verity.compiler.util
 
 enum Rec[A] {
   case Done(value: A)

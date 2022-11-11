@@ -1,6 +1,6 @@
-package verity.ast
+package verity.compiler.ast
 
-import verity.ast.*
+import verity.compiler.ast.*
 
 import scala.collection.mutable.ArrayBuffer
 

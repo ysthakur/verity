@@ -1,9 +1,9 @@
-package verity.core.resolve
+package verity.compiler.core.resolve
 
-import verity.ast._
-import verity.ast.infile.{unresolved => ur, _}
-import verity.core._
-import verity.core.Context.Defs
+import verity.compiler.ast._
+import verity.compiler.ast.infile.{unresolved => ur, _}
+import verity.compiler.core._
+import verity.compiler.core.Context.Defs
 
 //import cats._
 //import cats.catsInstancesForId

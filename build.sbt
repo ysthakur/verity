@@ -74,37 +74,14 @@ lazy val `verity-parser` = project
   )
   .dependsOn(`verity-ast`)
 
-lazy val `verity-read-bytecode` = project
-  .in(file("verity-read-bytecode"))
-  .settings(
-    name := "verity-read-bytecode",
-    commonSettings,
-    libraryDependencies ++= Seq(
-      "org.ow2.asm" % "asm" % "9.1",
-      "org.ow2.asm" % "asm-util" % "9.1"
-    )
-  )
-  .dependsOn(`verity-common`, `verity-ast`)
-
-lazy val `verity-codegen` = project
-  .in(file("verity-codegen"))
-  .settings(
-    name := "verity-codegen",
-    commonSettings,
-    libraryDependencies ++= Seq(
-      "org.ow2.asm" % "asm" % "9.1",
-      "org.ow2.asm" % "asm-util" % "9.1"
-    )
-  )
-  .dependsOn(`verity-ast`)
-
 lazy val `verity-core` = project
   .in(file("verity-core"))
   .settings(
     name := "verity-core",
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.8.0"
+      "org.typelevel" %% "cats-core" % "2.8.0",
+      "com.github.scopt" %% "scopt" % "4.1.0",
     )
   )
   .dependsOn(

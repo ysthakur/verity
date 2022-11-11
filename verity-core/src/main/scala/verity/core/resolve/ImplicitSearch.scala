@@ -1,7 +1,7 @@
-package verity.core.resolve
+package verity.compiler.core.resolve
 
-import verity.ast._
-import verity.core._
+import verity.compiler.ast._
+import verity.compiler.core._
 
 object ImplicitSearch {
 

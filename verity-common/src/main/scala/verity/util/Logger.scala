@@ -1,4 +1,4 @@
-package verity.util
+package verity.compiler.util
 
 class Logger {
   def debug(s: String): Unit =

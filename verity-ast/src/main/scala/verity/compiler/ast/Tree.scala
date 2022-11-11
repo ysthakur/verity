@@ -1,4 +1,4 @@
-package verity.ast
+package verity.compiler.ast
 
 trait Tree
 

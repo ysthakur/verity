@@ -1,4 +1,4 @@
-package verity.ast
+package verity.compiler.ast
 
 import java.io.File
 import scala.annotation.{tailrec, targetName}

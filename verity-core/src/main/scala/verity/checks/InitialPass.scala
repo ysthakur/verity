@@ -1,17 +1,17 @@
-package verity.checks
+package verity.compiler.checks
 
-import verity.ast._
+import verity.compiler.ast._
 
-import verity.util._
-import verity.core.Context.Defs
-import verity.core.resolve.ReferenceResolve
-import verity.core._
-import verity.ast.Def
+import verity.compiler.util._
+import verity.compiler.core.Context.Defs
+import verity.compiler.core.resolve.ReferenceResolve
+import verity.compiler.core._
+import verity.compiler.ast.Def
 //import com.typesafe.scalalogging.Logger
 
 import scala.collection.mutable
 
-//todo move into verity.core?
+//todo move into verity.compiler.core?
 object InitialPass {
 
   /** Resolve method and field types
@@ -21,7 +21,7 @@ object InitialPass {
     */
   def initialPass(root: Package): Unit = {
     given Package = root
-    verity.core.PackageUtil.walkWithPath(
+    verity.compiler.core.PackageUtil.walkWithPath(
       root,
       (file, parentPkgs, pkgName) => if (file.isSource) initialPassFile(file, parentPkgs, pkgName)
     )

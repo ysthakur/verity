@@ -1,7 +1,7 @@
-package verity.core
+package verity.compiler.core
 
-import verity.core._
-import verity.util._
+import verity.compiler.core._
+import verity.compiler.util._
 
 import cats.data.{Writer, OptionT}
 import cats.implicits._

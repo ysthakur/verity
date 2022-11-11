@@ -1,9 +1,9 @@
-package verity.parser
+package verity.compiler.parser
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import verity.ast.*
-import verity.parser.TypeDefs
+import verity.compiler.ast.*
+import verity.compiler.parser.TypeDefs
 
 class ClassDefTests extends AnyFunSuite {
   test("Basic class def") {

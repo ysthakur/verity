@@ -37,13 +37,13 @@ class PersonBuilder {
     return new Person(b.name, b.age);
   }
 
-  public def setName(n: String)(proof ev: verity.lang.NotProven[SetName]): void proof SetName {
+  public def setName(n: String)(proof ev: verity.compiler.lang.NotProven[SetName]): void proof SetName {
     name = n;
     proof val ev: SetName = null;
     return;
   }
 
-  public def setAge(a: int)(proof ev: verity.lang.NotProven[SetAge]): void proof SetAge {
+  public def setAge(a: int)(proof ev: verity.compiler.lang.NotProven[SetAge]): void proof SetAge {
     age = a;
     proof val ev: SetAge = null;
     return;

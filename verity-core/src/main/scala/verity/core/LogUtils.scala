@@ -1,6 +1,6 @@
-package verity.core
+package verity.compiler.core
 
-import verity.ast.{FileNode, TextRange}
+import verity.compiler.ast.{FileNode, TextRange}
 //import com.typesafe.scalalogging.Logger
 
 class Messages private (

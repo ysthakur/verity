@@ -1,10 +1,10 @@
-package verity.core.resolve
+package verity.compiler.core.resolve
 
-import verity.ast._
+import verity.compiler.ast._
 
 
-import verity.core._
-import verity.core.Context.Defs
+import verity.compiler.core._
+import verity.compiler.core.Context.Defs
 //import cats.data.{OptionT, Writer}
 //import cats.implicits._
 //import cats.catsInstancesForId
@@ -77,7 +77,7 @@ private[verity] object ReferenceResolve {
         _ <- Writer.tell(
           //Log errors with the arguments if the class is resolved
           maybeCls.fold(Nil)(cls =>
-            verity.checks.CheckTypes.checkTypeArgs(args, cls.typeParams.params, typeArgsRange)
+            verity.compiler.checks.CheckTypes.checkTypeArgs(args, cls.typeParams.params, typeArgsRange)
           )
         )
         argList = TypeArgList(args, typ.args.textRange)

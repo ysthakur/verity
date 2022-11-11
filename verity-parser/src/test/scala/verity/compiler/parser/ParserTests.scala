@@ -1,9 +1,9 @@
-package verity.parser
+package verity.compiler.parser
 
 import org.scalatest.funsuite.AnyFunSuite
 
-import verity.ast.*
-import verity.parser.{Exprs, Types}
+import verity.compiler.ast.*
+import verity.compiler.parser.{Exprs, Types}
 
 class ParserTests extends AnyFunSuite {
   test("Basic arithmetic and stuff") {
@@ -47,7 +47,7 @@ class ParserTests extends AnyFunSuite {
 
   test("Somewhat complex type") {
     assert(
-      Types.typ.parse("(verity.lang).Int[A, B[D].Foo[C]]") ==
+      Types.typ.parse("(verity.compiler.lang).Int[A, B[D].Foo[C]]") ==
         Right(
           "" ->
             TypeApply(
@@ -80,7 +80,7 @@ class ParserTests extends AnyFunSuite {
 
   test("Basic val expression with type") {
     assert(
-      Exprs.expr.parse("val x : verity.lang.Int = 5 in 3") ==
+      Exprs.expr.parse("val x : verity.compiler.lang.Int = 5 in 3") ==
         Right(
           "" ->
             LetExpr(

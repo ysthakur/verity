@@ -1,4 +1,4 @@
-package verity.ast
+package verity.compiler.ast
 
 /** Records where a continuous piece of text is in a file
   *
