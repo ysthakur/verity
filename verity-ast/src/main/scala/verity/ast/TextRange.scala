@@ -1,19 +1,34 @@
 package verity.ast
 
-/**
-  * Records where a continuous piece of text is in a file
+/** Records where a continuous piece of text is in a file
   *
-  * @param start Start offset of the text
-  * @param end End offset of the text
+  * @param start
+  *   Start offset of the text
+  * @param end
+  *   End offset of the text
   */
 case class TextRange(start: Int, end: Int) {
   def isEmpty: Boolean = start == end
-  def isSynthetic: Boolean = this == TextRange.synthetic
+
+  /** Whether this TextRange didn't come from a real file */
+  def isSynthetic: Boolean =
+    start == -1 && end == -1
+
+  /** The length of the text */
   def length: Int = end - start
-  def to(other: TextRange) = TextRange(this.start, other.end)
+
+  override def equals(other: Any) = other match {
+    case tr: TextRange =>
+      this.isSynthetic || tr.isSynthetic || start == tr.start && end == tr.end
+    case _ => false
+  }
 }
 
 object TextRange {
+
+  /** A TextRange that didn't come from a real file. Compares equal to any other
+    * TextRange
+    */
   val synthetic = TextRange(-1, -1)
 
   def empty(offset: Int) = TextRange(offset, offset)
@@ -31,6 +46,7 @@ case class Text(text: String, textRange: TextRange) {
 }
 
 object Text {
-  def apply(text: String, textRange: TextRange = TextRange.synthetic) = new Text(text, textRange)
+  def apply(text: String, textRange: TextRange = TextRange.synthetic) =
+    new Text(text, textRange)
   def unapply(text: Text): Some[String] = Some(text.text)
 }

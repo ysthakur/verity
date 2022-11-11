@@ -16,17 +16,17 @@ private[parser] object TypeDefs {
 
   val prop: P[Prop] =
     withRange(
-      identifier("val") *> ws *> (identifier ~ (ws *> P.char(
-        ':'
-      ) *> typ) ~ (ws *> P.char('=') *> expr).?)
+      identifier("val") *> identifier.surroundedBy(ws)
+        ~ (P.char(':') *> ws *> typ).?
+        ~ (P.char('=') *> ws *> expr).?
     ).map { case (start, name -> typ -> value, end) =>
-      Prop(name, typ, value)
+      Prop(name, typ.getOrElse(UnknownType), value)
     }
 
   // todo do supertypes and traits
   val classOrTrait: P[TypeDef] =
-    (identifier("class") *> identifier.between(ws, ws ~ P.char('=') ~ ws) ~ prop
-      .repSep0(ws) <* ws <* identifier("end")).map { case (name, props) =>
+    (identifier("class") *> identifier.surroundedBy(ws)
+      ~ prop.repSep0(ws)).map { case (name, props) =>
       ClassDef(name, Nil, props, false)
     }
 }

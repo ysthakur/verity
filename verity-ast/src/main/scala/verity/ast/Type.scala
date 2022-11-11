@@ -35,7 +35,7 @@ case class Wildcard(lower: Type, upper: Type) extends Type
   */
 case class TypeMemberAccess(typ: Type, memberName: String) extends Type
 
-object UnknownType extends Type
+case object UnknownType extends Type
 
 case class Record(fields: Seq[Field]) extends Type
 
