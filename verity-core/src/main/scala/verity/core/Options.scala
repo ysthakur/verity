@@ -1,7 +1,5 @@
 package verity.compiler.core
 
-import verity.compiler.util.unsafeNN
-
 import java.io.File
 import java.nio.file.Path
 
@@ -12,6 +10,6 @@ import java.nio.file.Path
   */
 case class Options(
   javaOutputDir: File,
-  jdkDir: String = System.getProperty("JAVA_HOME", raw"C:\Program Files\Java\jdk-11.0.5").unsafeNN,
+  jdkDir: String = System.getProperty("JAVA_HOME", raw"C:\Program Files\Java\jdk-11.0.5").nn,
   modulesToRead: Seq[String] = Seq("java.base")
 )

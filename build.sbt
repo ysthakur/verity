@@ -43,8 +43,6 @@ lazy val root = project
     `verity-common`,
     `verity-ast`,
     `verity-parser`,
-    `verity-read-bytecode`,
-    `verity-codegen`,
     `verity-core`
   )
   .dependsOn(`verity-ast`, `verity-parser`)
@@ -81,12 +79,10 @@ lazy val `verity-core` = project
     commonSettings,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "2.8.0",
-      "com.github.scopt" %% "scopt" % "4.1.0",
+      "com.github.scopt" %% "scopt" % "4.1.0"
     )
   )
   .dependsOn(
     `verity-ast`,
-    `verity-codegen`,
-    `verity-parser`,
-    `verity-read-bytecode`
+    `verity-parser`
   )
