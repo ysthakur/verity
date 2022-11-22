@@ -3,6 +3,8 @@ package verity.compiler.ast
 import java.io.File
 import scala.collection.mutable
 
+import cats.data.NonEmptyList
+
 case class FileNode(
   name: String,
   packageRef: Option[PackageStmt],
@@ -10,9 +12,6 @@ case class FileNode(
   typedefs: List[TypeDef],
   origFile: Option[File]
 ) {
-  val root: Package = ???
-  val textRanges: mutable.Map[Tree, TextRange] = mutable.HashMap()
-  private[verity] var pkg: Package | Null = null
   private[verity] var resolvedImports: Iterable[Def] = List.empty
 
   /** Whether or not this is a source file or just a classfile that the project
@@ -26,12 +25,12 @@ case class FileNode(
 /** @param path
   *   The path of the package this file is in
   */
-case class PackageStmt(val path: Iterable[(String, TextRange)]) extends Tree
+case class PackageStmt(val path: NonEmptyList[String]) extends Tree
 
 /** @param path
-  *   The path of the import (excluding the wildcard)
+  *   The path of the import, excluding the wildcard
   */
 case class ImportStmt(
-  path: Iterable[(String, TextRange)],
+  path: NonEmptyList[String],
   wildcard: Boolean = false
 ) extends Tree

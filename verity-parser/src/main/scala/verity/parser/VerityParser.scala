@@ -40,7 +40,7 @@ object VerityParser {
     processResult(fileParser.parse(code), new File("asdfasdfasdfasdf"))
   }
 
-  def parseFile(name: String, input: File): Either[(String, Int), FileNode] = {
+  def parseFile(input: File): Either[(String, Int), FileNode] = {
     processResult(
       fileParser.parse(
         Files.readString(input.toPath(), Charset.defaultCharset()).nn

@@ -19,9 +19,6 @@ case class Package(
 }
 
 object Package {
-
-  given rootFromFile(using file: FileNode): Package = file.root
-
   /** Find a subpackage given the relative path of the package. The last found subpackage and the
     * remaining path are returned.
     * @param pkgPath

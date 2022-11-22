@@ -28,7 +28,8 @@ val commonSettings = Seq(
     // "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
     // "com.novocode" % "junit-interface" % "0.11" % Test,
     "org.scala-lang" %% "scala3-library" % scala3Version,
-    "org.scalatest" %% "scalatest" % "3.2.14" % Test
+    "org.scalatest" %% "scalatest" % "3.2.14" % Test,
+      "org.typelevel" %% "cats-core" % "2.8.0",
   )
 )
 
@@ -78,7 +79,6 @@ lazy val `verity-core` = project
     name := "verity-core",
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "2.8.0",
       "com.github.scopt" %% "scopt" % "4.1.0"
     )
   )

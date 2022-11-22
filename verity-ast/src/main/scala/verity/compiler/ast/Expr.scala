@@ -31,7 +31,7 @@ case class UnresolvedIdentifier(id: String, textRange: TextRange) extends Expr
 
 /** Used for referring to references to packages such as `foo.bar.baz`
   */
-case class PkgRef(path: Seq[Text], pkg: Package)
+case class PkgRef(path: Seq[Text])
 
 /** Used for accessing a property on an object like `foo.bar`.
   *

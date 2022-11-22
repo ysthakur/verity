@@ -8,8 +8,7 @@ import cats.parse.{Parser, Parser0}
 import cats.parse.Rfc5234.{sp, crlf, lf, wsp}
 import cats.data.NonEmptyList
 
-/**
-  * General purpose parsers
+/** General purpose parsers
   */
 private[parser] object Core {
 
@@ -74,17 +73,12 @@ private[parser] object Core {
     )
   }
 
-  val dotPath: Parser[List[(String, TextRange)]] =
-    identifierWithTextRange.repSep(1, ws *> Parser.string0(".") *> ws).map {
-      case NonEmptyList(root, rest) =>
-        root :: rest
-    }
+  val dotPath: Parser[NonEmptyList[String]] =
+    identifier.repSep(1, ws *> Parser.string0(".") *> ws)
 
   val packageStmt: Parser[PackageStmt] =
     (identifier("package") *> dotPath.surroundedBy(ws) <* Parser.string0(";"))
-      .map { case path =>
-        PackageStmt(path)
-      }
+      .map { case path => PackageStmt(path) }
 
   val importStmt: Parser[ImportStmt] =
     (identifier("import") *> dotPath.surroundedBy(ws) ~ (Parser.string(
