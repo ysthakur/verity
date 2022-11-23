@@ -4,7 +4,7 @@ import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 import verity.compiler.parser.Exprs.*
 import verity.compiler.parser.Types.*
-import verity.compiler.parser.VerityParser.tr
+import verity.compiler.parser.Parser.tr
 
 import cats.parse.{Parser as P, Parser0 as P0}
 
@@ -25,8 +25,12 @@ private[parser] object TypeDefs {
 
   // todo do supertypes and traits
   val classOrTrait: P[TypeDef] =
-    (identifier("class") *> identifier.surroundedBy(ws)
-      ~ prop.repSep0(ws)).map { case (name, props) =>
+    (
+      identifier("class")
+        *> identifier.surroundedBy(ws)
+        ~ prop.repSep0(ws)
+        <* ws <* identifier("end")
+    ).map { case (name, props) =>
       ClassDef(name, Nil, props, false)
     }
 }

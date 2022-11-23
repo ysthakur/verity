@@ -2,7 +2,7 @@ package verity.compiler.parser
 
 import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
-import verity.compiler.parser.VerityParser.tr
+import verity.compiler.parser.Parser.tr
 
 import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}

@@ -2,28 +2,28 @@ package verity.compiler.parser
 
 import verity.compiler.ast.{FileNode, TextRange, Position}
 
-import cats.parse.{Parser, Parser0}
+import cats.parse.{Parser => CatsParser, Parser0}
 
 import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.{Files, Path}
 import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
 
-object VerityParser {
+object Parser {
   private val fileParser: Parser0[File => FileNode] =
-    (Core.packageStmt.? ~ Core.importStmt.rep0 <* Parser.end).map {
+    (Core.packageStmt.? ~ Core.importStmt.rep0 <* CatsParser.end).map {
       case (pkgStmt -> imptStmts) =>
         input =>
           FileNode(input.getName.nn, pkgStmt, imptStmts, ???, Some(input))
     }
 
   private def processResult(
-    parserResult: Either[Parser.Error, (String, File => FileNode)],
+    parserResult: Either[CatsParser.Error, (String, File => FileNode)],
     inputFile: File
   ): Either[(String, Int), FileNode] =
     parserResult match {
       case Right((_, ast)) => Right(ast(inputFile))
-      case Left(Parser.Error(failedAtOffset, expected)) =>
+      case Left(CatsParser.Error(failedAtOffset, expected)) =>
         Left(
           (
             s"Syntax error at offset $failedAtOffset, expected $expected",

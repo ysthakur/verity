@@ -2,7 +2,7 @@ package verity.compiler.parser
 
 import verity.compiler.ast.*
 
-import verity.compiler.parser.VerityParser.tr
+import verity.compiler.parser.Parser.tr
 
 import cats.parse.{Parser, Parser0}
 import cats.parse.Rfc5234.{sp, crlf, lf, wsp}

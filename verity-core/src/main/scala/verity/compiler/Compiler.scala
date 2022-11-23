@@ -1,10 +1,11 @@
 package verity.compiler
 
-import scopt.OParser
+import verity.compiler.parser.Parser
 
 import java.io.File
 import scala.collection.immutable.ArraySeq
-import verity.compiler.parser.VerityParser
+
+import scopt.OParser
 
 object Compiler {
 
@@ -33,7 +34,7 @@ object Compiler {
   }
 
   private def parseFile(file: File)(using proj: Project) = {
-    VerityParser.parseFile(file) match {
+    Parser.parseFile(file) match {
       case Right(fileNode) =>
         val pkg = fileNode.packageRef.fold(proj.root) { pkgStmt =>
           proj.getPackage(pkgStmt.path)
