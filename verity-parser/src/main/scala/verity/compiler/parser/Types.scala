@@ -7,8 +7,7 @@ import verity.compiler.parser.Parser.tr
 import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
 
-/**
-  * Parsers for type-related stuff
+/** Parsers for type-related stuff
   */
 object Types {
 
@@ -26,15 +25,10 @@ object Types {
 
   val selectableType: P[Type] = idsWithDots | parenType
 
-  val typeArgList = P
-    .defer(
-      typ
-        .repSep(ws ~ P.char(',') ~ ws)
-        .between(P.char('[') ~ ws, ws ~ P.char(']'))
-    )
-    .map { case NonEmptyList(firstArg, restArgs) =>
-      TypeArgList(firstArg :: restArgs)
-    }
+  val typeArgList =
+    (P.char('[') *> ws *>
+      P.defer(typ).repSep0(ws ~ P.char(',') ~ ws)
+      <* ws <* P.char(']')).map { case args => TypeArgList(args) }
 
   val typeApply: P[Type => Type] = typeArgList.rep.map { case argLists =>
     typ =>
@@ -61,26 +55,25 @@ object Types {
         dotsAndApplys.foldLeft(firstType) { (typ, fn) => fn(typ) }
     }
 
-  val wildcard: P[Type] = P.char('?').map {
-    case _ => Wildcard(UnknownType, UnknownType)
+  val wildcard: P[Type] = P.char('?').map { case _ =>
+    Wildcard(UnknownType, UnknownType)
   }
 
   val typ: P[Type] = P.defer(wildcard | typeApplyOrDot)
 
   def typeParam: P[TypeParam] =
-    (identifierWithTextRange ~ typ.between(ws ~ P.string("<:") ~ ws, ws).? ~ typ.between(ws ~ P.string(">:") ~ ws, ws).?).map {
-      case (name -> nameRange -> upperBound -> lowerBound) =>
-        TypeParam(
-          name,
-          upperBound,
-          lowerBound,
-          nameRange
-        )
+    (identifierWithTextRange ~ typ.between(ws ~ P.string("<:") ~ ws, ws).? ~ typ
+      .between(ws ~ P.string(">:") ~ ws, ws)
+      .?).map { case (name -> nameRange -> upperBound -> lowerBound) =>
+      TypeParam(
+        name,
+        upperBound,
+        lowerBound,
+        nameRange
+      )
     }
 
   def typeParamList: P[TypeParamList] =
-    withRange(typeParam.repSep(P.char(',')).between(P.char('['), P.char(']')))
-      .map { case (start, NonEmptyList(first, rest), end) =>
-        TypeParamList(first +: rest)
-      }
+    withRange(P.char('[') *> ws *> typeParam.repSep0(P.char(',')) <* ws <* P.char(']'))
+      .map { case (start, params, end) => TypeParamList(params) }
 }

@@ -18,12 +18,19 @@ case class Prop(name: String, typ: Type, value: Option[Expr]) extends Tree
 
 case class Singleton(name: String, superTypes: List[Type], props: List[Prop])
 
-case class ClassDef(
+case class EnumDef(
   name: String,
-  superTypes: List[Type],
-  override val props: List[Prop],
-  isTrait: Boolean
+  override val typeParams: TypeParamList,
+  val params: Option[ValParamList],
+  override val givenParams: ValParamList,
+  cases: EnumCase
 ) extends TypeDef
+
+case class EnumCase(
+  name: String,
+  typeParams: TypeParamList,
+  params: ValParamList
+)
 
 object BuiltinTypes {
   def verityPkg(using root: Package): Package = root.findChild("verity").get

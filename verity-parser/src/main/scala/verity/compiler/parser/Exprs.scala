@@ -127,12 +127,12 @@ object Exprs {
   val varDefs = identifier("val") *> ws *> varDef.repSep(P.char(',') ~ ws)
 
   val varDefExpr: P[Expr] =
-    P.defer((varDefs <* ws <* identifier("in") <* ws).rep0.with1 ~ assignment).map {
-      case (varLists, body) =>
-        varLists.foldRight(body) {
-          case (NonEmptyList(firstVar, rest), body) => LetExpr(firstVar :: rest, body)
+    P.defer((varDefs <* ws <* identifier("in") <* ws).rep0.with1 ~ assignment)
+      .map { case (varLists, body) =>
+        varLists.foldRight(body) { case (NonEmptyList(firstVar, rest), body) =>
+          LetExpr(firstVar :: rest, body)
         }
-    }
+      }
 
   // TODO add if expressions
   val expr: P[Expr] = varDefExpr
@@ -166,11 +166,10 @@ object Exprs {
 
   /** Helper to make parsers for different kinds of parameter lists */
   def paramList(start: P0[Unit], kind: ParamListKind): P[ValParamList] =
-    P.defer(
-      P.char('(') *> ws *> start *> ws *>
-        param.repSep0(ws ~ P.char(',') ~ ws) <* ws <* P.char(')')
-    ).map { case params =>
-      ValParamList(params, kind)
+    ((P.char('(') *> ws *> start).backtrack *> ws *>
+      P.defer(param).repSep0(ws ~ P.char(',') ~ ws) <* ws <* P.char(')')).map {
+      case params =>
+        ValParamList(params, kind)
     }
 
   val normParamList = paramList(P.unit, ParamListKind.Normal)
@@ -178,6 +177,8 @@ object Exprs {
   val givenParamList = paramList(identifier("given"), ParamListKind.Given)
 
   val proofParamList = paramList(identifier("proof"), ParamListKind.Proof)
+
+  val valParamList = normParamList | givenParamList | proofParamList
 
   // val provenClause: P[Seq[Type]] =
   //   (

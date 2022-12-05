@@ -22,15 +22,20 @@ private[parser] object TypeDefs {
     ).map { case (start, name -> typ -> value, end) =>
       Prop(name, typ.getOrElse(UnknownType), value)
     }
+  
+  val enumCase: P[EnumCase] =
+    (identifier.surroundedBy(ws) ~ normParamList).map {
+      case name => EnumCase(name)
+    }
 
-  // todo do supertypes and traits
-  val classOrTrait: P[TypeDef] =
+  val enumDef: P[TypeDef] =
     (
-      identifier("class")
+      identifier("enum")
         *> identifier.surroundedBy(ws)
-        ~ prop.repSep0(ws)
+        ~ typeParamList.?
+        ~ enumCase.rep0
         <* ws <* identifier("end")
-    ).map { case (name, props) =>
-      ClassDef(name, Nil, props, false)
+    ).map { case (name, props, cases) =>
+      EnumDef(name, Nil, props)
     }
 }
