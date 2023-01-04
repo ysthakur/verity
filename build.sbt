@@ -29,7 +29,7 @@ val commonSettings = Seq(
     // "com.novocode" % "junit-interface" % "0.11" % Test,
     "org.scala-lang" %% "scala3-library" % scala3Version,
     "org.scalatest" %% "scalatest" % "3.2.14" % Test,
-      "org.typelevel" %% "cats-core" % "2.8.0",
+    "org.typelevel" %% "cats-core" % "2.8.0"
   )
 )
 
@@ -41,29 +41,29 @@ lazy val root = project
   )
   .disablePlugins()
   .aggregate(
-    `verity-common`,
-    `verity-ast`,
-    `verity-parser`,
-    `verity-core`
+    common,
+    ast,
+    parser,
+    core
   )
-  .dependsOn(`verity-ast`, `verity-parser`)
+  .dependsOn(ast, parser)
 
-lazy val `verity-common` = project
-  .in(file("verity-common"))
+lazy val common = project
+  .in(file("common"))
   .settings(
     name := "verity-common",
     commonSettings
   )
 
-lazy val `verity-ast` = project
-  .in(file("verity-ast"))
+lazy val ast = project
+  .in(file("ast"))
   .settings(
-    name := "verity-ast",
+    name := "ast",
     commonSettings
   ) //.dependsOn(`verity-common`)
 
-lazy val `verity-parser` = project
-  .in(file("verity-parser"))
+lazy val parser = project
+  .in(file("parser"))
   .settings(
     name := "verity-parser",
     commonSettings,
@@ -71,10 +71,10 @@ lazy val `verity-parser` = project
       "org.typelevel" %% "cats-parse" % "0.3.8"
     )
   )
-  .dependsOn(`verity-ast`)
+  .dependsOn(ast)
 
-lazy val `verity-core` = project
-  .in(file("verity-core"))
+lazy val core = project
+  .in(file("core"))
   .settings(
     name := "verity-core",
     commonSettings,
@@ -83,6 +83,6 @@ lazy val `verity-core` = project
     )
   )
   .dependsOn(
-    `verity-ast`,
-    `verity-parser`
+    ast,
+    parser
   )
