@@ -1,3 +1,5 @@
+package verity.compiler.ast
+
 import scala.collection.mutable.ArrayBuffer
 
 trait Type extends Tree

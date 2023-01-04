@@ -1,3 +1,5 @@
+package verity.compiler.ast
+
 trait Tree
 
 object Tree {

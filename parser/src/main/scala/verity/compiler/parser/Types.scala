@@ -1,3 +1,5 @@
+package verity.compiler.parser
+
 import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 import verity.compiler.parser.Parser.tr

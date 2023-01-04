@@ -1,3 +1,5 @@
+package verity.compiler.parser
+
 import verity.compiler.ast.{FileNode, TextRange, Position}
 
 import cats.parse.{Parser => CatsParser, Parser0}

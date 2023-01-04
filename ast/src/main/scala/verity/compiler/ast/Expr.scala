@@ -1,4 +1,4 @@
-import verity.compiler.ast.*
+package verity.compiler.ast
 
 import scala.collection.mutable.ArrayBuffer
 
