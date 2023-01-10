@@ -37,6 +37,7 @@ object Parser {
     name: String,
     code: String
   ): Either[(String, Int), FileNode] = {
+    // todo don't give a File object?
     processResult(fileParser.parse(code), new File("asdfasdfasdfasdf"))
   }
 

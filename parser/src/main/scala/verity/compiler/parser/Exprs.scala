@@ -110,7 +110,7 @@ object Exprs {
 
   /** Has to be right-associative */
   val assignment: P[Expr] =
-    P.defer(logicOr.repSep(ws ~ P.string("<-") ~ ws)).map {
+    P.defer(logicOr.repSep(ws ~ P.string("=") ~ ws)).map {
       case NonEmptyList(first, rest) =>
         rest.foldRight(first) { (rvalue, lvalue) => AssignExpr(lvalue, rvalue) }
     }
@@ -134,8 +134,27 @@ object Exprs {
         }
       }
 
+  def lambda: P[Expr] =
+    (P.char('\\') *> P.index
+      ~ (typeParamList.? <* ws)
+      ~ (normParamList.? <* ws)
+      ~ (givenParamList.? <* ws)
+      ~ (proofParamList.? <* ws)
+      ~ (P.string("->") *> expr)
+      ~ P.index).map {
+      case (start -> typeParams -> normParams -> givenParams -> proofParams -> body -> end) =>
+        Lambda(
+          typeParams,
+          normParams,
+          givenParams,
+          proofParams,
+          body,
+          tr(start, end)
+        )
+    }
+
   // TODO add if expressions
-  val expr: P[Expr] = varDefExpr
+  val expr: P[Expr] = lambda | varDefExpr | assignment
 
   /** Helper to make a parser for a binary expression
     * @param prev
@@ -188,23 +207,4 @@ object Exprs {
   //   ).map { case (firstType, restTypes) =>
   //     firstType +: restTypes
   //   }
-
-  def lambda: P[Lambda] =
-    (P.char('\\') *> P.index
-      ~ (typeParamList.? <* ws)
-      ~ (normParamList.? <* ws)
-      ~ (givenParamList.? <* ws)
-      ~ (proofParamList.? <* ws)
-      ~ (P.string("->") *> expr)
-      ~ P.index).map {
-      case (start -> typeParams -> normParams -> givenParams -> proofParams -> body -> end) =>
-        Lambda(
-          typeParams,
-          normParams,
-          givenParams,
-          proofParams,
-          body,
-          tr(start, end)
-        )
-    }
 }
