@@ -37,11 +37,15 @@ case class TypeMemberAccess(typ: Type, memberName: String) extends Type
 
 case object UnknownType extends Type
 
-case class Record(fields: Seq[Field]) extends Type
-
 case class Field(name: String, typ: Type) extends Def
 
 case class FunctionType(
   paramTypes: List[TypeParamList | ValParamList],
   returnType: Type
 ) extends Type
+
+/** An argument list, either like `[A, B]` or `{ev1, ev2}` */
+enum ConstArgList {
+  case TypeArgList(args: List[Type])
+  case ProofArgList(args: List[Expr])
+}

@@ -13,29 +13,42 @@ import collection.mutable.ArrayBuffer
 /** Parsers for stuff inside TypeDefs
   */
 private[parser] object TypeDefs {
-
-  val prop: P[Prop] =
-    withRange(
-      identifier("val") *> identifier.surroundedBy(ws)
-        ~ (P.char(':') *> ws *> typ).?
-        ~ (P.char('=') *> ws *> expr).?
-    ).map { case (start, name -> typ -> value, end) =>
-      Prop(name, typ.getOrElse(UnknownType), value)
+  val recordDef: P[TypeDef] =
+    (identifier("record")
+      *> identifier.surroundedBy(ws)
+      ~ constParamList.rep0
+      ~ valParamList.rep0).map { case (name -> constParamss -> valParamss) =>
+      Record(name, constParamss, valParamss)
     }
 
   val enumCase: P[EnumCase] =
-    (identifier.surroundedBy(ws) ~ normParamList).map { case name =>
-      EnumCase(name)
+    (identifier.surroundedBy(
+      ws
+    ) ~ constParamList.rep0 ~ valParamList.rep ~ (ws *> P.char(':') *> ws *> constArgList ~ valArgList).?).map {
+      case (name -> constParamss -> valParamss -> args) =>
+        args match {
+          case None => EnumCase(name, constParamss, valParamss, Nil, Nil)
+        }
     }
 
   val enumDef: P[TypeDef] =
     (
       identifier("enum")
         *> identifier.surroundedBy(ws)
-        ~ typeParamList.?
-        ~ enumCase.rep0
+        ~ constParamList.rep0 ~ valParamList.rep0
+        ~ enumCase.repSep0(P.char(','))
         <* ws <* identifier("end")
-    ).map { case (name, props, cases) =>
-      EnumDef(name, Nil, props)
+    ).map { case (name -> constParamss -> valParamss -> cases) =>
+      EnumDef(name, constParamss, valParamss, cases)
     }
+
+  val typeAlias: P[TypeDef] =
+    (identifier("type")
+      *> identifier.surroundedBy(ws)
+      ~ (constParamList.rep0 <* ws <* P.char('=') <* ws)
+      ~ typ).map {
+    case (name -> paramss -> body) => TypeAlias(name, paramss, body)
+  }
+
+  val typeDef: P[TypeDef] = recordDef | enumDef
 }

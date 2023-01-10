@@ -10,11 +10,11 @@ import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
 
 object Parser {
-  private val fileParser: Parser0[File => FileNode] =
+  private val fileParser: Parser0[Either[String, File] => FileNode] =
     (Core.packageStmt.? ~ Core.importStmt.rep0 <* CatsParser.end).map {
       case (pkgStmt -> imptStmts) =>
         input =>
-          FileNode(input.getName.nn, pkgStmt, imptStmts, ???, Some(input))
+          FileNode(input.map(_.getName.nn).merge, pkgStmt, imptStmts, ???, input.toOption)
     }
 
   private def processResult(

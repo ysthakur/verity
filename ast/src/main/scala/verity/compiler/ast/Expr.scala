@@ -14,12 +14,6 @@ case class CharLiteral(char: Char, textRange: TextRange) extends Expr
 
 case class StringLiteral(text: String, textRange: TextRange) extends Expr
 
-case class NullLiteral(textRange: TextRange) extends Expr
-
-case class ThisRef(textRange: TextRange) extends Expr
-
-case class SuperRef(textRange: TextRange) extends Expr
-
 /** A resolved reference to a variable
   */
 case class VarRef(varName: String, decl: VarDef, textRange: TextRange)
@@ -49,29 +43,17 @@ case class UnaryPreExpr(op: Op, expr: Expr, typ: Type) extends Expr
 /** An operator */
 case class Op(symbol: String, textRange: TextRange) extends Expr
 
+/** An if-else expression */
+case class If(cond: Expr, thenBody: Expr, elseBody: Expr) extends Expr
+
 case class FnCall(
   fn: Expr,
-  typeArgs: Option[TypeArgList],
-  normArgs: NormArgList,
-  givenArgs: Option[GivenArgList],
-  proofArgs: Option[ProofArgList]
+  constArgss: List[ConstArgList],
+  valArgss: List[ValArgList]
 ) extends Expr
 
-sealed trait ArgList
-
 /** A list of actual arguments (as opposed to type arguments) */
-sealed trait ValArgList extends ArgList {
-  def args: List[Expr]
-}
-
-/** A list of normal arguments */
-case class NormArgList(args: List[Expr]) extends ValArgList
-
-/** A list of non-erased implicit arguments */
-case class GivenArgList(args: List[Expr]) extends ValArgList
-
-/** A list of erased implicit arguments */
-case class ProofArgList(args: List[Expr]) extends ValArgList
+case class ValArgList(args: List[Expr], isGiven: Boolean)
 
 case class UpcastExpr(expr: Expr, typ: Type) extends Expr
 
@@ -87,10 +69,8 @@ case class VarDef(
 ) extends Def
 
 case class Lambda(
-  typeParamList: Option[TypeParamList],
-  normParamList: Option[ValParamList],
-  givenParamList: Option[ValParamList],
-  proofParamList: Option[ValParamList],
+  constParamss: List[ConstParamList],
+  valParamss: List[ValParamList],
   body: Expr,
   textRange: TextRange
 ) extends Expr
@@ -99,12 +79,8 @@ case class ValParam(name: String, typ: Type)
 
 case class ValParamList(
   params: List[ValParam],
-  kind: ParamListKind = ParamListKind.Normal
+  isGiven: Boolean
 ) extends Tree
-
-enum ParamListKind {
-  case Normal, Given, Proof
-}
 
 case class Modifier(mod: String, textRange: TextRange) extends Tree
 

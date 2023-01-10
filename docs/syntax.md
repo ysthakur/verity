@@ -34,9 +34,13 @@ const-value-def = "const", lower-id, (":", type)?, "=", expr;
 
 ```ebnf
 type-def = record | enum | type-alias;
-record = "record", upper-id, const-param-list, val-param-list*;
-enum = "enum", upper-id, const-param-list, enum-case, (",", enum-case)*;
-type-alias = "type", upper-id, const-param-list, "=", type;
+
+record = "record", upper-id, const-param-list*, val-param-list*;
+
+enum = "enum", upper-id, const-param-list*, val-param-list*, enum-case, (",", enum-case)*;
+enum-case = upper-id, const-param-list*, val-param-list+, ("->", const-arg-list*, val-arg-list*)?;
+
+type-alias = "type", upper-id, const-param-list*, "=", type;
 ```
 
 ## Parameter lists

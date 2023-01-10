@@ -26,11 +26,6 @@ object Exprs {
       IntLiteral(num.toInt, tr(end - num.length, end))
     }
 
-  val nullLiteral: P[NullLiteral] =
-    (identifier("null") *> P.index).map { endInd =>
-      NullLiteral(tr(endInd - "null".length, endInd))
-    }
-
   val stringLiteral: P[StringLiteral] =
     withRange(
       ((P.char('\\') ~ P.anyChar) | (P.charWhere(_ != '"'))).rep.string
@@ -39,19 +34,8 @@ object Exprs {
       StringLiteral("\"" + text + "\"", tr(start, end))
     }
 
-  val thisRef: P[Expr] =
-    (P.index.with1 ~ (identifier("this") *> P.index)).map { case (start, end) =>
-      ThisRef(tr(start, end))
-    }
-
-  val superRef: P[Expr] =
-    (P.index.with1 ~ (identifier("super") *> P.index)).map {
-      case (start, end) =>
-        SuperRef(tr(start, end))
-    }
-
   val literal: P[Expr] =
-    intLiteral | boolLiteral | nullLiteral | stringLiteral
+    intLiteral | boolLiteral | stringLiteral
 
   val varRef: P[Expr] = identifierWithTextRange.map { case (name, textRange) =>
     UnresolvedIdentifier(name, textRange)
@@ -64,9 +48,7 @@ object Exprs {
     }
 
   /** Something with higher precedence than `.` */
-  val selectable: P[Expr] = P.defer(
-    parenExpr | literal | thisRef | superRef | varRef
-  )
+  val selectable: P[Expr] = parenExpr | literal | varRef
 
   /** `foo.bar` */
   val propAccess: P[Expr] =
@@ -83,12 +65,6 @@ object Exprs {
         ws ~ P.char(',') ~ ws
       ) <* P.char(')')
     )
-
-  val normArgList: P[NormArgList] = argList(P.unit).map(NormArgList(_))
-
-  val givenArgList = argList(identifier("given")).map(GivenArgList(_))
-
-  val proofArgList = argList(identifier("proof")).map(ProofArgList(_))
 
   val methodCall: P[Expr] = P
     .defer(
@@ -115,6 +91,13 @@ object Exprs {
         rest.foldRight(first) { (rvalue, lvalue) => AssignExpr(lvalue, rvalue) }
     }
 
+  val ifExpr: P[Expr] = (
+    (identifier("if") *> ws *> expr)
+      ~ (identifier("then") *> expr)
+      ~ (identifier("else") *> expr)).map {
+        case (cond, thenBody, elseBody) => If(cond, thenBody, elseBody)
+      }
+
   val varDef: P[VarDef] =
     (
       identifier.surroundedBy(ws)
@@ -134,27 +117,48 @@ object Exprs {
         }
       }
 
-  def lambda: P[Expr] =
+  val valParam: P[ValParam] = (identifier ~ (ws *> P.char(':') *> ws *> typ).?).map {
+    case (name, typ) => ValParam(name, typ.getOrElse(UnknownType))
+  }
+  val normParamList: P[ValParamList] =
+    list(P.char('('), valParam, P.char(','), P.char(')')).map { ValParamList(_, false) }
+  val givenParamList: P[ValParamList] =
+    list(P.char('('), valParam, P.char(','), P.char(')')).map { ValParamList(_, false) }
+  val valParamList: P[ValParamList] = normParamList | givenParamList
+
+  val typeParamList: P[ConstParamList] =
+    list(P.char('['), typeParam, P.char(','), P.char(']')).map { ConstParamList.TypeParamList(_) }
+  val proofParamList: P[ConstParamList] =
+    list(P.char('{'), valParam, P.char(','), P.char('}')).map { ConstParamList.ProofParamList(_) }
+  val constParamList: P[ConstParamList] = typeParamList | proofParamList
+
+  val typeArgList: P[ConstArgList] =
+    list(P.char('['), typ, P.char(','), P.char(']')).map { ConstArgList.TypeArgList(_) }
+  val proofArgList: P[ConstArgList] =
+    list(P.char('{'), expr, P.char(','), P.char('}')).map { ConstArgList.ProofArgList(_) }
+  val constArgList: P[ConstArgList] = typeArgList | proofArgList
+
+  val normArgList: P[ValArgList] = argList(P.unit).map(NormArgList(_))
+  val givenArgList: P[ValArgList] = argList(identifier("given")).map(GivenArgList(_))
+  val valArgList: P[ValArgList] = normArgList | givenArgList
+
+  val lambda: P[Expr] =
     (P.char('\\') *> P.index
-      ~ (typeParamList.? <* ws)
-      ~ (normParamList.? <* ws)
-      ~ (givenParamList.? <* ws)
-      ~ (proofParamList.? <* ws)
+      ~ constParamList.repSep0(ws)
+      ~ valParamList.repSep0(ws)
       ~ (P.string("->") *> expr)
       ~ P.index).map {
-      case (start -> typeParams -> normParams -> givenParams -> proofParams -> body -> end) =>
+      case (start -> constParamss -> valParamss -> body -> end) =>
         Lambda(
-          typeParams,
-          normParams,
-          givenParams,
-          proofParams,
+          constParamss,
+          valParamss,
           body,
           tr(start, end)
         )
     }
 
   // TODO add if expressions
-  val expr: P[Expr] = lambda | varDefExpr | assignment
+  val expr: P[Expr] = lambda | varDefExpr | ifExpr | assignment
 
   /** Helper to make a parser for a binary expression
     * @param prev
@@ -177,34 +181,4 @@ object Exprs {
         )
       }
     }
-
-  private val param: P[ValParam] =
-    ((identifier <* ws <* P.char(':') <* ws) ~ typ).map { case (name, typ) =>
-      ValParam(name, typ)
-    }
-
-  /** Helper to make parsers for different kinds of parameter lists */
-  def paramList(start: P0[Unit], kind: ParamListKind): P[ValParamList] =
-    ((P.char('(') *> ws *> start).backtrack *> ws *>
-      P.defer(param).repSep0(ws ~ P.char(',') ~ ws) <* ws <* P.char(')')).map {
-      case params =>
-        ValParamList(params, kind)
-    }
-
-  val normParamList = paramList(P.unit, ParamListKind.Normal)
-
-  val givenParamList = paramList(identifier("given"), ParamListKind.Given)
-
-  val proofParamList = paramList(identifier("proof"), ParamListKind.Proof)
-
-  val valParamList = normParamList | givenParamList | proofParamList
-
-  // val provenClause: P[Seq[Type]] =
-  //   (
-  //     identifier("proof") ~~ !CharPred(
-  //       _.isUnicodeIdentifierPart
-  //     ) ~/ typeRef ~ ("," ~ typeRef).rep
-  //   ).map { case (firstType, restTypes) =>
-  //     firstType +: restTypes
-  //   }
 }

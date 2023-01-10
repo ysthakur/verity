@@ -1,34 +1,56 @@
 package verity.compiler.ast
 
-trait TypeDef extends Def {
+import cats.data.NonEmptyList
+
+sealed trait TypeDef extends Def {
 
   /** The type parameters and proof parameters for this typedef. None of the
     * param lists should be normal or given parameters.
     */
-  def typeParams: TypeParamList = TypeParamList(Nil)
-  def givenParams: ValParamList = ValParamList(Nil)
-  def proofParams: ValParamList = ValParamList(Nil)
-
-  def props: List[Prop] = Nil
+  def constParamss: List[ConstParamList] = Nil
+  def valParamss: List[ValParamList] = Nil
 }
 
 case class Prop(name: String, typ: Type, value: Option[Expr]) extends Tree
 
-case class Singleton(name: String, superTypes: List[Type], props: List[Prop])
+case class Record(
+  name: String,
+  override val constParamss: List[ConstParamList],
+  override val valParamss: List[ValParamList]
+) extends TypeDef
 
 case class EnumDef(
   name: String,
-  override val typeParams: TypeParamList,
-  val params: Option[ValParamList],
-  override val givenParams: ValParamList,
-  cases: EnumCase
+  override val constParamss: List[ConstParamList],
+  override val valParamss: List[ValParamList],
+  cases: List[EnumCase]
 ) extends TypeDef
 
+/** A particular case/variant of an enum
+  * @param name
+  *   The name of the case
+  * @param constParamss
+  *   Compile-time parameters for this particular case
+  * @param valParamss
+  *   Parameters for this particular case
+  * @param ctorConstArgss
+  *   The compile-time arguments to pass to the upper enum's constructor, if any
+  * @param ctorValArgss
+  *   The arguments to pass to the upper enum's constructor, if any
+  */
 case class EnumCase(
   name: String,
-  typeParams: TypeParamList,
-  params: ValParamList
+  constParamss: List[ConstParamList],
+  valParamss: NonEmptyList[ValParamList],
+  ctorConstArgss: List[ConstArgList],
+  ctorValArgss: List[ValArgList]
 )
+
+case class TypeAlias(
+  override val name: String,
+  override val constParamss: List[ConstParamList],
+  val body: Type
+) extends TypeDef
 
 object BuiltinTypes {
   def verityPkg(using root: Package): Package = root.findChild("verity").get
@@ -55,6 +77,11 @@ object NotProvenDef extends TypeDef {
   override def name = "NotProven"
 }
 
+enum ConstParamList {
+  case TypeParamList(params: List[TypeParam])
+  case ProofParamList(params: List[ValParam])
+}
+
 /** @param name
   *   The parameter's name
   * @param upperBound
@@ -70,11 +97,3 @@ case class TypeParam(
 ) extends TypeDef
 
 case class TypeParamList(params: List[TypeParam]) extends Tree
-
-case class TypeAlias(
-  override val name: String,
-  override val typeParams: TypeParamList,
-  override val givenParams: ValParamList,
-  override val proofParams: ValParamList,
-  val body: Type
-) extends TypeDef
