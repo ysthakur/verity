@@ -18,8 +18,8 @@ object Parser {
     }
 
   private def processResult(
-    parserResult: Either[CatsParser.Error, (String, File => FileNode)],
-    inputFile: File
+    parserResult: Either[CatsParser.Error, (String, Either[String, File] => FileNode)],
+    inputFile: Either[String, File]
   ): Either[(String, Int), FileNode] =
     parserResult match {
       case Right((_, ast)) => Right(ast(inputFile))
@@ -37,8 +37,7 @@ object Parser {
     name: String,
     code: String
   ): Either[(String, Int), FileNode] = {
-    // todo don't give a File object?
-    processResult(fileParser.parse(code), new File("asdfasdfasdfasdf"))
+    processResult(fileParser.parse(code), Left(name))
   }
 
   def parseFile(input: File): Either[(String, Int), FileNode] = {
@@ -46,7 +45,7 @@ object Parser {
       fileParser.parse(
         Files.readString(input.toPath(), Charset.defaultCharset()).nn
       ),
-      input
+      Right(input)
     )
   }
 

@@ -77,6 +77,19 @@ object Exprs {
       }
     }
 
+  val fieldAccess: P[String] = P.char('.') *> ws *> identifier
+
+  val fnCall = valArgList.repSep(ws).eitherOr(constArgList.repSep(ws) ~ (ws *> valArgList.repSep0(ws)))
+
+  val fnCallOrFieldAccess: P[Expr] =
+    (selectable ~ fieldAccess.eitherOr(fnCall).repSep0(ws)).map {
+    case (start, rest) => rest.foldLeft(start) { (expr, next) =>
+      next match {
+        case Left(fieldName) => FieldAccess(expr, fieldName)
+      }
+    }
+  }
+
   val mulDivMod: P[Expr] = binOp(methodCall, List("*", "/", "%"))
   val addSub: P[Expr] = binOp(mulDivMod, List("+", "-"))
   val relational: P[Expr] = binOp(addSub, List("<=", "<", ">=", ">"))
@@ -95,7 +108,7 @@ object Exprs {
     (identifier("if") *> ws *> expr)
       ~ (identifier("then") *> expr)
       ~ (identifier("else") *> expr)).map {
-        case (cond, thenBody, elseBody) => If(cond, thenBody, elseBody)
+        case (cond -> thenBody -> elseBody) => If(cond, thenBody, elseBody)
       }
 
   val varDef: P[VarDef] =
@@ -123,7 +136,7 @@ object Exprs {
   val normParamList: P[ValParamList] =
     list(P.char('('), valParam, P.char(','), P.char(')')).map { ValParamList(_, false) }
   val givenParamList: P[ValParamList] =
-    list(P.char('('), valParam, P.char(','), P.char(')')).map { ValParamList(_, false) }
+    list(P.char('('), valParam, P.char(','), P.char(')')).map { ValParamList(_, true) }
   val valParamList: P[ValParamList] = normParamList | givenParamList
 
   val typeParamList: P[ConstParamList] =
@@ -138,8 +151,8 @@ object Exprs {
     list(P.char('{'), expr, P.char(','), P.char('}')).map { ConstArgList.ProofArgList(_) }
   val constArgList: P[ConstArgList] = typeArgList | proofArgList
 
-  val normArgList: P[ValArgList] = argList(P.unit).map(NormArgList(_))
-  val givenArgList: P[ValArgList] = argList(identifier("given")).map(GivenArgList(_))
+  val normArgList: P[ValArgList] = argList(P.unit).map(ValArgList(_, false))
+  val givenArgList: P[ValArgList] = argList(identifier("given")).map(ValArgList(_, true))
   val valArgList: P[ValArgList] = normArgList | givenArgList
 
   val lambda: P[Expr] =
