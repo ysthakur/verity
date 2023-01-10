@@ -93,7 +93,7 @@ case class Lambda(
   proofParamList: Option[ValParamList],
   body: Expr,
   textRange: TextRange
-)
+) extends Expr
 
 case class ValParam(name: String, typ: Type)
 
