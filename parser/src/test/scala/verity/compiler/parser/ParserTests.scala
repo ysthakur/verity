@@ -1,3 +1,5 @@
+package verity.compiler.parser
+
 import org.scalatest.funsuite.AnyFunSuite
 
 import verity.compiler.ast.*

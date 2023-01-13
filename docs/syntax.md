@@ -65,10 +65,11 @@ proof-param = lower-id, ":", type;
 ## Expressions
 
 ```ebnf
-expr = lambda | let-expr | assignment;
+expr = lambda | let-expr | if-expr | assignment;
 
 lambda = "\", const-param-list*, val-param-list*, "->", expr;
 let-expr = ("let", lower-id, (":", type), "=" expr)+, "in", expr;
+if-expr = "if", expr, "then", expr, "else", expr;
 assignment = binop, ("=" expr)?;
 
 binop = see below;
@@ -108,7 +109,7 @@ Precedence, from lowest to highest:
 <, >
 +, -
 *, /, %
-?, ~, @
+?, ~, @, \, $
 ```
 
 ## Type expressions

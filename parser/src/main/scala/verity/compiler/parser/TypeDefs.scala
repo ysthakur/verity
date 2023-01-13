@@ -24,9 +24,13 @@ private[parser] object TypeDefs {
   val enumCase: P[EnumCase] =
     (identifier.surroundedBy(
       ws
-    ) ~ constParamList.rep0 ~ valParamList.rep ~ (ws *> P.char(':') *> ws *> constArgList ~ valArgList).?).map {
+    ) ~ constParamList.rep0 ~ valParamList.rep ~ (ws *> P.char(
+      ':'
+    ) *> ws *> constArgList.rep0 ~ valArgList.rep0).?).map {
       case (name -> constParamss -> valParamss -> args) =>
         args match {
+          case Some((constArgss, valArgss)) =>
+            EnumCase(name, constParamss, valParamss, constArgss, valArgss)
           case None => EnumCase(name, constParamss, valParamss, Nil, Nil)
         }
     }
@@ -46,9 +50,9 @@ private[parser] object TypeDefs {
     (identifier("type")
       *> identifier.surroundedBy(ws)
       ~ (constParamList.rep0 <* ws <* P.char('=') <* ws)
-      ~ typ).map {
-    case (name -> paramss -> body) => TypeAlias(name, paramss, body)
-  }
+      ~ typ).map { case (name -> paramss -> body) =>
+      TypeAlias(name, paramss, body)
+    }
 
   val typeDef: P[TypeDef] = recordDef | enumDef
 }

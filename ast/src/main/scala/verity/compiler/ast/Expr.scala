@@ -28,11 +28,11 @@ case class PkgRef(path: Seq[Text])
 /** Used for accessing a property on an object like `foo.bar`.
   *
   * @param obj
-  *   The object whose property is being accessed
-  * @param prop
-  *   The property name
+  *   The object whose field is being accessed
+  * @param field
+  *   The field name
   */
-case class PropAccess(obj: Expr, prop: String) extends Expr
+case class FieldAccess(obj: Expr, field: String) extends Expr
 
 case class ParenExpr(expr: Expr, textRange: TextRange) extends Expr
 
@@ -54,8 +54,6 @@ case class FnCall(
 
 /** A list of actual arguments (as opposed to type arguments) */
 case class ValArgList(args: List[Expr], isGiven: Boolean)
-
-case class UpcastExpr(expr: Expr, typ: Type) extends Expr
 
 /** An expression like `let foo = bar in baz` */
 case class LetExpr(vars: List[VarDef], body: Expr) extends Expr

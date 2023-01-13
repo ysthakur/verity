@@ -1,15 +1,16 @@
+
+
 import org.scalatest.funsuite.AnyFunSuite
 
 import verity.compiler.ast.*
-import verity.compiler.parser.TypeDefs
 
-class ClassDefTests extends AnyFunSuite {
+class TypeDefTests extends AnyFunSuite {
   test("Basic class def") {
     assertResult(
       Right(
         (
           "",
-          ClassDef(
+          TypeDef(
             "Foo",
             List.empty,
             List(
