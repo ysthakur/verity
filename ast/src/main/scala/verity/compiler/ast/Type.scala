@@ -25,8 +25,6 @@ case class TypeArgList(args: List[Type]) extends Tree
 
 case class TypeApply(typeCtor: Type, args: TypeArgList) extends Type
 
-case class Wildcard(lower: Type, upper: Type) extends Type
-
 /** Accessing a type member of another type (e.g. `Foo.Bar`)
   *
   * @param typ
@@ -37,15 +35,15 @@ case class TypeMemberAccess(typ: Type, memberName: String) extends Type
 
 case object UnknownType extends Type
 
-case class Field(name: String, typ: Type) extends Def
-
 case class FunctionType(
-  paramTypes: List[TypeParamList | ValParamList],
+  comptimeParamss: List[ComptimeParamList],
+  normParamTypes: List[Type],
+  givenParamTypes: List[Type],
   returnType: Type
 ) extends Type
 
 /** An argument list, either like `[A, B]` or `{ev1, ev2}` */
-enum ConstArgList {
+enum ComptimeArgList {
   case TypeArgList(args: List[Type])
-  case ProofArgList(args: List[Expr])
+  case ConstArgList(args: List[Expr])
 }

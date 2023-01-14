@@ -14,11 +14,20 @@ object Parser {
     (Core.packageStmt.? ~ Core.importStmt.rep0 <* CatsParser.end).map {
       case (pkgStmt -> imptStmts) =>
         input =>
-          FileNode(input.map(_.getName.nn).merge, pkgStmt, imptStmts, ???, input.toOption)
+          FileNode(
+            input.map(_.getName.nn).merge,
+            pkgStmt,
+            imptStmts,
+            ???,
+            input.toOption
+          )
     }
 
   private def processResult(
-    parserResult: Either[CatsParser.Error, (String, Either[String, File] => FileNode)],
+    parserResult: Either[
+      CatsParser.Error,
+      (String, Either[String, File] => FileNode)
+    ],
     inputFile: Either[String, File]
   ): Either[(String, Int), FileNode] =
     parserResult match {

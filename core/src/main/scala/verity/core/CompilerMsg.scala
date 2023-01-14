@@ -105,7 +105,7 @@
 //  * to make it easier to return false from inside methods that return booleans
 //  * representing whether or not an operation was successful.
 //  * TODO Return Unit instead for the sake of good practice?
-//  */ 
+//  */
 // def sendMsg(msg: CompilerMsg)(using msgs: Messages): false = {
 //   msgs.msgs += msg
 //   false

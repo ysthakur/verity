@@ -4,51 +4,70 @@ import cats.data.NonEmptyList
 
 sealed trait TypeDef extends Def {
 
-  /** The type parameters and proof parameters for this typedef. None of the
+  /** The type parameters and const parameters for this typedef. None of the
     * param lists should be normal or given parameters.
     */
-  def constParamss: List[ConstParamList] = Nil
-  def valParamss: List[ValParamList] = Nil
+  def comptimeParamss: List[ComptimeParamList] = Nil
+
+  def fields: List[Field] = Nil
 }
 
-case class Prop(name: String, typ: Type, value: Option[Expr]) extends Tree
+case class Field(name: String, typ: Type) extends Tree
 
 case class Record(
   name: String,
-  override val constParamss: List[ConstParamList],
-  override val valParamss: List[ValParamList]
+  override val comptimeParamss: List[ComptimeParamList],
+  normFields: List[ValParam],
+  givenFields: List[ValParam]
 ) extends TypeDef
 
 case class EnumDef(
   name: String,
-  override val constParamss: List[ConstParamList],
-  override val valParamss: List[ValParamList],
+  override val comptimeParamss: List[ComptimeParamList],
+  normParams: List[ValParam],
+  givenParams: List[ValParam],
   cases: List[EnumCase]
 ) extends TypeDef
 
 /** A particular case/variant of an enum
   * @param name
   *   The name of the case
-  * @param constParamss
-  *   Compile-time parameters for this particular case
-  * @param valParamss
-  *   Parameters for this particular case
-  * @param ctorConstArgss
-  *   The compile-time arguments to pass to the upper enum's constructor, if any
-  * @param ctorValArgss
-  *   The arguments to pass to the upper enum's constructor, if any
+  * @param comptimeParamss
+  *   Compile-time parameter lists for this particular case (note the `ss`)
+  * @param normParams
+  *   Normal parameters for this particular case
+  * @param givenParams
+  *   Implicit parameters for this particular case
+  * @param ctorComptimeArgs
+  *   The compile-time arguments to pass to the upper enum's constructor, if
+  *   any.
+  * @param ctorNormArgs
+  *   The normal arguments to pass to the upper enum's constructor, if any
+  * @param ctorGivenArgs
+  *   The implicit arguments to pass to the upper enum's constructor, if any
   */
 case class EnumCase(
   name: String,
-  constParamss: List[ConstParamList],
-  valParamss: NonEmptyList[ValParamList],
-  ctorConstArgss: List[ConstArgList],
-  ctorValArgss: List[ValArgList]
+  comptimeParamss: List[ComptimeParamList],
+  normParams: List[ValParam],
+  givenParams: List[ValParam],
+  ctorComptimeArgss: List[ComptimeArgList],
+  ctorNormArgs: List[Expr],
+  ctorGivenArgs: List[Expr]
 )
 
+/** A type alias
+  *
+  * @param name
+  * @param comptimeParamss
+  *   All the lists of compile-time parameters for this type alias. A
+  *   compile-time parameter list can be either a type parameter list or a const
+  *   parameter list.
+  * @param body
+  */
 case class TypeAlias(
   override val name: String,
-  override val constParamss: List[ConstParamList],
+  override val comptimeParamss: List[ComptimeParamList],
   val body: Type
 ) extends TypeDef
 
@@ -77,9 +96,13 @@ object NotProvenDef extends TypeDef {
   override def name = "NotProven"
 }
 
-enum ConstParamList {
+/** A compile-time parameter list. Can be either a type parameter list or a
+  * const parameter list (const parameters are values, but given at compile-time
+  * instead of runtime)
+  */
+enum ComptimeParamList {
   case TypeParamList(params: List[TypeParam])
-  case ProofParamList(params: List[ValParam])
+  case ConstParamList(params: List[ValParam], isGiven: Boolean)
 }
 
 /** @param name
@@ -95,5 +118,3 @@ case class TypeParam(
   lowerBound: Option[Type],
   nameRange: TextRange
 ) extends TypeDef
-
-case class TypeParamList(params: List[TypeParam]) extends Tree

@@ -48,8 +48,9 @@ case class If(cond: Expr, thenBody: Expr, elseBody: Expr) extends Expr
 
 case class FnCall(
   fn: Expr,
-  constArgss: List[ConstArgList],
-  valArgss: List[ValArgList]
+  comptimeArgss: List[ComptimeArgList],
+  normArgs: List[Expr],
+  givenArgs: List[Expr]
 ) extends Expr
 
 /** A list of actual arguments (as opposed to type arguments) */
@@ -67,8 +68,9 @@ case class VarDef(
 ) extends Def
 
 case class Lambda(
-  constParamss: List[ConstParamList],
-  valParamss: List[ValParamList],
+  comptimeParamss: List[ComptimeParamList],
+  normParams: List[ValParam],
+  givenParams: List[ValParam],
   body: Expr,
   textRange: TextRange
 ) extends Expr

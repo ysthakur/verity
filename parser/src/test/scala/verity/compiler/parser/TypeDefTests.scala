@@ -14,17 +14,17 @@ class TypeDefTests extends AnyFunSuite {
             "Foo",
             List.empty,
             List(
-              Prop(
+              Field(
                 "foo",
                 UnresolvedType(List("int")),
                 Some(IntLiteral(0, TextRange.synthetic))
               ),
-              Prop(
+              Field(
                 "x",
                 UnresolvedType(List("string")),
                 None
               ),
-              Prop(
+              Field(
                 "y",
                 UnknownType,
                 Some(IntLiteral(8, TextRange.synthetic))
@@ -35,11 +35,8 @@ class TypeDefTests extends AnyFunSuite {
         )
       )
     ) {
-      TypeDefs.classOrTrait.parse(
-        """class Foo
-             val foo: int = 0
-             val x: string
-             val y = 8"""
+      TypeDefs.typedef.parse(
+        """record Foo(foo: int, x: string, y: int)"""
       )
     }
   }

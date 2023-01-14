@@ -16,22 +16,21 @@ private[parser] object TypeDefs {
   val recordDef: P[TypeDef] =
     (identifier("record")
       *> identifier.surroundedBy(ws)
-      ~ constParamList.rep0
-      ~ valParamList.rep0).map { case (name -> constParamss -> valParamss) =>
-      Record(name, constParamss, valParamss)
+      ~ comptimeParamList.rep0
+      ~ valParamList.rep0).map { case (name -> comptimeParamss -> valParamss) =>
+      Record(name, comptimeParamss, valParamss)
     }
 
   val enumCase: P[EnumCase] =
-    (identifier.surroundedBy(
-      ws
-    ) ~ constParamList.rep0 ~ valParamList.rep ~ (ws *> P.char(
-      ':'
-    ) *> ws *> constArgList.rep0 ~ valArgList.rep0).?).map {
-      case (name -> constParamss -> valParamss -> args) =>
+    (identifier.surroundedBy(ws)
+      ~ comptimeParamList.rep0
+      ~ (params <* ws)
+      ~ (P.char(':') *> ws *> comptimeArgList.rep0 ~ valArgList.rep0).?).map {
+      case (name -> comptimeParamss -> (normParams, givenParams) -> args) =>
         args match {
-          case Some((constArgss, valArgss)) =>
-            EnumCase(name, constParamss, valParamss, constArgss, valArgss)
-          case None => EnumCase(name, constParamss, valParamss, Nil, Nil)
+          case Some((comptimeArgss, valArgss)) =>
+            EnumCase(name, comptimeParamss, normParams, givenParams, comptimeArgss, valArgss)
+          case None => EnumCase(name, comptimeParamss, normParams, givenParams, Nil, Nil)
         }
     }
 
@@ -39,17 +38,17 @@ private[parser] object TypeDefs {
     (
       identifier("enum")
         *> identifier.surroundedBy(ws)
-        ~ constParamList.rep0 ~ valParamList.rep0
-        ~ enumCase.repSep0(P.char(','))
-        <* ws <* identifier("end")
-    ).map { case (name -> constParamss -> valParamss -> cases) =>
-      EnumDef(name, constParamss, valParamss, cases)
+        ~ comptimeParamList.repSep0(ws) ~ normParamList.surroundedBy(ws).? ~ givenParamList.?
+        ~ enumCase.repSep0(ws *> P.char(',') *> ws).surroundedBy(ws)
+        <* identifier("end")
+    ).map { case (name -> comptimeParamss -> normParams -> givenParams -> cases) =>
+      EnumDef(name, comptimeParamss, normParams.getOrElse(Nil), givenParams.getOrElse(Nil), cases)
     }
 
   val typeAlias: P[TypeDef] =
     (identifier("type")
       *> identifier.surroundedBy(ws)
-      ~ (constParamList.rep0 <* ws <* P.char('=') <* ws)
+      ~ (comptimeParamList.rep0 <* ws <* P.char('=') <* ws)
       ~ typ).map { case (name -> paramss -> body) =>
       TypeAlias(name, paramss, body)
     }

@@ -57,7 +57,7 @@ private[parser] object Core {
       "pub",
       "mut",
       "const",
-      "given",
+      "given"
     )
   ) ~ (idEnd *> P.index)).map { case (modifier, end) =>
     Modifier(modifier, tr(end - modifier.length, end))
@@ -67,8 +67,9 @@ private[parser] object Core {
     identifier.repSep(1, ws *> P.string0(".") *> ws)
 
   val packageStmt: P[PackageStmt] =
-    (identifier("package") *> dotPath.surroundedBy(ws) <* P.string0(";"))
-      .map { case path => PackageStmt(path) }
+    (identifier("package") *> dotPath.surroundedBy(ws) <* P.string0(";")).map {
+      case path => PackageStmt(path)
+    }
 
   val importStmt: P[ImportStmt] =
     (identifier("import") *> dotPath.surroundedBy(ws) ~ (P.string(
@@ -115,7 +116,7 @@ private[parser] object Core {
     start: P[Unit],
     item: P[T],
     sep: P[Unit],
-    end: P[Unit],
+    end: P[Unit]
   ): P[List[T]] =
-    start *> ws *> item.repSep0(ws *> sep <* ws) <* ws <* end
+    start.soft *> ws *> item.repSep0(ws *> sep <* ws) <* ws <* end
 }

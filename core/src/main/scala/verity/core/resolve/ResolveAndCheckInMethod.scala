@@ -13,8 +13,6 @@
 
 // import scala.collection.mutable
 
-
-
 // //todo make a proper solver for this stuff
 // private def resolveStmt(
 //   stmt: Statement,

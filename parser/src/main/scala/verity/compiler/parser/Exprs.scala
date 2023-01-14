@@ -63,13 +63,13 @@ object Exprs {
   /** Either `foo.bar` or `foo[T](bar)(given baz)` */
   val fnCallOrFieldAccess: P[Expr] =
     (selectable ~ fieldAccess
-      .eitherOr(valArgList.eitherOr(constArgList))
+      .eitherOr(valArgList.eitherOr(comptimeArgList))
       .repSep0(ws)).map { case (start, rest) =>
       rest.foldLeft(start) { (expr, next) =>
         next match {
-          case Right(fieldName)         => FieldAccess(expr, fieldName)
-          case Left(Right(valArgList))  => ???
-          case Left(Left(constArgList)) => ???
+          case Right(fieldName)            => FieldAccess(expr, fieldName)
+          case Left(Right(valArgList))     => ???
+          case Left(Left(comptimeArgList)) => ???
         }
       }
     }
@@ -78,7 +78,12 @@ object Exprs {
   val binop7 = binOp(binop8, op('*', '/', '%'))
   val binop6 = binOp(binop7, op('+', '-'))
   val binop5 = binOp(binop6, op('<', '>'))
-  val binop4 = binOp(binop5, op('!') | (P.char('=') ~ ((P.char('=').as('=') ~ opChar).string | opChar.string)).rep.string)
+  val binop4 = binOp(
+    binop5,
+    op('!') | (P.char('=') ~ ((P
+      .char('=')
+      .as('=') ~ opChar).string | opChar.string)).rep.string
+  )
   val binop3 = binOp(binop4, op('&'))
   val binop2 = binOp(binop3, op('^'))
   val binop1 = binOp(binop2, op('|'))
@@ -107,46 +112,54 @@ object Exprs {
     }
 
   val letExpr: P[Expr] =
-    P.defer((varDef.repSep(ws) <* ws <* identifier("in") <* ws).rep0.with1 ~ expr)
-      .map { case (varLists, body) =>
-        varLists.foldRight(body) { case (NonEmptyList(firstVar, rest), body) =>
-          LetExpr(firstVar :: rest, body)
-        }
+    P.defer(
+      (varDef.repSep(ws) <* ws <* identifier("in") <* ws).rep0.with1 ~ expr
+    ).map { case (varLists, body) =>
+      varLists.foldRight(body) { case (NonEmptyList(firstVar, rest), body) =>
+        LetExpr(firstVar :: rest, body)
       }
+    }
 
   val valParam: P[ValParam] =
     (identifier ~ (ws *> P.char(':') *> ws *> typ).?).map { case (name, typ) =>
       ValParam(name, typ.getOrElse(UnknownType))
     }
-  val normParamList: P[ValParamList] =
-    list(P.char('('), valParam, P.char(','), P.char(')')).map {
-      ValParamList(_, false)
-    }
-  val givenParamList: P[ValParamList] =
-    list(P.char('('), valParam, P.char(','), P.char(')')).map {
-      ValParamList(_, true)
-    }
-  val valParamList: P[ValParamList] = normParamList | givenParamList
+  val normParamList: P[List[ValParam]] =
+    list(P.char('('), valParam, P.char(','), P.char(')'))
+  val givenParamList: P[List[ValParam]] =
+    list(
+      P.char('(') *> ws *> identifier("given"),
+      valParam,
+      P.char(','),
+      P.char(')')
+    )
 
-  val typeParamList: P[ConstParamList] =
+  /** A normal parameter list and an implicit parameter list together */
+  val params: P0[(List[ValParam], List[ValParam])] =
+    ((normParamList <* ws).? ~ givenParamList.?).map {
+      case (normParams, givenParams) =>
+        (normParams.getOrElse(Nil), givenParams.getOrElse(Nil))
+    }
+
+  val typeParamList: P[ComptimeParamList] =
     list(P.char('['), typeParam, P.char(','), P.char(']')).map {
-      ConstParamList.TypeParamList(_)
+      ComptimeParamList.TypeParamList(_)
     }
-  val proofParamList: P[ConstParamList] =
+  val constParamList: P[ComptimeParamList] =
     list(P.char('{'), valParam, P.char(','), P.char('}')).map {
-      ConstParamList.ProofParamList(_)
+      ComptimeParamList.ConstParamList(_)
     }
-  val constParamList: P[ConstParamList] = typeParamList | proofParamList
+  val comptimeParamList: P[ComptimeParamList] = typeParamList | constParamList
 
-  val typeArgList: P[ConstArgList] =
+  val typeArgList: P[ComptimeArgList] =
     list(P.char('['), typ, P.char(','), P.char(']')).map {
-      ConstArgList.TypeArgList(_)
+      ComptimeArgList.TypeArgList(_)
     }
-  val proofArgList: P[ConstArgList] =
+  val constArgList: P[ComptimeArgList] =
     list(P.char('{'), expr, P.char(','), P.char('}')).map {
-      ConstArgList.ProofArgList(_)
+      ComptimeArgList.ConstArgList(_)
     }
-  val constArgList: P[ConstArgList] = typeArgList | proofArgList
+  val comptimeArgList: P[ComptimeArgList] = typeArgList | constArgList
 
   val normArgList: P[ValArgList] = argList(P.unit).map(ValArgList(_, false))
   val givenArgList: P[ValArgList] =
@@ -155,14 +168,16 @@ object Exprs {
 
   val lambda: P[Expr] =
     (P.char('\\') *> P.index
-      ~ constParamList.repSep0(ws)
-      ~ valParamList.repSep0(ws)
-      ~ (P.string("->") *> expr)
+      ~ comptimeParamList.repSep0(ws)
+      ~ normParamList.?.surroundedBy(ws)
+      ~ givenParamList.?
+      ~ (ws *> P.string("->") *> expr)
       ~ P.index).map {
-      case (start -> constParamss -> valParamss -> body -> end) =>
+      case (start -> comptimeParamss -> normParams -> givenParams -> body -> end) =>
         Lambda(
-          constParamss,
-          valParamss,
+          comptimeParamss,
+          normParams.getOrElse(Nil),
+          givenParams.getOrElse(Nil),
           body,
           tr(start, end)
         )
@@ -184,8 +199,8 @@ object Exprs {
     *   Parser for the operator
     */
   def binOp(prev: P[Expr], op: P[String]) =
-    (prev ~ ((op ~ P.index <* ws) ~ prev).repSep0(ws))
-      .map { case (left, reps) =>
+    (prev ~ ((op ~ P.index <* ws) ~ prev).repSep0(ws)).map {
+      case (left, reps) =>
         reps.foldLeft(left) { case (lhs, op -> opEnd -> rhs) =>
           BinExpr(
             lhs,
@@ -193,5 +208,5 @@ object Exprs {
             rhs
           )
         }
-      }
+    }
 }

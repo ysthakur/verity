@@ -2,7 +2,6 @@
 
 // import verity.compiler.ast._
 
-
 // import verity.compiler.core._
 // import verity.compiler.core.Context.Defs
 // //import cats.data.{OptionT, Writer}

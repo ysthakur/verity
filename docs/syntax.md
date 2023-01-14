@@ -112,6 +112,10 @@ Precedence, from lowest to highest:
 ?, ~, @, \, $
 ```
 
+An operator is a sequence of one or more of the characters above. One caveat is
+that if an operator ends with `=`, it must also start with `=`. Otherwise, it is
+interpreted to be an augmented assignment, e.g. `+=`.
+
 ## Type expressions
 
 ```ebnf
