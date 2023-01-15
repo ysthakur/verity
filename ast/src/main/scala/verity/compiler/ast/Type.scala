@@ -42,8 +42,13 @@ case class FunctionType(
   returnType: Type
 ) extends Type
 
-/** An argument list, either like `[A, B]` or `{ev1, ev2}` */
-enum ComptimeArgList {
-  case TypeArgList(args: List[Type])
-  case ConstArgList(args: List[Expr])
+/** Compile-time arguments */
+case class ComptimeArgs(
+  typeArgs: List[Type],
+  normConstArgs: List[Expr],
+  givenConstArgs: List[Expr]
+)
+
+object Comptime {
+  def empty = ComptimeArgs(Nil, Nil, Nil)
 }

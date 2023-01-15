@@ -63,13 +63,14 @@ object Exprs {
   /** Either `foo.bar` or `foo[T](bar)(given baz)` */
   val fnCallOrFieldAccess: P[Expr] =
     (selectable ~ fieldAccess
-      .eitherOr(valArgList.eitherOr(comptimeArgList))
+      .eitherOr(valArgs.eitherOr(comptimeArgs *> ws ~ valArgs))
       .repSep0(ws)).map { case (start, rest) =>
       rest.foldLeft(start) { (expr, next) =>
         next match {
-          case Right(fieldName)            => FieldAccess(expr, fieldName)
-          case Left(Right(valArgList))     => ???
-          case Left(Left(comptimeArgList)) => ???
+          case Right(fieldName)     => FieldAccess(expr, fieldName)
+          case Left(Right(valArgs)) => FnCall(expr, ComptimeArgs.empty, valArgs)
+          case Left(Left(comptimeArgs -> valArgs)) =>
+            FnCall(expr, comptimeArgs, valArgs)
         }
       }
     }
@@ -120,13 +121,13 @@ object Exprs {
       }
     }
 
-  val valParam: P[ValParam] =
+  val valParam: P[Param] =
     (identifier ~ (ws *> P.char(':') *> ws *> typ).?).map { case (name, typ) =>
-      ValParam(name, typ.getOrElse(UnknownType))
+      Param(name, typ.getOrElse(UnknownType))
     }
-  val normParamList: P[List[ValParam]] =
+  val normParamList: P[List[Param]] =
     list(P.char('('), valParam, P.char(','), P.char(')'))
-  val givenParamList: P[List[ValParam]] =
+  val givenParamList: P[List[Param]] =
     list(
       P.char('(') *> ws *> identifier("given"),
       valParam,
@@ -135,49 +136,111 @@ object Exprs {
     )
 
   /** A normal parameter list and an implicit parameter list together */
-  val params: P0[(List[ValParam], List[ValParam])] =
+  val params: P[Params] = givenParamList
+    .map(Params(Nil, _))
+    .orElse((normParamList ~ givenParamList.?).map { case (normParams, givenParams) =>
+      Params(normParams, givenParams.getOrElse(Nil))
+    })
+  val params0: P0[Params] =
     ((normParamList <* ws).? ~ givenParamList.?).map {
       case (normParams, givenParams) =>
-        (normParams.getOrElse(Nil), givenParams.getOrElse(Nil))
+        Params(normParams.getOrElse(Nil), givenParams.getOrElse(Nil))
     }
 
-  val typeParamList: P[ComptimeParamList] =
-    list(P.char('['), typeParam, P.char(','), P.char(']')).map {
-      ComptimeParamList.TypeParamList(_)
+  val typeParamList: P[List[TypeParam]] =
+    list(P.char('['), typeParam, P.char(','), P.char(']'))
+  val normConstParamList: P[List[Param]] =
+    list(P.char('{'), valParam, P.char(','), P.char('}'))
+  val givenConstParamList: P[List[Param]] =
+    list(
+      P.char('{') *> ws *> identifier("given"),
+      valParam,
+      P.char(','),
+      P.char('}')
+    )
+  val comptimeParams: P[ComptimeParams] = {
+    // Has type params
+    val typeParamsFirst =
+      (typeParamList ~ normConstParamList.? ~ givenConstParamList.?).map {
+        case (typeParams -> normConstParams -> givenConstParams) =>
+          ComptimeParams(
+            typeParams,
+            normConstParams.getOrElse(Nil),
+            givenConstParams.getOrElse(Nil)
+          )
+      }
+    // No type params
+    val normConstFirst = (normConstParamList ~ givenConstParamList.?).map {
+      case (normConstParams -> givenConstParams) =>
+        ComptimeParams(Nil, normConstParams, givenConstParams.getOrElse(Nil))
     }
-  val constParamList: P[ComptimeParamList] =
-    list(P.char('{'), valParam, P.char(','), P.char('}')).map {
-      ComptimeParamList.ConstParamList(_)
+    // No type params and no normal const params, only given const params
+    val givenConstOnly = givenConstParamList.map { givenConstParams =>
+      ComptimeParams(Nil, Nil, givenConstParams)
     }
-  val comptimeParamList: P[ComptimeParamList] = typeParamList | constParamList
 
-  val typeArgList: P[ComptimeArgList] =
-    list(P.char('['), typ, P.char(','), P.char(']')).map {
-      ComptimeArgList.TypeArgList(_)
-    }
-  val constArgList: P[ComptimeArgList] =
-    list(P.char('{'), expr, P.char(','), P.char('}')).map {
-      ComptimeArgList.ConstArgList(_)
-    }
-  val comptimeArgList: P[ComptimeArgList] = typeArgList | constArgList
+    typeParamsFirst | normConstFirst | givenConstOnly
+  }
 
-  val normArgList: P[ValArgList] = argList(P.unit).map(ValArgList(_, false))
-  val givenArgList: P[ValArgList] =
-    argList(identifier("given")).map(ValArgList(_, true))
-  val valArgList: P[ValArgList] = normArgList | givenArgList
+  val typeArgList: P[List[Type]] =
+    list(P.char('['), typ, P.char(','), P.char(']'))
+  val normConstArgList: P[List[Expr]] =
+    list(P.char('{'), expr, P.char(','), P.char('}'))
+  val givenConstArgList: P[List[Expr]] =
+    list(
+      P.char('{') *> ws *> identifier("given"),
+      expr,
+      P.char(','),
+      P.char('}')
+    )
+  val comptimeArgs: P[ComptimeArgs] = {
+    // Has type args
+    val typeArgsFirst =
+      (typeArgList ~ normConstArgList.? ~ givenConstArgList.?).map {
+        case (typeArgs -> normConstArgs -> givenConstArgs) =>
+          ComptimeArgs(
+            typeArgs,
+            normConstArgs.getOrElse(Nil),
+            givenConstArgs.getOrElse(Nil)
+          )
+      }
+    // No type args
+    val normConstFirst = (normConstArgList ~ givenConstArgList.?).map {
+      case (normConstArgs -> givenConstArgs) =>
+        ComptimeArgs(Nil, normConstArgs, givenConstArgs.getOrElse(Nil))
+    }
+    // No type args and no normal const args, only given const args
+    val givenConstOnly = givenConstArgList.map { givenConstArgs =>
+      ComptimeArgs(Nil, Nil, givenConstArgs)
+    }
+
+    typeArgsFirst | normConstFirst | givenConstOnly
+  }
+
+  val normArgList: P[List[Expr]] =
+    list(P.char('('), expr, P.char(','), P.char(')'))
+  val givenArgList: P[List[Expr]] = list(
+    P.char('(') *> ws *> identifier("given"),
+    expr,
+    P.char(','),
+    P.char(')')
+  )
+  val valArgs: P[Args] = givenArgList
+    .map(Args(Nil, _))
+    .orElse((normArgList ~ givenArgList.?).map { case (normArgs, givenArgs) =>
+      Args(normArgs, givenArgs.getOrElse(Nil))
+    })
 
   val lambda: P[Expr] =
     (P.char('\\') *> P.index
-      ~ comptimeParamList.repSep0(ws)
-      ~ normParamList.?.surroundedBy(ws)
-      ~ givenParamList.?
+      ~ comptimeParams.surroundedBy(ws)
+      ~ params
       ~ (ws *> P.string("->") *> expr)
       ~ P.index).map {
-      case (start -> comptimeParamss -> normParams -> givenParams -> body -> end) =>
+      case (start -> comptimeParams -> params -> body -> end) =>
         Lambda(
-          comptimeParamss,
-          normParams.getOrElse(Nil),
-          givenParams.getOrElse(Nil),
+          comptimeParams,
+          params,
           body,
           tr(start, end)
         )

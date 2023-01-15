@@ -7,7 +7,7 @@ sealed trait TypeDef extends Def {
   /** The type parameters and const parameters for this typedef. None of the
     * param lists should be normal or given parameters.
     */
-  def comptimeParamss: List[ComptimeParamList] = Nil
+  def comptimeParams: ComptimeParams = ComptimeParams(Nil, Nil, Nil)
 
   def fields: List[Field] = Nil
 }
@@ -16,28 +16,24 @@ case class Field(name: String, typ: Type) extends Tree
 
 case class Record(
   name: String,
-  override val comptimeParamss: List[ComptimeParamList],
-  normFields: List[ValParam],
-  givenFields: List[ValParam]
+  override val comptimeParams: ComptimeParams,
+  params: Params
 ) extends TypeDef
 
 case class EnumDef(
   name: String,
-  override val comptimeParamss: List[ComptimeParamList],
-  normParams: List[ValParam],
-  givenParams: List[ValParam],
+  override val comptimeParams: ComptimeParams,
+  params: Params,
   cases: List[EnumCase]
 ) extends TypeDef
 
 /** A particular case/variant of an enum
   * @param name
   *   The name of the case
-  * @param comptimeParamss
-  *   Compile-time parameter lists for this particular case (note the `ss`)
-  * @param normParams
-  *   Normal parameters for this particular case
-  * @param givenParams
-  *   Implicit parameters for this particular case
+  * @param comptimeParams
+  *   Compile-time parameters for this particular case
+  * @param params
+  *   Runtime parameters for this particular case
   * @param ctorComptimeArgs
   *   The compile-time arguments to pass to the upper enum's constructor, if
   *   any.
@@ -48,12 +44,10 @@ case class EnumDef(
   */
 case class EnumCase(
   name: String,
-  comptimeParamss: List[ComptimeParamList],
-  normParams: List[ValParam],
-  givenParams: List[ValParam],
-  ctorComptimeArgss: List[ComptimeArgList],
-  ctorNormArgs: List[Expr],
-  ctorGivenArgs: List[Expr]
+  comptimeParams: ComptimeParams,
+  params: Params,
+  ctorComptimeArgs: ComptimeArgs,
+  ctorArgs: Args
 )
 
 /** A type alias
@@ -67,7 +61,7 @@ case class EnumCase(
   */
 case class TypeAlias(
   override val name: String,
-  override val comptimeParamss: List[ComptimeParamList],
+  override val comptimeParams: ComptimeParams,
   val body: Type
 ) extends TypeDef
 
@@ -102,7 +96,7 @@ object NotProvenDef extends TypeDef {
   */
 enum ComptimeParamList {
   case TypeParamList(params: List[TypeParam])
-  case ConstParamList(params: List[ValParam], isGiven: Boolean)
+  case ConstParamList(params: List[Param], isGiven: Boolean)
 }
 
 /** @param name
@@ -118,3 +112,9 @@ case class TypeParam(
   lowerBound: Option[Type],
   nameRange: TextRange
 ) extends TypeDef
+
+case class ComptimeParams(
+  typeParams: List[TypeParam],
+  normConstParams: List[Param],
+  givenConstParams: List[Param],
+)

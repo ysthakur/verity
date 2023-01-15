@@ -23,14 +23,14 @@ private[parser] object TypeDefs {
 
   val enumCase: P[EnumCase] =
     (identifier.surroundedBy(ws)
-      ~ comptimeParamList.rep0
+      ~ (comptimeParams <* ws)
       ~ (params <* ws)
-      ~ (P.char(':') *> ws *> comptimeArgList.rep0 ~ valArgList.rep0).?).map {
-      case (name -> comptimeParamss -> (normParams, givenParams) -> args) =>
+      ~ (P.char(':') *> ws *> comptimeArgs ~ valArgs).?).map {
+      case (name -> comptimeParams -> valParams -> args) =>
         args match {
-          case Some((comptimeArgss, valArgss)) =>
-            EnumCase(name, comptimeParamss, normParams, givenParams, comptimeArgss, valArgss)
-          case None => EnumCase(name, comptimeParamss, normParams, givenParams, Nil, Nil)
+          case Some((comptimeArgs, valArgss)) =>
+            EnumCase(name, comptimeParams, valParams, comptimeArgs, valArgss)
+          case None => EnumCase(name, comptimeParams, valParams, Nil, Nil)
         }
     }
 
@@ -38,19 +38,19 @@ private[parser] object TypeDefs {
     (
       identifier("enum")
         *> identifier.surroundedBy(ws)
-        ~ comptimeParamList.repSep0(ws) ~ normParamList.surroundedBy(ws).? ~ givenParamList.?
+        ~ comptimeParams0 ~ params0
         ~ enumCase.repSep0(ws *> P.char(',') *> ws).surroundedBy(ws)
         <* identifier("end")
-    ).map { case (name -> comptimeParamss -> normParams -> givenParams -> cases) =>
-      EnumDef(name, comptimeParamss, normParams.getOrElse(Nil), givenParams.getOrElse(Nil), cases)
+    ).map { case (name -> comptimeParams -> params -> cases) =>
+      EnumDef(name, comptimeParams, params, cases)
     }
 
   val typeAlias: P[TypeDef] =
     (identifier("type")
       *> identifier.surroundedBy(ws)
-      ~ (comptimeParamList.rep0 <* ws <* P.char('=') <* ws)
-      ~ typ).map { case (name -> paramss -> body) =>
-      TypeAlias(name, paramss, body)
+      ~ (comptimeParams <* ws <* P.char('=') <* ws)
+      ~ typ).map { case (name -> params -> body) =>
+      TypeAlias(name, params, body)
     }
 
   val typeDef: P[TypeDef] = recordDef | enumDef

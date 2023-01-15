@@ -46,12 +46,7 @@ case class Op(symbol: String, textRange: TextRange) extends Expr
 /** An if-else expression */
 case class If(cond: Expr, thenBody: Expr, elseBody: Expr) extends Expr
 
-case class FnCall(
-  fn: Expr,
-  comptimeArgss: List[ComptimeArgList],
-  normArgs: List[Expr],
-  givenArgs: List[Expr]
-) extends Expr
+case class FnCall(fn: Expr, comptimeArgs: ComptimeArgs, args: Args) extends Expr
 
 /** A list of actual arguments (as opposed to type arguments) */
 case class ValArgList(args: List[Expr], isGiven: Boolean)
@@ -61,26 +56,27 @@ case class LetExpr(vars: List[VarDef], body: Expr) extends Expr
 
 /** A local variable
   */
-case class VarDef(
-  val name: String,
-  val typ: Option[Type],
-  val value: Expr
-) extends Def
+case class VarDef(name: String, typ: Option[Type], value: Expr) extends Def
 
 case class Lambda(
-  comptimeParamss: List[ComptimeParamList],
-  normParams: List[ValParam],
-  givenParams: List[ValParam],
+  comptimeParams: ComptimeParams,
+  params: Params,
   body: Expr,
   textRange: TextRange
 ) extends Expr
 
-case class ValParam(name: String, typ: Type)
+case class Param(name: String, typ: Type)
 
-case class ValParamList(
-  params: List[ValParam],
-  isGiven: Boolean
-) extends Tree
+/** The usual kind of runtime parameters, both normal and implicit ones */
+case class Params(
+  normParams: List[Param],
+  givenParams: List[Param]
+)
+
+/** Runtime arguments, both normal and implicit ones */
+case class Args(normArgs: List[Expr], givenArgs: List[Expr])
+
+case class ValParamList(params: List[Param], isGiven: Boolean) extends Tree
 
 case class Modifier(mod: String, textRange: TextRange) extends Tree
 
