@@ -14,24 +14,28 @@ class TypeDefTests extends AnyFunSuite {
             "Foo",
             ComptimeParams(
               List(
-                TypeParam("A")
+                TypeParam("A"),
+                TypeParam("B")
               ),
               Nil,
               Nil
             ),
             Params(
               List(
-                // Param("foo", UnresolvedType("Int")),
-                // Param("x", UnresolvedType("A"))
+                Param("foo", UnresolvedType(List("Int"))),
+                Param("x", TypeApply(UnresolvedType(List("A")), List(UnresolvedType(List("C"))))),
+                Param("y", UnresolvedType(List("B")))
               ),
-              Nil
+              List(
+                Param("foo", UnresolvedType(List("Boolean")))
+              )
             )
           )
         )
       )
     ) {
       TypeDefs.typeDef.parse(
-        """record Foo[A, B] (foo: Int, x: A[C], y: B)"""
+        """record Foo[A, B] (foo: Int, x: A[C], y: B)(given foo: Boolean)"""
       )
     }
   }

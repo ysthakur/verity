@@ -26,10 +26,8 @@ object Types {
 
     val selectableType: P[Type] = idsWithDots | parenType
 
-    val typeArgList =
-      (P.char('[') *> ws *>
-        P.defer(typ).repSep0(ws ~ P.char(',') ~ ws)
-        <* ws <* P.char(']')).map { case args => TypeArgList(args) }
+    val typeArgList: P[List[Type]] =
+      list(P.char('['), P.defer(typ), P.char(','), P.char(']'))
 
     val typeApply: P[Type => Type] = typeArgList.rep.map { case argLists =>
       typ =>

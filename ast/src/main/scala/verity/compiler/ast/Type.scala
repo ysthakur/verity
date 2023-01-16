@@ -20,10 +20,7 @@ case class TypeRef(typeDef: TypeDef, args: List[Type] = Nil) extends Type
 
 case class ParenType(inner: Type, textRange: TextRange) extends Type
 
-/** A list of type arguments */
-case class TypeArgList(args: List[Type]) extends Tree
-
-case class TypeApply(typeCtor: Type, args: TypeArgList) extends Type
+case class TypeApply(typeCtor: Type, args: List[Type]) extends Type
 
 /** Accessing a type member of another type (e.g. `Foo.Bar`)
   *
