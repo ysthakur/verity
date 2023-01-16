@@ -4,26 +4,22 @@ import scala.collection.mutable.ArrayBuffer
 
 sealed trait Expr extends Tree
 
-case class BoolLiteral(value: Boolean, textRange: TextRange) extends Expr
+case class BoolLiteral(value: Boolean, textRange: TextRange = TextRange.synthetic) extends Expr
 
-case class IntLiteral(value: Int, textRange: TextRange) extends Expr
+case class IntLiteral(value: Int, textRange: TextRange = TextRange.synthetic) extends Expr
 
-case class DoubleLiteral(value: Double, textRange: TextRange) extends Expr
+case class DoubleLiteral(value: Double, textRange: TextRange = TextRange.synthetic) extends Expr
 
-case class CharLiteral(char: Char, textRange: TextRange) extends Expr
+case class CharLiteral(char: Char, textRange: TextRange = TextRange.synthetic) extends Expr
 
-case class StringLiteral(text: String, textRange: TextRange) extends Expr
+case class StringLiteral(text: String, textRange: TextRange = TextRange.synthetic) extends Expr
 
 /** A resolved reference to a variable
   */
-case class VarRef(varName: String, decl: VarDef, textRange: TextRange)
+case class VarRef(varName: String, decl: VarDef, textRange: TextRange = TextRange.synthetic)
     extends Expr
 
-case class UnresolvedIdentifier(id: String, textRange: TextRange) extends Expr
-
-/** Used for referring to references to packages such as `foo.bar.baz`
-  */
-case class PkgRef(path: Seq[Text])
+case class UnresolvedIdentifier(id: String, textRange: TextRange = TextRange.synthetic) extends Expr
 
 /** Used for accessing a property on an object like `foo.bar`.
   *

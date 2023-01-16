@@ -174,9 +174,10 @@ object Exprs {
 
   /** Either `foo.bar` or `foo[T](bar)(given baz)` */
   val fnCallOrFieldAccess: P[Expr] =
-    (selectable ~ fieldAccess
-      .eitherOr(valArgs.eitherOr(comptimeArgs ~~ valArgs))
-      .repSep0(ws)).map { case (start, rest) =>
+    (selectable ~
+      (ws *> fieldAccess
+        .eitherOr(valArgs.eitherOr(comptimeArgs ~~ valArgs))
+        .rep0)).map { case (start, rest) =>
       rest.foldLeft(start) { (expr, next) =>
         next match {
           case Right(fieldName) => FieldAccess(expr, fieldName)
@@ -194,9 +195,9 @@ object Exprs {
   val binop5 = binOp(binop6, op('<', '>'))
   val binop4 = binOp(
     binop5,
-    op('!') | (P.char('=') ~ ((P
-      .char('=')
-      .as('=') ~ opChar).string | opChar.string)).rep.string
+    op('!') |
+      (P.char('=') ~
+        ((P.char('=').as('=') <* P.not(opChar)) | opChar).rep0).string.backtrack
   )
   val binop3 = binOp(binop4, op('&'))
   val binop2 = binOp(binop3, op('^'))
@@ -204,7 +205,7 @@ object Exprs {
 
   /** Has to be right-associative */
   val assignment: P[Expr] =
-    binop1.repSep(ws ~ P.string("=") ~ ws).map {
+    binop1.repSep(ws *> P.string("=") *> ws).map {
       case NonEmptyList(first, rest) =>
         rest.foldRight(first) { (rvalue, lvalue) =>
           AssignExpr(lvalue, rvalue)
@@ -230,9 +231,9 @@ object Exprs {
   /** Variable definition */
   val letExpr: P[Expr] =
     (
-      (varDef.repSep(ws) <* ws <* keyword("in") <* ws).rep0.with1 ~ expr
+      (varDef.repSep(ws) <* ws <* keyword("in") <* ws).rep.with1 ~ expr
     ).map { case (letGroups, body) =>
-      letGroups.foldRight(body) { case (NonEmptyList(firstVar, rest), body) =>
+      letGroups.toList.foldRight(body) { case (NonEmptyList(firstVar, rest), body) =>
         LetExpr(firstVar :: rest, body)
       }
     }

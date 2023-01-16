@@ -8,7 +8,7 @@ import verity.compiler.parser.{Exprs, Types}
 class ParserTests extends AnyFunSuite {
   test("Basic arithmetic and stuff") {
     assert(
-      Exprs.expr.parse("3 + 2 * 6 > abc == true") ==
+      Exprs.expr.parse("3 + 2 * 6 > abc == true") ===
         Right(
           "" ->
             BinExpr(
@@ -33,65 +33,53 @@ class ParserTests extends AnyFunSuite {
   }
 
   test("Basic val expression without type") {
-    assert(
-      Exprs.expr.parse("val x = 5 in 3") ==
-        Right(
-          "" ->
-            LetExpr(
-              List(VarDef("x", None, IntLiteral(5, TextRange(8, 9)))),
-              IntLiteral(3, TextRange(13, 14))
-            )
+    assertResult(
+      Right(
+        LetExpr(
+          List(VarDef("x", None, IntLiteral(5, TextRange(8, 9)))),
+          IntLiteral(3, TextRange(13, 14))
         )
-    )
+      )
+    )(Exprs.expr.parseAll("let x = 5 in 3"))
+  }
+
+  test("Basic let expression with type") {
+    assertResult(
+      Right(
+        LetExpr(
+          List(
+            VarDef(
+              "x",
+              Some(UnresolvedType(List("verity", "lang", "Int"))),
+              IntLiteral(5)
+            )
+          ),
+          IntLiteral(3)
+        )
+      )
+    )(Exprs.expr.parseAll("let x: verity.lang.Int = 5 in 3"))
   }
 
   test("Somewhat complex type") {
-    assert(
-      Types.typ.parse("(verity.lang).Int[A, B[D].Foo[C]]") ==
-        Right(
-          "" ->
+    assertResult(
+      Right(
+        TypeApply(
+          UnresolvedType(List("verity", "lang", "Int")),
+          List(
+            UnresolvedType(List("A")),
             TypeApply(
               TypeMemberAccess(
-                ParenType(
-                  UnresolvedType(List("verity", "lang")),
-                  TextRange(0, 13)
-                ),
-                "Int"
-              ),
-              List(
-                UnresolvedType(List("A")),
                 TypeApply(
-                  TypeMemberAccess(
-                    TypeApply(
-                      UnresolvedType(List("B")),
-                      List(UnresolvedType(List("D")))
-                    ),
-                    "Foo"
-                  ),
-                  List(UnresolvedType(List("C")))
-                )
-              )
-            )
-        )
-    )
-  }
-
-  test("Basic val expression with type") {
-    assert(
-      Exprs.expr.parse("val x : verity.lang.Int = 5 in 3") ==
-        Right(
-          "" ->
-            LetExpr(
-              List(
-                VarDef(
-                  "x",
-                  Some(UnresolvedType(List("verity", "lang", "Int"))),
-                  IntLiteral(5, TextRange(26, 27))
-                )
+                  UnresolvedType(List("B")),
+                  List(UnresolvedType(List("D")))
+                ),
+                "Foo"
               ),
-              IntLiteral(3, TextRange(31, 32))
+              List(UnresolvedType(List("C")))
             )
+          )
         )
-    )
+      )
+    )(Types.typ.parseAll("verity.lang.Int[A, B[D].Foo[C]]"))
   }
 }
