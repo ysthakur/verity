@@ -1,5 +1,5 @@
 val projectName = "verity"
-val scala3Version = "3.2.0"
+val scala3Version = "3.2.2"
 val verityVersion = "0.1.0"
 
 name := projectName
@@ -28,8 +28,8 @@ val commonSettings = Seq(
     // "ch.qos.logback" % "logback-classic" % "1.1.3" % Runtime,
     // "com.novocode" % "junit-interface" % "0.11" % Test,
     "org.scala-lang" %% "scala3-library" % scala3Version,
-    "org.scalatest" %% "scalatest" % "3.2.14" % Test,
-    "org.typelevel" %% "cats-core" % "2.8.0"
+    "org.scalatest" %% "scalatest" % "3.2.15" % Test,
+    "org.typelevel" %% "cats-core" % "2.9.0"
   )
 )
 
@@ -68,7 +68,7 @@ lazy val parser = project
     name := "verity-parser",
     commonSettings,
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-parse" % "0.3.8"
+      "org.typelevel" %% "cats-parse" % "0.3.9"
     )
   )
   .dependsOn(ast)

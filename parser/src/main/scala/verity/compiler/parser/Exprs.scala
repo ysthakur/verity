@@ -14,7 +14,7 @@ import cats.parse.Rfc5234.digit
   */
 object Exprs {
   val boolLiteral: P[BoolLiteral] =
-    ((identifier("true").as(true) | identifier("false").as(false)) ~ P.index)
+    ((keyword("true").as(true) | keyword("false").as(false)) ~ P.index)
       .map { case (value -> end) =>
         val text = if (value) "true" else "false"
         BoolLiteral(value, tr(end - text.length, end))
@@ -63,14 +63,15 @@ object Exprs {
   /** Either `foo.bar` or `foo[T](bar)(given baz)` */
   val fnCallOrFieldAccess: P[Expr] =
     (selectable ~ fieldAccess
-      .eitherOr(valArgs.eitherOr(comptimeArgs *> ws ~ valArgs))
+      .eitherOr(P.char('a') /*valArgs.eitherOr(comptimeArgs ~~ valArgs)*/)
       .repSep0(ws)).map { case (start, rest) =>
       rest.foldLeft(start) { (expr, next) =>
         next match {
           case Right(fieldName)     => FieldAccess(expr, fieldName)
-          case Left(Right(valArgs)) => FnCall(expr, ComptimeArgs.empty, valArgs)
-          case Left(Left(comptimeArgs -> valArgs)) =>
-            FnCall(expr, comptimeArgs, valArgs)
+          case _ => ???
+          // case Left(Right(valArgs)) => FnCall(expr, ComptimeArgs.empty, valArgs)
+          // case Left(Left( /*comptimeArgs ->*/ valArgs)) =>
+          //   FnCall(expr, ComptimeArgs.empty /*comptimeArgs*/, valArgs)
         }
       }
     }
@@ -97,15 +98,15 @@ object Exprs {
     }
 
   val ifExpr: P[Expr] =
-    ((identifier("if") *> ws *> expr)
-      ~ (identifier("then").surroundedBy(ws) *> expr)
-      ~ (identifier("else").surroundedBy(ws) *> expr)).map {
+    ((keyword("if") *> ws *> expr)
+      ~ (keyword("then").surroundedBy(ws) *> expr)
+      ~ (keyword("else").surroundedBy(ws) *> expr)).map {
       case (cond -> thenBody -> elseBody) => If(cond, thenBody, elseBody)
     }
 
   val varDef: P[VarDef] =
     (
-      identifier("let") *> identifier.surroundedBy(ws)
+      keyword("let") *> identifier.surroundedBy(ws)
         ~ (P.char(':') *> ws *> typ <* ws).?
         ~ (P.char('=') *> ws *> assignment <* ws)
     ).map { case (varName -> typ -> value) =>
@@ -114,7 +115,7 @@ object Exprs {
 
   val letExpr: P[Expr] =
     P.defer(
-      (varDef.repSep(ws) <* ws <* identifier("in") <* ws).rep0.with1 ~ expr
+      (varDef.repSep(ws) <* ws <* keyword("in") <* ws).rep0.with1 ~ expr
     ).map { case (varLists, body) =>
       varLists.foldRight(body) { case (NonEmptyList(firstVar, rest), body) =>
         LetExpr(firstVar :: rest, body)
@@ -129,7 +130,7 @@ object Exprs {
     list(P.char('('), valParam, P.char(','), P.char(')'))
   val givenParamList: P[List[Param]] =
     list(
-      P.char('(') *> ws *> identifier("given"),
+      P.char('(') *> ws *> keyword("given"),
       valParam,
       P.char(','),
       P.char(')')
@@ -138,8 +139,9 @@ object Exprs {
   /** A normal parameter list and an implicit parameter list together */
   val params: P[Params] = givenParamList
     .map(Params(Nil, _))
-    .orElse((normParamList ~ givenParamList.?).map { case (normParams, givenParams) =>
-      Params(normParams, givenParams.getOrElse(Nil))
+    .orElse((normParamList ~ givenParamList.?).map {
+      case (normParams, givenParams) =>
+        Params(normParams, givenParams.getOrElse(Nil))
     })
   val params0: P0[Params] =
     ((normParamList <* ws).? ~ givenParamList.?).map {
@@ -153,7 +155,7 @@ object Exprs {
     list(P.char('{'), valParam, P.char(','), P.char('}'))
   val givenConstParamList: P[List[Param]] =
     list(
-      P.char('{') *> ws *> identifier("given"),
+      P.char('{') *> ws *> keyword("given"),
       valParam,
       P.char(','),
       P.char('}')
@@ -181,6 +183,15 @@ object Exprs {
 
     typeParamsFirst | normConstFirst | givenConstOnly
   }
+  val comptimeParams0: P0[ComptimeParams] =
+    (typeParamList.? ~~ normConstParamList.? ~~ givenConstParamList.?).map {
+      case (typeParams -> normConstParams -> givenConstParams) =>
+        ComptimeParams(
+          typeParams.getOrElse(Nil),
+          normConstParams.getOrElse(Nil),
+          givenConstParams.getOrElse(Nil)
+        )
+    }
 
   val typeArgList: P[List[Type]] =
     list(P.char('['), typ, P.char(','), P.char(']'))
@@ -188,7 +199,7 @@ object Exprs {
     list(P.char('{'), expr, P.char(','), P.char('}'))
   val givenConstArgList: P[List[Expr]] =
     list(
-      P.char('{') *> ws *> identifier("given"),
+      P.char('{') *> ws *> keyword("given"),
       expr,
       P.char(','),
       P.char('}')
@@ -196,7 +207,7 @@ object Exprs {
   val comptimeArgs: P[ComptimeArgs] = {
     // Has type args
     val typeArgsFirst =
-      (typeArgList ~ normConstArgList.? ~ givenConstArgList.?).map {
+      (typeArgList ~~ normConstArgList.? ~~ givenConstArgList.?).map {
         case (typeArgs -> normConstArgs -> givenConstArgs) =>
           ComptimeArgs(
             typeArgs,
@@ -205,7 +216,7 @@ object Exprs {
           )
       }
     // No type args
-    val normConstFirst = (normConstArgList ~ givenConstArgList.?).map {
+    val normConstFirst = (normConstArgList ~~ givenConstArgList.?).map {
       case (normConstArgs -> givenConstArgs) =>
         ComptimeArgs(Nil, normConstArgs, givenConstArgs.getOrElse(Nil))
     }
@@ -213,14 +224,13 @@ object Exprs {
     val givenConstOnly = givenConstArgList.map { givenConstArgs =>
       ComptimeArgs(Nil, Nil, givenConstArgs)
     }
-
     typeArgsFirst | normConstFirst | givenConstOnly
   }
 
   val normArgList: P[List[Expr]] =
     list(P.char('('), expr, P.char(','), P.char(')'))
   val givenArgList: P[List[Expr]] = list(
-    P.char('(') *> ws *> identifier("given"),
+    P.char('(') *> ws *> keyword("given"),
     expr,
     P.char(','),
     P.char(')')
@@ -247,7 +257,7 @@ object Exprs {
     }
 
   // TODO add if expressions
-  val expr: P[Expr] = lambda | letExpr | ifExpr | assignment
+  val expr: P[Expr] = (lambda | letExpr | ifExpr | assignment).nn
 
   /** A character that can be part of an operator */
   def opChar: P[Char] = P.charIn("~!@$%^&*-+=:<>/?|\\")

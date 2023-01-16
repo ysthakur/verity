@@ -49,6 +49,10 @@ case class ComptimeArgs(
   givenConstArgs: List[Expr]
 )
 
+object ComptimeArgs {
+  def empty = ComptimeArgs(Nil, Nil, Nil)
+}
+
 object Comptime {
   def empty = ComptimeArgs(Nil, Nil, Nil)
 }

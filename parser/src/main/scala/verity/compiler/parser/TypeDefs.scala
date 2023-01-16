@@ -14,10 +14,10 @@ import collection.mutable.ArrayBuffer
   */
 private[parser] object TypeDefs {
   val recordDef: P[TypeDef] =
-    (identifier("record")
-      *> identifier.surroundedBy(ws)
-      ~ comptimeParamList.rep0
-      ~ valParamList.rep0).map { case (name -> comptimeParamss -> valParamss) =>
+    (keyword("record") *> ws
+      *> (identifier <* ws)
+      ~ (comptimeParams0 <* ws)
+      ~ params0).map { case (name -> comptimeParamss -> valParamss) =>
       Record(name, comptimeParamss, valParamss)
     }
 
@@ -30,23 +30,23 @@ private[parser] object TypeDefs {
         args match {
           case Some((comptimeArgs, valArgss)) =>
             EnumCase(name, comptimeParams, valParams, comptimeArgs, valArgss)
-          case None => EnumCase(name, comptimeParams, valParams, Nil, Nil)
+          case None => EnumCase(name, comptimeParams, valParams, ComptimeArgs.empty, Args.empty)
         }
     }
 
   val enumDef: P[TypeDef] =
     (
-      identifier("enum")
+      keyword("enum")
         *> identifier.surroundedBy(ws)
         ~ comptimeParams0 ~ params0
         ~ enumCase.repSep0(ws *> P.char(',') *> ws).surroundedBy(ws)
-        <* identifier("end")
+        <* keyword("end")
     ).map { case (name -> comptimeParams -> params -> cases) =>
       EnumDef(name, comptimeParams, params, cases)
     }
 
   val typeAlias: P[TypeDef] =
-    (identifier("type")
+    (keyword("type")
       *> identifier.surroundedBy(ws)
       ~ (comptimeParams <* ws <* P.char('=') <* ws)
       ~ typ).map { case (name -> params -> body) =>

@@ -1,42 +1,37 @@
-
+package verity.compiler.parser
 
 import org.scalatest.funsuite.AnyFunSuite
 
 import verity.compiler.ast.*
 
 class TypeDefTests extends AnyFunSuite {
-  test("Basic class def") {
+  test("Basic record def") {
     assertResult(
       Right(
         (
           "",
-          TypeDef(
+          Record(
             "Foo",
-            List.empty,
-            List(
-              Field(
-                "foo",
-                UnresolvedType(List("int")),
-                Some(IntLiteral(0, TextRange.synthetic))
+            ComptimeParams(
+              List(
+                TypeParam("A")
               ),
-              Field(
-                "x",
-                UnresolvedType(List("string")),
-                None
-              ),
-              Field(
-                "y",
-                UnknownType,
-                Some(IntLiteral(8, TextRange.synthetic))
-              )
+              Nil,
+              Nil
             ),
-            false
+            Params(
+              List(
+                // Param("foo", UnresolvedType("Int")),
+                // Param("x", UnresolvedType("A"))
+              ),
+              Nil
+            )
           )
         )
       )
     ) {
-      TypeDefs.typedef.parse(
-        """record Foo(foo: int, x: string, y: int)"""
+      TypeDefs.typeDef.parse(
+        """record Foo[A, B] (foo: Int, x: A[C], y: B)"""
       )
     }
   }

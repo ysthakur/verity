@@ -108,9 +108,7 @@ enum ComptimeParamList {
   */
 case class TypeParam(
   override val name: String,
-  upperBound: Option[Type],
-  lowerBound: Option[Type],
-  nameRange: TextRange
+  nameRange: TextRange = TextRange.synthetic
 ) extends TypeDef
 
 case class ComptimeParams(
@@ -118,3 +116,7 @@ case class ComptimeParams(
   normConstParams: List[Param],
   givenConstParams: List[Param],
 )
+
+object ComptimeParams {
+  def empty = ComptimeParams(Nil, Nil, Nil)
+}

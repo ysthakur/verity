@@ -59,14 +59,11 @@ object Types {
     typeApplyOrDot
   }
 
+  // todo allow adding kind
   def typeParam: P[TypeParam] =
-    (identifierWithTextRange ~ typ.between(ws ~ P.string("<:") ~ ws, ws).? ~ typ
-      .between(ws ~ P.string(">:") ~ ws, ws)
-      .?).map { case (name -> nameRange -> upperBound -> lowerBound) =>
+    (identifierWithTextRange).map { case (name, nameRange) =>
       TypeParam(
         name,
-        upperBound,
-        lowerBound,
         nameRange
       )
     }

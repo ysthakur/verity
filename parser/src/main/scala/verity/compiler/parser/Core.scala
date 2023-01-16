@@ -12,19 +12,27 @@ import cats.data.NonEmptyList
   */
 private[parser] object Core {
 
+  extension [A](p1: P[A])
+    /** Like `~`, but allows whitespace in between */
+    def ~~[B](p2: P0[B]): P[(A, B)] = (p1 <* ws) ~ p2
+
+  extension [A](p1: P0[A])
+    /** Like `~`, but allows whitespace in between */
+    def ~~[B](p2: P0[B]): P0[(A, B)] = (p1 <* ws) ~ p2
+
   /** Whitespace */
-  def ws: P0[Unit] = (sp | crlf | lf).rep0.void
+  val ws: P0[Unit] = (sp | crlf | lf).rep0.void
 
   /** Lookahead sort of thing to make sure an identifier's ended */
-  def idEnd: P0[Unit] = P.not(
+  val idEnd: P0[Unit] = P.not(
     P.charWhere(_.isUnicodeIdentifierPart)
   )
 
-  def identifier(id: String): P[Unit] = P.string(id) *> P.not(
+  def keyword(id: String): P[Unit] = P.string(id) *> P.not(
     P.charWhere(_.isUnicodeIdentifierPart)
   )
 
-  def identifier: P[String] =
+  val identifier: P[String] =
     (P.charWhere(_.isUnicodeIdentifierStart) ~ P.charsWhile0(
       _.isUnicodeIdentifierPart
     )).map { case (first, rest) => s"$first$rest" }
@@ -32,14 +40,14 @@ private[parser] object Core {
   /** Like [[identifierWithTextRange]], but doesn't get inlined, and a tuple
     * doesn't have to be turned into a Text object later
     */
-  def identifierText: P[Text] =
+  val identifierText: P[Text] =
     (identifier ~ P.index).map { case (id, end) =>
       Text(id, tr(end - id.length, end))
     }
 
   /** Like [[identifierWithTextRange]], but can be inlined
     */
-  def identifierWithTextRange: P[(String, TextRange)] =
+  val identifierWithTextRange: P[(String, TextRange)] =
     (identifier ~ P.index).map { case (id, end) =>
       id -> tr(end - id.length, end)
     }
@@ -49,8 +57,8 @@ private[parser] object Core {
       (start, a, end)
     }
 
-  val GIVEN: P[Unit] = identifier("given")
-  val PROOF: P[Unit] = identifier("proof")
+  val GIVEN: P[Unit] = keyword("given")
+  val PROOF: P[Unit] = keyword("proof")
 
   val modifier: P[Modifier] = (P.stringIn(
     List(
@@ -67,12 +75,12 @@ private[parser] object Core {
     identifier.repSep(1, ws *> P.string0(".") *> ws)
 
   val packageStmt: P[PackageStmt] =
-    (identifier("package") *> dotPath.surroundedBy(ws) <* P.string0(";")).map {
+    (keyword("package") *> dotPath.surroundedBy(ws) <* P.string0(";")).map {
       case path => PackageStmt(path)
     }
 
   val importStmt: P[ImportStmt] =
-    (identifier("import") *> dotPath.surroundedBy(ws) ~ (P.string(
+    (keyword("import") *> dotPath.surroundedBy(ws) ~ (P.string(
       "."
     ) *> ws *> P.string("*")).? <* P.string(";")).map {
       case (path, None) =>

@@ -73,8 +73,16 @@ case class Params(
   givenParams: List[Param]
 )
 
+object Params {
+  def empty = Params(Nil, Nil)
+}
+
 /** Runtime arguments, both normal and implicit ones */
 case class Args(normArgs: List[Expr], givenArgs: List[Expr])
+
+object Args {
+  def empty = Args(Nil, Nil)
+}
 
 case class ValParamList(params: List[Param], isGiven: Boolean) extends Tree
 
