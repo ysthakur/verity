@@ -25,11 +25,13 @@ private[parser] object TypeDefs {
     (identifier.surroundedBy(ws)
       ~ (comptimeParams <* ws)
       ~ (params <* ws)
-      ~ (P.char(':') *> ws *> comptimeArgs ~ valArgs).?).map {
-      case (name -> comptimeParams -> valParams -> args) =>
-        args match {
-          case Some((comptimeArgs, valArgss)) =>
-            EnumCase(name, comptimeParams, valParams, comptimeArgs, valArgss)
+      ~ (P.char(':') *> ws *> valArgs.eitherOr(comptimeArgs ~~ valArgs)).?).map {
+      case (name -> comptimeParams -> valParams -> ctorArgs) =>
+        ctorArgs match {
+          case Some(Right(valArgs)) =>
+            EnumCase(name, comptimeParams, valParams, ComptimeArgs.empty, valArgs)
+          case Some(Left((comptimeArgs, valArgs))) =>
+            EnumCase(name, comptimeParams, valParams, comptimeArgs, valArgs)
           case None => EnumCase(name, comptimeParams, valParams, ComptimeArgs.empty, Args.empty)
         }
     }

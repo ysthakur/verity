@@ -19,9 +19,9 @@ val commonSettings = Seq(
     "UTF-8",
     "-feature",
     "-Xfatal-warnings",
-    "-Yexplicit-nulls"
+    "-Yexplicit-nulls",
     // "-explain",
-    // "-Ysafe-init",
+    "-Ysafe-init",
   ),
   libraryDependencies ++= Seq(
     // "junit" % "junit" % "4.13.2" % Test,
