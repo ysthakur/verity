@@ -22,6 +22,8 @@ case class FileNode(
   override def toString = s"file $name"
 }
 
+case class Module(name: String, submodules: Seq[Module], typeDefs: List[TypeDef], varDefs: List[VarDef])
+
 /** @param path
   *   The path of the package this file is in
   */

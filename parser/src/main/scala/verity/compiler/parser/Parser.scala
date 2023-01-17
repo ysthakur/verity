@@ -1,6 +1,7 @@
 package verity.compiler.parser
 
 import verity.compiler.ast.{FileNode, TextRange, Position}
+import verity.compiler.parser.Core.*
 
 import cats.parse.{Parser => CatsParser, Parser0}
 
@@ -10,6 +11,9 @@ import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
 
 object Parser {
+  private val moduleParser =
+    (keyword("mod") ~~ TypeDefs.typeDef.orElse(varDef).repSep0(ws))
+
   private val fileParser: Parser0[Either[String, File] => FileNode] =
     (Core.packageStmt.? ~ Core.importStmt.rep0 <* CatsParser.end).map {
       case (pkgStmt -> imptStmts) =>
