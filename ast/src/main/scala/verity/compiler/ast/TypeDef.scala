@@ -66,19 +66,19 @@ case class TypeAlias(
 ) extends TypeDef
 
 object BuiltinTypes {
-  def verityPkg(using root: Package): Package = root.findChild("verity").get
+  // def verityPkg(using root: Package): Package = root.findChild("verity").get
 
-  def boolType(using root: Package): TypeDef = verityPkg.findType("Bool").get
+  // def boolType(using root: Package): TypeDef = verityPkg.findType("Bool").get
 
-  def intType(using root: Package): TypeDef = verityPkg.findType("Int").get
+  // def intType(using root: Package): TypeDef = verityPkg.findType("Int").get
 
-  def doubleType(using root: Package): TypeDef =
-    verityPkg.findType("Double").get
+  // def doubleType(using root: Package): TypeDef =
+  //   verityPkg.findType("Double").get
 
-  def charType(using root: Package): TypeDef = verityPkg.findType("Char").get
+  // def charType(using root: Package): TypeDef = verityPkg.findType("Char").get
 
-  def stringType(using root: Package): TypeDef =
-    verityPkg.findType("String").get
+  // def stringType(using root: Package): TypeDef =
+  //   verityPkg.findType("String").get
 }
 
 /** todo make a copy for every root */

@@ -19,14 +19,14 @@ object Parser {
   private val module: CatsParser[ModuleDef] =
     (keyword("mod") *> ws
       *> identifier
-      ~~ CatsParser.defer0(moduleContents: @unchecked) <* ws
+      ~ CatsParser.defer0(moduleContents: @unchecked)
       <* keyword("end").?).map { case (name, contents) =>
       ModuleDef(name, contents)
     }
 
   private lazy val moduleContents: Parser0[List[ModuleMember]] =
-    ((Core.importStmt: CatsParser[ModuleMember])
-      | module | TypeDefs.typeDef | Exprs.varDef).repSep0(ws)
+    ws *> ((Core.importStmt: CatsParser[ModuleMember])
+      | module | TypeDefs.typeDef | Exprs.varDef).repSep0(ws) <* ws
 
   private def processResult[T](
     parserResult: Either[CatsParser.Error, T]

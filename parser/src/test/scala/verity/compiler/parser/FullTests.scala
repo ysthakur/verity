@@ -14,7 +14,7 @@ class FullTests extends AnyFunSuite {
         "test",
         """
     """
-      )
+      ).toOption.get
     )
   }
 }

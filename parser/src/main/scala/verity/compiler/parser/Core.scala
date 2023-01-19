@@ -74,11 +74,6 @@ private[parser] object Core {
   val dotPath: P[NonEmptyList[String]] =
     identifier.repSep(1, ws *> P.string0(".") *> ws)
 
-  val packageStmt: P[PackageStmt] =
-    (keyword("package") *> dotPath.surroundedBy(ws) <* P.string0(";")).map {
-      case path => PackageStmt(path)
-    }
-
   val importStmt: P[ImportStmt] =
     (keyword("import") *> dotPath.surroundedBy(ws) ~ (P.string(
       "."
