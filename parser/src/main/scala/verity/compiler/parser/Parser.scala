@@ -1,6 +1,6 @@
 package verity.compiler.parser
 
-import verity.compiler.ast.{FileNode, TextRange, Position}
+import verity.compiler.ast.{ModuleMember, ModuleDef, TextRange, Position}
 import verity.compiler.parser.Core.*
 
 import cats.parse.{Parser => CatsParser, Parser0}
@@ -9,58 +9,51 @@ import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.{Files, Path}
 import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
+import verity.compiler.ast.ImportStmt
+import verity.compiler.ast.VarDef
+import verity.compiler.ast.TypeDef
+
+case class SyntaxError(message: String, location: Int)
 
 object Parser {
-  private val moduleParser =
-    (keyword("mod") ~~ TypeDefs.typeDef.orElse(varDef).repSep0(ws))
-
-  private val fileParser: Parser0[Either[String, File] => FileNode] =
-    (Core.packageStmt.? ~ Core.importStmt.rep0 <* CatsParser.end).map {
-      case (pkgStmt -> imptStmts) =>
-        input =>
-          FileNode(
-            input.map(_.getName.nn).merge,
-            pkgStmt,
-            imptStmts,
-            ???,
-            input.toOption
-          )
+  private val module: CatsParser[ModuleDef] =
+    (keyword("mod") *> ws
+      *> identifier
+      ~~ CatsParser.defer0(moduleContents: @unchecked) <* ws
+      <* keyword("end").?).map { case (name, contents) =>
+      ModuleDef(name, contents)
     }
 
-  private def processResult(
-    parserResult: Either[
-      CatsParser.Error,
-      (String, Either[String, File] => FileNode)
-    ],
-    inputFile: Either[String, File]
-  ): Either[(String, Int), FileNode] =
-    parserResult match {
-      case Right((_, ast)) => Right(ast(inputFile))
+  private lazy val moduleContents: Parser0[List[ModuleMember]] =
+    ((Core.importStmt: CatsParser[ModuleMember])
+      | module | TypeDefs.typeDef | Exprs.varDef).repSep0(ws)
+
+  private def processResult[T](
+    parserResult: Either[CatsParser.Error, T]
+  ): Either[SyntaxError, T] =
+    (parserResult: @unchecked) match {
+      case Right(ast) => Right(ast)
       case Left(CatsParser.Error(failedAtOffset, expected)) =>
-        Left(
-          (
-            s"Syntax error at offset $failedAtOffset, expected $expected",
-            failedAtOffset
-          )
-        )
-      case _ => ???
+        Left(SyntaxError(s"Expected $expected", failedAtOffset))
     }
 
-  def parseString(
-    name: String,
+  def parseModule(
+    moduleName: String,
     code: String
-  ): Either[(String, Int), FileNode] = {
-    processResult(fileParser.parse(code), Left(name))
-  }
-
-  def parseFile(input: File): Either[(String, Int), FileNode] = {
+  ): Either[SyntaxError, ModuleDef] =
     processResult(
-      fileParser.parse(
-        Files.readString(input.toPath(), Charset.defaultCharset()).nn
-      ),
-      Right(input)
+      moduleContents
+        .map { contents =>
+          ModuleDef(moduleName, contents)
+        }
+        .parseAll(code)
     )
-  }
+
+  def parseFile(name: String, input: File): Either[SyntaxError, ModuleDef] =
+    parseModule(
+      name,
+      Files.readString(input.toPath(), Charset.defaultCharset()).nn
+    )
 
   /** Just a shorter way to create TextRanges */
   private[parser] def tr(startOffset: Int, endOffset: Int) =
