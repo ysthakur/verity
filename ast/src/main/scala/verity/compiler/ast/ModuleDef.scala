@@ -4,6 +4,7 @@ import java.io.File
 import scala.collection.mutable
 
 import cats.data.NonEmptyList
+import scala.collection.mutable.ArrayBuffer
 
 type ModuleMember = ImportStmt | ModuleDef | TypeDef | VarDef
 
@@ -19,8 +20,10 @@ case class ImportStmt(
   *
   * Can't name it `Module` because of [[java.lang.Module]]
   */
-case class ModuleDef(name: String, contents: Seq[ModuleMember]) {
-  private val submodules = contents.collect { case m: ModuleDef => m }
+sealed trait ModuleDef {
+  def name: String
+
+  def submodules: Iterable[ModuleDef]
 
   /** Find a submodule given its relative path
     *
@@ -31,14 +34,28 @@ case class ModuleDef(name: String, contents: Seq[ModuleMember]) {
   def findSubmodule(
     path: NonEmptyList[String]
   ): Either[NonEmptyList[String], ModuleDef] =
-    val NonEmptyList(subName, rest) = path
-
-    this.submodules.find(_.name == subName) match {
+    this.submodules.find(_.name == path.head) match {
       case Some(subMod) =>
-        rest match {
+        path.tail match {
           case head :: tail => subMod.findSubmodule(NonEmptyList(head, tail))
           case _            => Right(subMod)
         }
       case None => Left(path)
     }
+}
+
+/**
+  * A module represented by a folder containing other modules
+  *
+  * @param name The module name
+  * @param file The folder associated with the module
+  */
+private[verity] case class FolderModule(override val name: String, folder: File) extends ModuleDef {
+  override val submodules = ArrayBuffer.empty[ModuleDef]
+}
+
+/** A module that has actual source code */
+case class SourceModule(override val name: String, contents: Seq[ModuleMember])
+    extends ModuleDef {
+  override val submodules = contents.collect { case m: ModuleDef => m }
 }

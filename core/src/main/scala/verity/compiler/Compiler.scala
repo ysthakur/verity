@@ -32,8 +32,8 @@ object Compiler {
   }
 
   private def parseFile(file: File)(using proj: Project) = {
-    Parser.parseFile(file) match {
-      case Right(fileNode) =>
+    Parser.parseFile(getModuleName(file.getSimpleName), file) match {
+      case Right(mod) =>
         val pkg = fileNode.packageRef.fold(proj.root) { pkgStmt =>
           proj.getPackage(pkgStmt.path)
         }
@@ -41,6 +41,9 @@ object Compiler {
       case Left(_) => ???
     }
   }
+
+  private def getModuleName(filename: String): String =
+    ???
 
   private val builder = OParser.builder[CliConfig]
 
