@@ -40,7 +40,7 @@
 //     typeDefs: Defs[TypeDef],
 //     pkgDefs: Defs[Package]
 //   )(using msgs: Messages, ctxt: Context): Option[Type] = typ match {
-//     case tr: UnresolvedTypeRef => resolveTypeRef(tr, typeDefs, pkgDefs)
+//     case span: UnresolvedTypeRef => resolveTypeRef(span, typeDefs, pkgDefs)
 //     case _                     => ResolveRes.fromRes(typ)
 //   }
 
@@ -53,7 +53,7 @@
 //     pkgDefs: Defs[Package]
 //   )(using msgs: Messages, ctxt: Context): Option[Type] = {
 //     // println(s"resolving typeref=$typ")
-//     val typeArgsRange = typ.args.textRange
+//     val typeArgsRange = typ.args.span
 //     val resolvedCls = resolveCls(typ.path, typeDefs, pkgDefs).value
 
 //     //A writer where the value is a tuple (areAllArgsResolved?, resolvedArgsInReverse)
@@ -79,7 +79,7 @@
 //             verity.compiler.checks.CheckTypes.checkTypeArgs(args, cls.typeParams.params, typeArgsRange)
 //           )
 //         )
-//         argList = TypeArgList(args, typ.args.textRange)
+//         argList = TypeArgList(args, typ.args.span)
 //         res <-
 //           //Only return a ResolvedTypeRef if the class and all arguments are resolved
 //           if (allResolved && maybeCls.nonEmpty)
@@ -114,7 +114,7 @@
 //           case Some(_ -> pkg) => resolveClsInPkg(pkg, head :: Nil, tail)
 //           case None           =>
 // //            println(s"${head.text},typedefs=${typeDefs.map(_._1)},pkgdefs=${pkgDefs.map(_._1)}")
-//             singleMsg(errorMsg(s"Symbol ${head.text} not found", head.textRange))
+//             singleMsg(errorMsg(s"Symbol ${head.text} not found", head.span))
 //         }
 //     }
 //   }
@@ -136,7 +136,7 @@
 //           case _ =>
 //             ctxt.pkgDefs.find(_._1 == head.text) match {
 //               case Some(pkg) => resolveExprOrCls(pkg._2, head :: Nil, tail)
-//               case None      => singleMsg(errorMsg(s"Symbol ${head.text} not found", head.textRange))
+//               case None      => singleMsg(errorMsg(s"Symbol ${head.text} not found", head.span))
 //             }
 //         }
 //     }
@@ -159,7 +159,7 @@
 //               singleMsg(
 //                 errorMsg(
 //                   s"${head.text} is not a member of package ${HasText.seqText(prevPath.reverse, ".")}",
-//                   head.textRange
+//                   head.span
 //                 )
 //               )
 //           }
@@ -168,7 +168,7 @@
 //       singleMsg(
 //         errorMsg(
 //           s"${prev.name} is a package, not a class",
-//           prevPath.head.textRange
+//           prevPath.head.span
 //         )
 //       )
 //   }
@@ -179,7 +179,7 @@
 //     prevPath: List[Text],
 //     path: Seq[Text]
 //   )(using msgs: Messages, ctxt: Context): Option[Classlike] = path match {
-//     case head +: tail => singleMsg(errorMsg("No inner classes yet", head.textRange))
+//     case head +: tail => singleMsg(errorMsg("No inner classes yet", head.span))
 //     case _            => OptionT(Writer(Nil, Some(prev)))
 //   }
 
@@ -200,7 +200,7 @@
 //               singleMsg(
 //                 errorMsg(
 //                   s"${head.text} is not a member of package ${HasText.seqText(prevPath.reverse, ".")}",
-//                   head.textRange
+//                   head.span
 //                 )
 //               )
 //           }
@@ -209,7 +209,7 @@
 //       singleMsg(
 //         errorMsg(
 //           s"${prev.name} is a package, not an expression or class",
-//           prevPath.head.textRange
+//           prevPath.head.span
 //         )
 //       )
 //   }
@@ -223,8 +223,8 @@
 //   )(using msgs: Messages, ctxt: Context): Option[Expr] = path match {
 //     case head +: tail =>
 //       prev.typ.fields.find(_.name == head.text) match {
-//         case Some(field) => resolveExprOnly(FieldAccess(prev, field, head.textRange), tail)
-//         case None        => singleMsg(errorMsg(s"No field named ${head.text} found", head.textRange))
+//         case Some(field) => resolveExprOnly(FieldAccess(prev, field, head.span), tail)
+//         case None        => singleMsg(errorMsg(s"No field named ${head.text} found", head.span))
 //       }
 //     case _ => ResolveRes.fromRes(prev)
 //   }
@@ -238,11 +238,11 @@
 //     case head +: tail =>
 //       prev.cls.fields.find(f => f.isStatic && f.name == head.text) match {
 //         case Some(field) =>
-//           resolveExprOnly(StaticFieldAccess(prev, field, head.textRange), tail)
+//           resolveExprOnly(StaticFieldAccess(prev, field, head.span), tail)
 //             .asInstanceOf[Option[Expr | ClassRef]]
 //         case None =>
 //           singleMsg(
-//             errorMsg(s"Field ${head.text} not found in class ${prev.cls.name}", head.textRange)
+//             errorMsg(s"Field ${head.text} not found in class ${prev.cls.name}", head.span)
 //           )
 //       }
 //     case _ => Some(prev)

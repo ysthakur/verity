@@ -1,6 +1,6 @@
 package verity.compiler.parser
 
-import verity.compiler.ast.{ModuleMember, ModuleDef, TextRange, Position}
+import verity.compiler.ast.{ModuleMember, ModuleDef, Span, Position}
 import verity.compiler.parser.Core.*
 
 import cats.parse.{Parser => CatsParser, Parser0}
@@ -44,7 +44,7 @@ object Parser {
     processResult(
       moduleContents
         .map { contents =>
-          ModuleDef(moduleName, contents)
+          SourceModule(moduleName, contents)
         }
         .parseAll(code)
     )
@@ -56,6 +56,6 @@ object Parser {
     )
 
   /** Just a shorter way to create TextRanges */
-  private[parser] def tr(startOffset: Int, endOffset: Int) =
-    TextRange(startOffset, endOffset)
+  private[parser] def span(startOffset: Int, endOffset: Int) =
+    Span(startOffset, endOffset)
 }

@@ -2,7 +2,7 @@ package verity.compiler.parser
 
 import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
-import verity.compiler.parser.Parser.tr
+import verity.compiler.parser.Parser.span
 
 import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
@@ -21,7 +21,7 @@ object Types {
   val typ: P[Type] = P.recursive { typ =>
     val parenType: P[Type] =
       P.defer(withRange(typ.between(P.char('(') ~ ws, ws ~ P.char(')')))).map {
-        case (start, inner, end) => ParenType(inner, tr(start, end))
+        case (start, inner, end) => ParenType(inner, span(start, end))
       }
 
     val selectableType: P[Type] = idsWithDots | parenType

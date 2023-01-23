@@ -2,7 +2,7 @@ package verity.compiler.parser
 
 import verity.compiler.ast.*
 
-import verity.compiler.parser.Parser.tr
+import verity.compiler.parser.Parser.span
 
 import cats.parse.{Parser as P, Parser0 as P0}
 import cats.parse.Rfc5234.{sp, crlf, lf, wsp}
@@ -42,14 +42,14 @@ private[parser] object Core {
     */
   val identifierText: P[Text] =
     (identifier ~ P.index).map { case (id, end) =>
-      Text(id, tr(end - id.length, end))
+      Text(id, span(end - id.length, end))
     }
 
   /** Like [[identifierWithTextRange]], but can be inlined
     */
-  val identifierWithTextRange: P[(String, TextRange)] =
+  val identifierWithTextRange: P[(String, Span)] =
     (identifier ~ P.index).map { case (id, end) =>
-      id -> tr(end - id.length, end)
+      id -> span(end - id.length, end)
     }
 
   def withRange[A](parser: P[A]): P[(Int, A, Int)] =
@@ -68,7 +68,7 @@ private[parser] object Core {
       "given"
     )
   ) ~ (idEnd *> P.index)).map { case (modifier, end) =>
-    Modifier(modifier, tr(end - modifier.length, end))
+    Modifier(modifier, span(end - modifier.length, end))
   }
 
   val dotPath: P[NonEmptyList[String]] =

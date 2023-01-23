@@ -1,6 +1,6 @@
 package verity.compiler.ast
 
-import verity.compiler.ast.scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ArrayBuffer
 
 trait Type extends Tree
 
@@ -18,7 +18,7 @@ case class UnresolvedType(path: List[String]) extends Type
 //TODO deal with covariance and contravariance?
 case class TypeRef(typeDef: TypeDef, args: List[Type] = Nil) extends Type
 
-case class ParenType(inner: Type, textRange: TextRange) extends Type
+case class ParenType(inner: Type, span: Span) extends Type
 
 case class TypeApply(typeCtor: Type, args: List[Type]) extends Type
 

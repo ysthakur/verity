@@ -7,10 +7,10 @@ package verity.compiler.ast
   * @param end
   *   End offset of the text
   */
-case class TextRange(start: Int, end: Int) {
+case class Span(start: Int, end: Int) {
   def isEmpty: Boolean = start == end
 
-  /** Whether this TextRange didn't come from a real file */
+  /** Whether this Span didn't come from a real file */
   def isSynthetic: Boolean =
     start == -1 && end == -1
 
@@ -18,20 +18,20 @@ case class TextRange(start: Int, end: Int) {
   def length: Int = end - start
 
   override def equals(other: Any) = other match {
-    case tr: TextRange =>
-      this.isSynthetic || tr.isSynthetic || start == tr.start && end == tr.end
+    case span: Span =>
+      this.isSynthetic || span.isSynthetic || start == span.start && end == span.end
     case _ => false
   }
 }
 
-object TextRange {
+object Span {
 
-  /** A TextRange that didn't come from a real file. Compares equal to any other
-    * TextRange
+  /** A Span that didn't come from a real file. Compares equal to any other
+    * Span
     */
-  val synthetic = TextRange(-1, -1)
+  val synthetic = Span(-1, -1)
 
-  def empty(offset: Int) = TextRange(offset, offset)
+  def empty(offset: Int) = Span(offset, offset)
 }
 
 /** Marks a row and column in a file */
@@ -41,12 +41,12 @@ object Position {
   def synthetic: Position = Position(-1, -1)
 }
 
-case class Text(text: String, textRange: TextRange) {
+case class Text(text: String, span: Span) {
   override def toString = text
 }
 
 object Text {
-  def apply(text: String, textRange: TextRange = TextRange.synthetic) =
-    new Text(text, textRange)
+  def apply(text: String, span: Span = Span.synthetic) =
+    new Text(text, span)
   def unapply(text: Text): Some[String] = Some(text.text)
 }

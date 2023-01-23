@@ -1,10 +1,10 @@
 package verity.compiler.ast
 
-import verity.compiler.ast.java.io.File
-import verity.compiler.ast.scala.collection.mutable
+import java.io.File
+import scala.collection.mutable
 
-import verity.compiler.ast.cats.data.NonEmptyList
-import verity.compiler.ast.scala.collection.mutable.ArrayBuffer
+import cats.data.NonEmptyList
+import scala.collection.mutable.ArrayBuffer
 
 type ModuleMember = ImportStmt | ModuleDef | TypeDef | VarDef
 

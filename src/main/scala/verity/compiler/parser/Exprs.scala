@@ -4,7 +4,7 @@ import verity.compiler.ast.*
 
 import verity.compiler.parser.Core.*
 import verity.compiler.parser.Types.*
-import verity.compiler.parser.Parser.tr
+import verity.compiler.parser.Parser.span
 
 import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
@@ -137,13 +137,13 @@ object Exprs {
     ((keyword("true").as(true) | keyword("false").as(false)) ~ P.index).map {
       case (value -> end) =>
         val text = if (value) "true" else "false"
-        BoolLiteral(value, tr(end - text.length, end))
+        BoolLiteral(value, span(end - text.length, end))
     }
 
   // TODO merge int and float literals, and allow underscores
   val intLiteral: P[IntLiteral] =
     (digit.rep.string ~ P.index).map { case (num -> end) =>
-      IntLiteral(num.toInt, tr(end - num.length, end))
+      IntLiteral(num.toInt, span(end - num.length, end))
     }
 
   val stringLiteral: P[StringLiteral] =
@@ -151,20 +151,20 @@ object Exprs {
       ((P.char('\\') ~ P.anyChar) | (P.charWhere(_ != '"'))).rep.string
         .surroundedBy(P.char('"'))
     ).map { case (start, text, end) =>
-      StringLiteral("\"" + text + "\"", tr(start, end))
+      StringLiteral("\"" + text + "\"", span(start, end))
     }
 
   val literal: P[Expr] =
     intLiteral | boolLiteral | stringLiteral
 
-  val varRef: P[Expr] = identifierWithTextRange.map { case (name, textRange) =>
-    UnresolvedIdentifier(name, textRange)
+  val varRef: P[Expr] = identifierWithTextRange.map { case (name, span) =>
+    UnresolvedIdentifier(name, span)
   }
 
   val parenExpr: P[Expr] =
     withRange(expr.between(P.char('(') ~ ws, ws ~ P.char(')'))).map {
       case (start, expr, end) =>
-        ParenExpr(expr, tr(start, end))
+        ParenExpr(expr, span(start, end))
     }
 
   /** Something with higher precedence than `.` */
@@ -249,7 +249,7 @@ object Exprs {
           comptimeParams,
           params,
           body,
-          tr(start, end)
+          span(start, end)
         )
     }
 
@@ -271,7 +271,7 @@ object Exprs {
         reps.foldLeft(left) { case (lhs, op -> opEnd -> rhs) =>
           BinExpr(
             lhs,
-            Op(op, tr(opEnd - op.length, opEnd)),
+            Op(op, span(opEnd - op.length, opEnd)),
             rhs
           )
         }

@@ -176,7 +176,7 @@
 //       case Some(block) =>
 //         mthd.modifiers.find(_.modType == ModifierType.ABSTRACT) match {
 //           case Some(abstractMod) =>
-//             sendMsg(errorMsg("Abstract methods cannot have implementations", abstractMod.textRange))
+//             sendMsg(errorMsg("Abstract methods cannot have implementations", abstractMod.span))
 //           case None =>
 //             val ctxt = Context(
 //               fieldDefs ++ mthd.params.params.view.map(p => p.name -> p),

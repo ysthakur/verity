@@ -1,6 +1,6 @@
 package verity.compiler.ast
 
-import verity.compiler.ast.cats.data.NonEmptyList
+import cats.data.NonEmptyList
 
 sealed trait TypeDef extends Def {
 
@@ -104,11 +104,11 @@ enum ComptimeParamList {
   * @param upperBound
   * @param lowerBound
   * @param nameRange
-  *   The TextRange of the name
+  *   The Span of the name
   */
 case class TypeParam(
   override val name: String,
-  nameRange: TextRange = TextRange.synthetic
+  nameRange: Span = Span.synthetic
 ) extends TypeDef
 
 case class ComptimeParams(

@@ -1,3 +1,5 @@
+package verity.compiler
+
 import verity.compiler.parser.Parser
 
 import java.io.File

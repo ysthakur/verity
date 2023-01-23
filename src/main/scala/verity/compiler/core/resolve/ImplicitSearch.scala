@@ -8,7 +8,7 @@
 //   private[resolve] def resolveImplicitArgList(
 //     argList: Option[ArgList],
 //     params: Option[ParamList],
-//     defaultTextRange: TextRange
+//     defaultTextRange: Span
 //   )(using ctxt: Context): Option[Option[ArgList]] = {
 //     // println(s"givenDefs=${ctxt.givenDefs.map(_.asInstanceOf[HasText].text)}, proofDefs=${ctxt.proofDefs.map(_.asInstanceOf[HasText].text)}")
 //     argList match {
@@ -35,7 +35,7 @@
 //                     )
 //                     .sequence
 //                     .map(givenArgs =>
-//                       Some(Some(ArgList(givenArgs, ArgsKind.Given, TextRange.synthetic)))
+//                       Some(Some(ArgList(givenArgs, ArgsKind.Given, Span.synthetic)))
 //                     )
 //                 )
 //               case ParamListKind.PROOF =>
@@ -46,7 +46,7 @@
 //                     )
 //                     .sequence
 //                     .map(proofArgs =>
-//                       Some(Some(ArgList(proofArgs, ArgsKind.Proof, TextRange.synthetic)))
+//                       Some(Some(ArgList(proofArgs, ArgsKind.Proof, Span.synthetic)))
 //                     )
 //                 )
 //             }
@@ -56,32 +56,32 @@
 //   }
 
 //   //TODO reduce code duplication (findGiven and findProof)
-//   def findGiven(givenType: Type, tr: TextRange)(using ctxt: Context): Option[Expr] =
+//   def findGiven(givenType: Type, span: Span)(using ctxt: Context): Option[Expr] =
 //     val poss = findGivens(givenType)
 
 //     if (poss.isEmpty) {
-//       singleMsg(errorMsg(s"No givens of type ${givenType.text} found", tr))
+//       singleMsg(errorMsg(s"No givens of type ${givenType.text} found", span))
 //     } else if (poss.size > 1) {
 //       singleMsg(
 //         errorMsg(
 //           s"Ambiguous implicits - all of the following match type ${givenType.text}:\n${poss.map(_.text).mkString("\n")}",
-//           tr
+//           span
 //         )
 //       )
 //     } else {
 //       ResolveRes.fromRes(poss.head)
 //     }
 
-//   def findProof(proofType: Type, tr: TextRange)(using ctxt: Context): Option[Expr] = {
+//   def findProof(proofType: Type, span: Span)(using ctxt: Context): Option[Expr] = {
 //     val poss = findProofs(proofType)
 
 //     if (poss.isEmpty) {
-//       singleMsg(errorMsg(s"No proofs of type ${proofType.text} found", tr))
+//       singleMsg(errorMsg(s"No proofs of type ${proofType.text} found", span))
 //     } else if (poss.size > 1) {
 //       singleMsg(
 //         errorMsg(
 //           s"Ambiguous implicits - all of the following match type ${proofType.text}:\n${poss.map(_.text).mkString("\n")}",
-//           tr
+//           span
 //         )
 //       )
 //     } else {
@@ -107,12 +107,12 @@
 //         // println(s"finding notgiven, ${singleArg.head.text}")
 //         //There shouldn't be a given of type singleArg.head (proofType is NotGivenDef<singleArg.head>)
 //         val givens = findGivens(singleArg.head)
-//         if (givens.isEmpty) Seq(NullLiteral(TextRange.synthetic))
+//         if (givens.isEmpty) Seq(NullLiteral(Span.synthetic))
 //         else Nil
 //       case ResolvedTypeRef(_, TypeArgList(singleArg, _), NotProvenDef) =>
 //         val proofs = findProofs(singleArg.head)
 //         val res =
-//           if (proofs.isEmpty) Seq(NullLiteral(TextRange.synthetic))
+//           if (proofs.isEmpty) Seq(NullLiteral(Span.synthetic))
 //           else Nil
 //         // println(s"finding notproven, ${singleArg.head.text}, res=${res.map(_.asInstanceOf[HasText].text)}")
 //         res

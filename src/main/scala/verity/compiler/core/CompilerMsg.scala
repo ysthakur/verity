@@ -1,6 +1,6 @@
 // package verity.compiler.core
 
-// import verity.compiler.ast.TextRange
+// import verity.compiler.ast.Span
 // import cats.data.{OptionT, Writer}
 
 // //type ResWithLogs[T] = Writer[List[CompilerMsg], T]
@@ -83,7 +83,7 @@
 //   }
 // }
 
-// case class CompilerMsg(msg: String, textRangeOrTree: TextRange | HasTextRange, msgType: MsgType) {
+// case class CompilerMsg(msg: String, textRangeOrTree: Span | HasTextRange, msgType: MsgType) {
 //   override def toString = s"$msgType: $msg"
 // }
 
@@ -91,13 +91,13 @@
 //   case ERROR, WARNING, WEAK_WARNING, INFO
 // }
 
-// def errorMsg(msg: String, textRangeOrTree: TextRange | HasTextRange) =
+// def errorMsg(msg: String, textRangeOrTree: Span | HasTextRange) =
 //   CompilerMsg(msg, textRangeOrTree, MsgType.ERROR)
-// def warningMsg(msg: String, textRangeOrTree: TextRange | HasTextRange) =
+// def warningMsg(msg: String, textRangeOrTree: Span | HasTextRange) =
 //   CompilerMsg(msg, textRangeOrTree, MsgType.WARNING)
-// def weakWarningMsg(msg: String, textRangeOrTree: TextRange | HasTextRange) =
+// def weakWarningMsg(msg: String, textRangeOrTree: Span | HasTextRange) =
 //   CompilerMsg(msg, textRangeOrTree, MsgType.WEAK_WARNING)
-// def infoMsg(msg: String, textRangeOrTree: TextRange | HasTextRange) =
+// def infoMsg(msg: String, textRangeOrTree: Span | HasTextRange) =
 //   CompilerMsg(msg, textRangeOrTree, MsgType.INFO)
 
 // /**

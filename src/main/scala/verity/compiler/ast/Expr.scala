@@ -1,25 +1,25 @@
 package verity.compiler.ast
 
-import verity.compiler.ast.scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ArrayBuffer
 
 sealed trait Expr extends Tree
 
-case class BoolLiteral(value: Boolean, textRange: TextRange = TextRange.synthetic) extends Expr
+case class BoolLiteral(value: Boolean, span: Span = Span.synthetic) extends Expr
 
-case class IntLiteral(value: Int, textRange: TextRange = TextRange.synthetic) extends Expr
+case class IntLiteral(value: Int, span: Span = Span.synthetic) extends Expr
 
-case class DoubleLiteral(value: Double, textRange: TextRange = TextRange.synthetic) extends Expr
+case class DoubleLiteral(value: Double, span: Span = Span.synthetic) extends Expr
 
-case class CharLiteral(char: Char, textRange: TextRange = TextRange.synthetic) extends Expr
+case class CharLiteral(char: Char, span: Span = Span.synthetic) extends Expr
 
-case class StringLiteral(text: String, textRange: TextRange = TextRange.synthetic) extends Expr
+case class StringLiteral(text: String, span: Span = Span.synthetic) extends Expr
 
 /** A resolved reference to a variable
   */
-case class VarRef(varName: String, decl: VarDef, textRange: TextRange = TextRange.synthetic)
+case class VarRef(varName: String, decl: VarDef, span: Span = Span.synthetic)
     extends Expr
 
-case class UnresolvedIdentifier(id: String, textRange: TextRange = TextRange.synthetic) extends Expr
+case class UnresolvedIdentifier(id: String, span: Span = Span.synthetic) extends Expr
 
 /** Used for accessing a property on an object like `foo.bar`.
   *
@@ -30,14 +30,14 @@ case class UnresolvedIdentifier(id: String, textRange: TextRange = TextRange.syn
   */
 case class FieldAccess(obj: Expr, field: String) extends Expr
 
-case class ParenExpr(expr: Expr, textRange: TextRange) extends Expr
+case class ParenExpr(expr: Expr, span: Span) extends Expr
 
 case class BinExpr(left: Expr, op: Op, right: Expr) extends Expr
 
 case class UnaryPreExpr(op: Op, expr: Expr, typ: Type) extends Expr
 
 /** An operator */
-case class Op(symbol: String, textRange: TextRange) extends Expr
+case class Op(symbol: String, span: Span) extends Expr
 
 /** An if-else expression */
 case class If(cond: Expr, thenBody: Expr, elseBody: Expr) extends Expr
@@ -58,7 +58,7 @@ case class Lambda(
   comptimeParams: ComptimeParams,
   params: Params,
   body: Expr,
-  textRange: TextRange
+  span: Span
 ) extends Expr
 
 case class Param(name: String, typ: Type)
@@ -82,6 +82,6 @@ object Args {
 
 case class ValParamList(params: List[Param], isGiven: Boolean) extends Tree
 
-case class Modifier(mod: String, textRange: TextRange) extends Tree
+case class Modifier(mod: String, span: Span) extends Tree
 
 case class AssignExpr(lvalue: Expr, rvalue: Expr) extends Expr

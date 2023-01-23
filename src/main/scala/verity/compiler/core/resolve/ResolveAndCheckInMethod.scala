@@ -31,11 +31,11 @@
 //           case None => OptionT(Writer(Nil, Some(rs)))
 //           case Some(oldExpr) =>
 //             resolveAndCheckExpr(oldExpr, mthdReturnType).map { (newExpr, proofs) =>
-//               ReturnStmt(Some(newExpr), rs.textRange)
+//               ReturnStmt(Some(newExpr), rs.span)
 //             }
 //         }: Option[ReturnStmt]
 //         _ <- mthdProofs.toList
-//           .map(ImplicitSearch.findProof(_, rs.textRange))
+//           .map(ImplicitSearch.findProof(_, rs.span))
 //           .sequence: Option[List[Expr]]
 //       } yield (newReturnStmt, List.empty[Expr])
 //     case lv: LocalVar =>
@@ -110,8 +110,8 @@
 //         (
 //           Block(
 //             stmts,
-//             block.textRange,
-//             if (stmts.isEmpty) VoidTypeRef(TextRange.synthetic) else statementType(stmts.last)
+//             block.span,
+//             if (stmts.isEmpty) VoidTypeRef(Span.synthetic) else statementType(stmts.last)
 //           ),
 //           Nil //newCtxt.proofDefs
 //         )
@@ -141,7 +141,7 @@
 //       resolveAndCheckExpr(obj, BuiltinTypes.objectType).flatMapR { (owner, proofs) =>
 //         ReferenceResolve.findField(owner.typ, fieldName.text) match {
 //           case Some(field) =>
-//             ResolveRes.fromRes(FieldAccess(owner, field, fieldName.textRange) -> proofs)
+//             ResolveRes.fromRes(FieldAccess(owner, field, fieldName.span) -> proofs)
 //           case None => singleMsg(errorMsg(s"No such field ${fieldName.text}", fieldName))
 //         }
 //       }
@@ -155,16 +155,16 @@
 //     case b: BinaryExpr => resolveBinaryExpr(b)
 //     case upe: ParenExpr =>
 //       resolveAndCheckExpr(upe.expr, expectedType).map { (expr, proofs) =>
-//         (ParenExpr(expr, upe.textRange), proofs)
+//         (ParenExpr(expr, upe.span), proofs)
 //       }
-//     case t: ThisRef => ResolveRes.fromRes(ThisRef(ctxt.cls, t.textRange) -> Nil)
+//     case t: ThisRef => ResolveRes.fromRes(ThisRef(ctxt.cls, t.span) -> Nil)
 //     case s: SuperRef =>
 //       ctxt.cls match {
 //         case cd: ClassDef =>
 //           ResolveRes.fromRes(
 //             SuperRef(
 //               cd.superClass.asInstanceOf[ResolvedTypeRef].typeDef.asInstanceOf[Classlike],
-//               s.textRange
+//               s.span
 //             ) -> Nil
 //           )
 //         case _ => singleMsg(errorMsg(s"${ctxt.cls.name} has no superclass", s))
@@ -287,7 +287,7 @@
 //     singleMsg(errorMsg(s"Ambiguous method call $mthdName", mthdCall))
 //   } else {
 //     val resolvedMthd = possibleMthds.head
-//     val argEndTextRange = TextRange.empty(mthdCall.valArgs.textRange.end)
+//     val argEndTextRange = Span.empty(mthdCall.valArgs.span.end)
 //     val returnedProofs = resolvedMthd.proofs.map(Expr.dummy(_)).toList
 
 //     for {
@@ -361,7 +361,7 @@
 //   resolvedArgs.map { case (resolvedArgs, allResolved) =>
 //     //TODO do something with allResolved to signal that everything is not okay
 //     val (args, proofs) = resolvedArgs.reverse.unzip
-//     Some((ArgList(args, origArgs.argsKind, origArgs.textRange), proofs.flatten))
+//     Some((ArgList(args, origArgs.argsKind, origArgs.span), proofs.flatten))
 //   }.toResolveRes
 // }
 
@@ -382,5 +382,5 @@
 
 // private def statementType(stmt: Statement): Type = stmt match {
 //   case ht: HasType => ht.typ
-//   case _           => VoidTypeRef(TextRange.synthetic)
+//   case _           => VoidTypeRef(Span.synthetic)
 // }
