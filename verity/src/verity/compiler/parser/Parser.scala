@@ -1,6 +1,7 @@
 package verity.compiler.parser
 
-import verity.compiler.ast.{ModuleMember, ModuleDef, Span, Position}
+import verity.compiler.CompilationError
+import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 
 import cats.parse.{Parser => CatsParser, Parser0}
@@ -9,11 +10,8 @@ import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.{Files, Path}
 import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
-import verity.compiler.ast.ImportStmt
-import verity.compiler.ast.VarDef
-import verity.compiler.ast.TypeDef
 
-case class SyntaxError(message: String, location: Int)
+case class SyntaxError(span: Span, msg: String) extends CompilationError(span, msg)
 
 object Parser {
   private val module: CatsParser[ModuleDef] =
@@ -21,7 +19,7 @@ object Parser {
       *> identifier
       ~ CatsParser.defer0(moduleContents: @unchecked)
       <* keyword("end").?).map { case (name, contents) =>
-      ModuleDef(name, contents)
+      SourceModule(name, contents)
     }
 
   private lazy val moduleContents: Parser0[List[ModuleMember]] =
@@ -34,7 +32,8 @@ object Parser {
     (parserResult: @unchecked) match {
       case Right(ast) => Right(ast)
       case Left(CatsParser.Error(failedAtOffset, expected)) =>
-        Left(SyntaxError(s"Expected $expected", failedAtOffset))
+        // Left(SyntaxError(s"Expected $expected", failedAtOffset))
+        Left(???)
     }
 
   def parseModule(
