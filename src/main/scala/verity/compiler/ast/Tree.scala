@@ -54,7 +54,7 @@ case class Pos(offset: Int, row: Int, col: Int) {
     * position is actually valid!
     */
   def -(shift: Int): Pos =
-    if (col <= shift) Pos(offset - shift, row, col + shift)
+    if (col >= shift) Pos(offset - shift, row, col + shift)
     else
       throw new IllegalArgumentException(
         s"Cannot shift left $shift characters from column $col"

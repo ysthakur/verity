@@ -37,7 +37,7 @@ case class BinExpr(left: Expr, op: Op, right: Expr) extends Expr
 case class UnaryPreExpr(op: Op, expr: Expr, typ: Type) extends Expr
 
 /** An operator */
-case class Op(symbol: String, span: Span) extends Expr
+case class Op(symbol: String, span: Span = Span.synthetic) extends Expr
 
 /** An if-else expression */
 case class If(cond: Expr, thenBody: Expr, elseBody: Expr) extends Expr

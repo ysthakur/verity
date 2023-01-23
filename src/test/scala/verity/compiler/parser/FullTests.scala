@@ -8,7 +8,7 @@ import verity.compiler.parser.{Exprs, Types}
 class FullTests extends AnyFunSuite {
   test("Module should parse properly") {
     assertResult(
-      ModuleDef("test", Nil)
+      SourceModule("test", Nil)
     )(
       Parser.parseModule(
         "test",

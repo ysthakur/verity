@@ -62,3 +62,7 @@ case class SourceModule(override val name: String, contents: Seq[ModuleMember])
     extends ModuleDef {
   override val submodules = contents.collect { case m: ModuleDef => m }
 }
+
+/** An entire file treated as a module */
+class FileModule(name: String, contents: Seq[ModuleMember], val file: File)
+  extends SourceModule(name, contents)

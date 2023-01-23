@@ -14,19 +14,19 @@ class ParserTests extends AnyFunSuite {
             BinExpr(
               BinExpr(
                 BinExpr(
-                  IntLiteral(3, Span(0, 1)),
-                  Op("+", Span(2, 3)),
+                  IntLiteral(3),
+                  Op("+"),
                   BinExpr(
-                    IntLiteral(2, Span(4, 5)),
-                    Op("*", Span(6, 7)),
-                    IntLiteral(6, Span(8, 9))
+                    IntLiteral(2),
+                    Op("*"),
+                    IntLiteral(6)
                   )
                 ),
-                Op(">", Span(10, 11)),
-                UnresolvedIdentifier("abc", Span(12, 15))
+                Op(">"),
+                UnresolvedIdentifier("abc")
               ),
-              Op("==", Span(16, 18)),
-              BoolLiteral(true, Span(19, 23))
+              Op("=="),
+              BoolLiteral(true)
             )
         )
     )
@@ -36,8 +36,8 @@ class ParserTests extends AnyFunSuite {
     assertResult(
       Right(
         LetExpr(
-          List(VarDef("x", None, IntLiteral(5, Span(8, 9)))),
-          IntLiteral(3, Span(13, 14))
+          List(VarDef("x", None, IntLiteral(5))),
+          IntLiteral(3)
         )
       )
     )(Exprs.expr.parseAll("let x = 5 in 3"))
