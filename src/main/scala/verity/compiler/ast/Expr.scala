@@ -1,6 +1,6 @@
 package verity.compiler.ast
 
-import scala.collection.mutable.ArrayBuffer
+import verity.compiler.ast.scala.collection.mutable.ArrayBuffer
 
 sealed trait Expr extends Tree
 

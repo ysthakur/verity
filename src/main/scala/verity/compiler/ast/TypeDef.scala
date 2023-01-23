@@ -1,6 +1,6 @@
 package verity.compiler.ast
 
-import cats.data.NonEmptyList
+import verity.compiler.ast.cats.data.NonEmptyList
 
 sealed trait TypeDef extends Def {
 
