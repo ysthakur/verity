@@ -2,8 +2,6 @@ package verity.compiler.parser
 
 import verity.compiler.ast.*
 
-import verity.compiler.parser.Parser.span
-
 import cats.parse.{Parser as P, Parser0 as P0}
 import cats.parse.Rfc5234.{sp, crlf, lf, wsp}
 import cats.data.NonEmptyList
@@ -11,6 +9,10 @@ import cats.data.NonEmptyList
 /** General purpose parsers
   */
 private[parser] object Core {
+
+  def pos: P0[Pos] = P.caret.map { caret =>
+    Pos(caret.offset, caret.line, caret.col)
+  }
 
   extension [A](p1: P[A])
     /** Like `~`, but allows whitespace in between */
@@ -41,19 +43,19 @@ private[parser] object Core {
     * doesn't have to be turned into a Text object later
     */
   val identifierText: P[Text] =
-    (identifier ~ P.index).map { case (id, end) =>
-      Text(id, span(end - id.length, end))
+    (identifier ~ pos).map { case (id, end) =>
+      Text(id, Span(end - id.length, end))
     }
 
   /** Like [[identifierWithTextRange]], but can be inlined
     */
   val identifierWithTextRange: P[(String, Span)] =
-    (identifier ~ P.index).map { case (id, end) =>
-      id -> span(end - id.length, end)
+    (identifier ~ pos).map { case (id, end) =>
+      id -> Span(end - id.length, end)
     }
 
-  def withRange[A](parser: P[A]): P[(Int, A, Int)] =
-    (P.index.with1 ~ parser ~ P.index).map { case ((start, a), end) =>
+  def withRange[A](parser: P[A]): P[(Pos, A, Pos)] =
+    (pos.with1 ~ parser ~ pos).map { case ((start, a), end) =>
       (start, a, end)
     }
 
@@ -67,8 +69,8 @@ private[parser] object Core {
       "const",
       "given"
     )
-  ) ~ (idEnd *> P.index)).map { case (modifier, end) =>
-    Modifier(modifier, span(end - modifier.length, end))
+  ) ~ (idEnd *> pos)).map { case (modifier, end) =>
+    Modifier(modifier, Span(end - modifier.length, end))
   }
 
   val dotPath: P[NonEmptyList[String]] =

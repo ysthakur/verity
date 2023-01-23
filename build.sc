@@ -1,6 +1,6 @@
 import mill._, scalalib._
 
-object verity extends ScalaModule {
+object verity extends SbtModule {
   def scalaVersion = "3.2.2"
 
   def ivyDeps = Agg(

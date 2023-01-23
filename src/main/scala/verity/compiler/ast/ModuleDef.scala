@@ -44,15 +44,18 @@ sealed trait ModuleDef {
     }
 }
 
-/**
-  * A module represented by a folder containing other modules
+/** A module represented by a folder containing other modules
   *
-  * @param name The module name
-  * @param file The folder associated with the module
+  * @param name
+  *   The module name
+  * @param file
+  *   The folder associated with the module
   */
-private[verity] case class FolderModule(override val name: String, folder: File) extends ModuleDef {
-  override val submodules = ArrayBuffer.empty[ModuleDef]
-}
+case class FolderModule(
+  override val name: String,
+  folder: File,
+  override val submodules: Seq[ModuleDef]
+) extends ModuleDef
 
 /** A module that has actual source code */
 case class SourceModule(override val name: String, contents: Seq[ModuleMember])

@@ -4,7 +4,6 @@ import verity.compiler.ast.*
 
 import verity.compiler.parser.Core.*
 import verity.compiler.parser.Types.*
-import verity.compiler.parser.Parser.span
 
 import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
@@ -134,16 +133,16 @@ object Exprs {
   }
 
   val boolLiteral: P[BoolLiteral] =
-    ((keyword("true").as(true) | keyword("false").as(false)) ~ P.index).map {
+    ((keyword("true").as(true) | keyword("false").as(false)) ~ pos).map {
       case (value -> end) =>
         val text = if (value) "true" else "false"
-        BoolLiteral(value, span(end - text.length, end))
+        BoolLiteral(value, Span(end - text.length, end))
     }
 
   // TODO merge int and float literals, and allow underscores
   val intLiteral: P[IntLiteral] =
-    (digit.rep.string ~ P.index).map { case (num -> end) =>
-      IntLiteral(num.toInt, span(end - num.length, end))
+    (digit.rep.string ~ pos).map { case (num -> end) =>
+      IntLiteral(num.toInt, Span(end - num.length, end))
     }
 
   val stringLiteral: P[StringLiteral] =
@@ -151,7 +150,7 @@ object Exprs {
       ((P.char('\\') ~ P.anyChar) | (P.charWhere(_ != '"'))).rep.string
         .surroundedBy(P.char('"'))
     ).map { case (start, text, end) =>
-      StringLiteral("\"" + text + "\"", span(start, end))
+      StringLiteral("\"" + text + "\"", Span(start, end))
     }
 
   val literal: P[Expr] =
@@ -164,7 +163,7 @@ object Exprs {
   val parenExpr: P[Expr] =
     withRange(expr.between(P.char('(') ~ ws, ws ~ P.char(')'))).map {
       case (start, expr, end) =>
-        ParenExpr(expr, span(start, end))
+        ParenExpr(expr, Span(start, end))
     }
 
   /** Something with higher precedence than `.` */
@@ -233,24 +232,20 @@ object Exprs {
     (
       (varDef.repSep(ws) <* ws <* keyword("in") <* ws).rep.with1 ~ expr
     ).map { case (letGroups, body) =>
-      letGroups.toList.foldRight(body) { case (NonEmptyList(firstVar, rest), body) =>
-        LetExpr(firstVar :: rest, body)
+      letGroups.toList.foldRight(body) {
+        case (NonEmptyList(firstVar, rest), body) =>
+          LetExpr(firstVar :: rest, body)
       }
     }
 
   val lambda: P[Expr] =
-    (P.char('\\') *> P.index
+    (P.char('\\') *> pos
       ~ comptimeParams.surroundedBy(ws)
       ~ params
       ~ (ws *> P.string("->") *> expr)
-      ~ P.index).map {
+      ~ pos).map {
       case (start -> comptimeParams -> params -> body -> end) =>
-        Lambda(
-          comptimeParams,
-          params,
-          body,
-          span(start, end)
-        )
+        Lambda(comptimeParams, params, body, Span(start, end))
     }
 
   /** A character that can be part of an operator */
@@ -266,15 +261,14 @@ object Exprs {
     *   Parser for the operator
     */
   def binOp(prev: P[Expr], op: P[String]) =
-    (prev ~ ((op ~ P.index <* ws) ~ prev).repSep0(ws)).map {
-      case (left, reps) =>
-        reps.foldLeft(left) { case (lhs, op -> opEnd -> rhs) =>
-          BinExpr(
-            lhs,
-            Op(op, span(opEnd - op.length, opEnd)),
-            rhs
-          )
-        }
+    (prev ~ ((op ~ pos <* ws) ~ prev).repSep0(ws)).map { case (left, reps) =>
+      reps.foldLeft(left) { case (lhs, op -> opEnd -> rhs) =>
+        BinExpr(
+          lhs,
+          Op(op, Span(opEnd - op.length, opEnd)),
+          rhs
+        )
+      }
     }
 
   lazy val exprLazy: P[Expr] = lambda | letExpr | ifExpr | assignment

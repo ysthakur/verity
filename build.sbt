@@ -3,6 +3,10 @@ ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ysthakur"
 ThisBuild / scalaVersion := "3.2.2"
 
+// For Metals
+Global / semanticdbEnabled := true
+
+// Reload sbt any time build.sbt is changed
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 lazy val root = project

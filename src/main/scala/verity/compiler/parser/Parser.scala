@@ -4,14 +4,14 @@ import verity.compiler.CompilationError
 import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 
+import cats.implicits.toShow
 import cats.parse.{Parser => CatsParser, Parser0}
 
 import java.io.{File, FileInputStream, InputStream}
 import java.nio.file.{Files, Path}
 import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
-
-case class SyntaxError(span: Span, msg: String) extends CompilationError(span, msg)
+import cats.parse.LocationMap
 
 object Parser {
   private val module: CatsParser[ModuleDef] =
@@ -28,18 +28,26 @@ object Parser {
 
   private def processResult[T](
     parserResult: Either[CatsParser.Error, T]
-  ): Either[SyntaxError, T] =
+  ): Either[CompilationError, T] =
     (parserResult: @unchecked) match {
       case Right(ast) => Right(ast)
-      case Left(CatsParser.Error(failedAtOffset, expected)) =>
-        // Left(SyntaxError(s"Expected $expected", failedAtOffset))
-        Left(???)
+      case Left(error) =>
+        val expectedMsg = s"Expected one of ${error.expected.toList.map(e => s"\n- ${e.show}").mkString}"
+        error.input match {
+          case None => Left(CompilationError(Span.empty(Pos.atStart), expectedMsg))
+          case Some(input) =>
+            new LocationMap(input).toCaret(error.failedAtOffset) match {
+              case None => Left(CompilationError(Span.empty(Pos.atStart), expectedMsg))
+              case Some(caret) =>
+                Left(CompilationError(Span(Pos(caret.offset, caret.line, caret.col), Pos(caret.offset, caret.line, caret.col + 1)), expectedMsg))
+            }
+        }
     }
 
   def parseModule(
     moduleName: String,
     code: String
-  ): Either[SyntaxError, ModuleDef] =
+  ): Either[CompilationError, ModuleDef] =
     processResult(
       moduleContents
         .map { contents =>
@@ -48,13 +56,9 @@ object Parser {
         .parseAll(code)
     )
 
-  def parseFile(name: String, input: File): Either[SyntaxError, ModuleDef] =
+  def parseFile(name: String, input: File): Either[CompilationError, ModuleDef] =
     parseModule(
       name,
       Files.readString(input.toPath(), Charset.defaultCharset()).nn
     )
-
-  /** Just a shorter way to create TextRanges */
-  private[parser] def span(startOffset: Int, endOffset: Int) =
-    Span(startOffset, endOffset)
 }

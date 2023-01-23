@@ -4,7 +4,6 @@ import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 import verity.compiler.parser.Exprs.*
 import verity.compiler.parser.Types.*
-import verity.compiler.parser.Parser.span
 
 import cats.parse.{Parser as P, Parser0 as P0}
 

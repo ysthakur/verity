@@ -18,39 +18,27 @@ object Compiler {
 
   def main(args: Array[String]): Unit = {
     OParser.parse(parser, args, CliConfig()) match {
-      case Some(cfg) => parseAll(cfg.files)
+      case Some(cfg) => invert(cfg.files.map(parseModule).toList)
       case None      => ???
     }
   }
 
+  private def invert(modules: List[Ior[Errors, ModuleDef]]): Ior[Errors, List[ModuleDef]] =
+    ???
+
   private def parseModule(file: File): Ior[Errors, ModuleDef] = {
+    val filename = file.getName().nn
     if (file.isDirectory) {
-      file.listFiles()
-        .map(parseModule)
-        .foldLeft(Ior.right[Errors, List[ModuleDef]](Nil)){
-          (acc, mod) =>
-        }
-    }
-    val submodules = ArrayBuffer.empty[ModuleDef]
-    val syntaxErrors = ListBuffer.empty[SyntaxError]
-    FolderModule(
-      moduleName,
-      files.collect {
-        case file if (file.isDirectory()) =>
-          parseAll(
-            file.getName(),
-            file.listFiles().asInstanceOf[Array[File]]
-          )
-        case file if (file.getName().nn.endsWith(extension)) =>
-          Parser.parseFile(getModuleName(file.getName()), file) match {
-
-          }
+      invert(file.listFiles().nn.toList.map(f => parseModule(f.nn))).map(FolderModule(filename, file, _))
+    } else if (filename.endsWith(extension)) {
+      Parser.parseFile(getModuleName(filename), file) match {
+        case Right(mod) => Ior.right(mod)
+        case Left(err) => Ior.left(Chain(err))
       }
-    )
+    } else {
+      Ior.left(Chain.nil)
+    }
   }
-
-  private def parseFile(file: File) =
-    Parser.parseFile(getModuleName(file.getName()), file)
 
   private def getModuleName(filename: String): String =
     filename.stripSuffix(extension)
