@@ -51,11 +51,6 @@ object Compiler {
       results.reduceMap(res => res.map(NonEmptyChain.one))
     }
 
-  private def combine(
-    modules: Iterable[Result[ModuleDef]]
-  ): Result[List[ModuleDef]] =
-    modules.foldLeft(Ior.right(Nil)) { (acc, mod) => ??? }
-
   private def getModuleName(filename: String): String =
     filename.stripSuffix(extension)
 
