@@ -1,6 +1,6 @@
 package verity.compiler.parser
 
-import verity.compiler.CompilationError
+import verity.compiler.{Message, Result}
 import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 
@@ -12,6 +12,7 @@ import java.nio.file.{Files, Path}
 import java.nio.charset.Charset
 import collection.mutable.ArrayBuffer
 import cats.parse.LocationMap
+import cats.data.{Chain, Writer}
 
 object Parser {
   private val module: CatsParser[ModuleDef] =
@@ -27,28 +28,42 @@ object Parser {
       | module | TypeDefs.typeDef | Exprs.varDef).repSep0(ws) <* ws
 
   private def processResult[T](
+    filename: String,
     parserResult: Either[CatsParser.Error, T]
-  ): Either[CompilationError, T] =
+  ): Result[Option[T]] =
     (parserResult: @unchecked) match {
-      case Right(ast) => Right(ast)
+      case Right(ast) => Writer.value(Some(ast))
       case Left(error) =>
-        val expectedMsg = s"Expected one of ${error.expected.toList.map(e => s"\n- ${e.show}").mkString}"
-        error.input match {
-          case None => Left(CompilationError(Span.empty(Pos.atStart), expectedMsg))
+        val span = error.input match {
+          case None =>
+            Span.empty(Pos.atStart)
           case Some(input) =>
             new LocationMap(input).toCaret(error.failedAtOffset) match {
-              case None => Left(CompilationError(Span.empty(Pos.atStart), expectedMsg))
+              case None =>
+                Span.empty(Pos.atStart)
               case Some(caret) =>
-                Left(CompilationError(Span(Pos(caret.offset, caret.line, caret.col), Pos(caret.offset, caret.line, caret.col + 1)), expectedMsg))
+                Span(
+                  Pos(caret.offset, caret.line, caret.col),
+                  Pos(caret.offset, caret.line, caret.col + 1)
+                )
             }
         }
+        Result.msg(
+          Message.err(
+            s"Expected one of ${error.expected.toList.map(e => s"\n- ${e.show}").mkString}",
+            span,
+            filename
+          )
+        )
     }
 
   def parseModule(
+    filename: String,
     moduleName: String,
     code: String
-  ): Either[CompilationError, ModuleDef] =
+  ): Result[Option[ModuleDef]] =
     processResult(
+      filename,
       moduleContents
         .map { contents =>
           SourceModule(moduleName, contents)
@@ -56,8 +71,9 @@ object Parser {
         .parseAll(code)
     )
 
-  def parseFile(name: String, input: File): Either[CompilationError, ModuleDef] =
+  def parseFile(name: String, input: File): Result[Option[ModuleDef]] =
     parseModule(
+      input.getName().nn,
       name,
       Files.readString(input.toPath(), Charset.defaultCharset()).nn
     )

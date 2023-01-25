@@ -1,5 +1,8 @@
 package verity.compiler
 
+// Necessary because of all the File stuff
+import scala.language.unsafeNulls
+
 import verity.compiler.ast.{FolderModule, ModuleDef, ModuleMember}
 import verity.compiler.parser.Parser
 
@@ -7,16 +10,13 @@ import java.io.File
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-import cats.data.{Chain, Ior, NonEmptyChain, Tuple2K}
+import cats.data.{Chain, NonEmptyChain, Writer}
 import cats.syntax.all.*
 import scopt.OParser
 
 object Compiler {
 
   val extension = "vt"
-
-  /** A result and/or a bunch of results */
-  type Result[T] = Ior[NonEmptyChain[CompilationError], T]
 
   def main(args: Array[String]): Unit = {
     OParser.parse(parser, args, CliConfig()) match {
@@ -31,24 +31,22 @@ object Compiler {
 
   private def parseFiles(
     files: Seq[File]
-  ): Option[Result[NonEmptyChain[ModuleDef]]] =
-    val results = files.map { file =>
-      val filename = file.getName().nn
-      if (file.isDirectory) {
-        parseFiles(file.listFiles().nn.toList.asInstanceOf[List[File]]).map(
-          _.map(mods => FolderModule(filename, file, mods.toList))
-        )
-      } else if (filename.endsWith(extension)) {
-        Some(Parser.parseFile(getModuleName(file.getName().nn), file) match {
-          case Right(mod) => Ior.right(mod)
-          case Left(errs) => Ior.leftNec(errs)
-        })
-      } else {
-        None
-      }
+  ): Option[Result[Chain[ModuleDef]]] =
+    val results = files.collect {
+      file =>
+        val filename = file.getName()
+        if (file.isDirectory) {
+          parseFiles(file.listFiles().toList).map(
+            _.map(mods => Some(FolderModule(filename, file, mods.toList)))
+          )
+        } else if (filename.endsWith(extension)) {
+          Some(Parser.parseFile(getModuleName(filename), file))
+        } else {
+          None
+        }
     }
     NonEmptyChain.fromSeq(results.flatten).map { results =>
-      results.reduceMap(res => res.map(NonEmptyChain.one))
+      results.reduceMap(res => res.map(Chain.fromOption))
     }
 
   private def getModuleName(filename: String): String =
