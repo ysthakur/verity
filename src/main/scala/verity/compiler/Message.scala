@@ -43,7 +43,6 @@ object Message {
 type Result[T] = Writer[Chain[Message], T]
 
 object Result {
-
   /** A successful result with no messages */
   def from[T](t: T): Result[T] = Writer(Chain.nil, t)
 
@@ -55,4 +54,8 @@ object Result {
 
   /** Just a message for an optional result */
   def msg[T](msg: Message): Result[Option[T]] = Writer(Chain(msg), None)
+
+  /** Check if any of the messages in the result are errors */
+  def hasError[T](res: Result[T]): Boolean =
+    res.written.exists(_.level == Message.LogLevel.Error)
 }

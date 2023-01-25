@@ -16,14 +16,20 @@ import scopt.OParser
 
 object Compiler {
 
-  val extension = "vt"
+  /** File extension for Verity code */
+  val Extension = "vt"
 
   def main(args: Array[String]): Unit = {
     OParser.parse(parser, args, CliConfig()) match {
       case Some(cfg) =>
         parseFiles(cfg.files) match {
           case None       => println("No source files found!")
-          case Some(mods) => ???
+          case Some(result) =>
+            if (Result.hasError(result)) {
+              printMsgs(result.written)
+            } else {
+              
+            }
         }
       case None => ???
     }
@@ -39,8 +45,8 @@ object Compiler {
           parseFiles(file.listFiles().toList).map(
             _.map(mods => Some(FolderModule(filename, file, mods.toList)))
           )
-        } else if (filename.endsWith(extension)) {
-          Some(Parser.parseFile(getModuleName(filename), file))
+        } else if (filename.endsWith(Extension)) {
+          Some(Parser.parseFile(filename.stripSuffix(Extension), file))
         } else {
           None
         }
@@ -49,8 +55,11 @@ object Compiler {
       results.reduceMap(res => res.map(Chain.fromOption))
     }
 
-  private def getModuleName(filename: String): String =
-    filename.stripSuffix(extension)
+  private def printMsgs(msgs: Chain[Message]): Unit = {
+    for (msg <- msgs.iterator) {
+      println(msg)
+    }
+  }
 
   private val builder = OParser.builder[CliConfig]
 
