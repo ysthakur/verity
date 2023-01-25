@@ -7,38 +7,54 @@ import java.io.File
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-import cats.data.{Chain, Ior}
+import cats.data.{Chain, Ior, NonEmptyChain, Tuple2K}
+import cats.syntax.all.*
 import scopt.OParser
 
 object Compiler {
 
   val extension = "vt"
 
-  type Errors = Chain[CompilationError]
+  /** A result and/or a bunch of results */
+  type Result[T] = Ior[NonEmptyChain[CompilationError], T]
 
   def main(args: Array[String]): Unit = {
     OParser.parse(parser, args, CliConfig()) match {
-      case Some(cfg) => invert(cfg.files.map(parseModule).toList)
-      case None      => ???
+      case Some(cfg) =>
+        parseFiles(cfg.files) match {
+          case None       => println("No source files found!")
+          case Some(mods) => ???
+        }
+      case None => ???
     }
   }
 
-  private def invert(modules: List[Ior[Errors, ModuleDef]]): Ior[Errors, List[ModuleDef]] =
-    ???
-
-  private def parseModule(file: File): Ior[Errors, ModuleDef] = {
-    val filename = file.getName().nn
-    if (file.isDirectory) {
-      invert(file.listFiles().nn.toList.map(f => parseModule(f.nn))).map(FolderModule(filename, file, _))
-    } else if (filename.endsWith(extension)) {
-      Parser.parseFile(getModuleName(filename), file) match {
-        case Right(mod) => Ior.right(mod)
-        case Left(err) => Ior.left(Chain(err))
+  private def parseFiles(
+    files: Seq[File]
+  ): Option[Result[NonEmptyChain[ModuleDef]]] =
+    val results = files.map { file =>
+      val filename = file.getName().nn
+      if (file.isDirectory) {
+        parseFiles(file.listFiles().nn.toList.asInstanceOf[List[File]]).map(
+          _.map(mods => FolderModule(filename, file, mods.toList))
+        )
+      } else if (filename.endsWith(extension)) {
+        Some(Parser.parseFile(getModuleName(file.getName().nn), file) match {
+          case Right(mod) => Ior.right(mod)
+          case Left(errs) => Ior.leftNec(errs)
+        })
+      } else {
+        None
       }
-    } else {
-      Ior.left(Chain.nil)
     }
-  }
+    NonEmptyChain.fromSeq(results.flatten).map { results =>
+      results.reduceMap(res => res.map(NonEmptyChain.one))
+    }
+
+  private def combine(
+    modules: Iterable[Result[ModuleDef]]
+  ): Result[List[ModuleDef]] =
+    modules.foldLeft(Ior.right(Nil)) { (acc, mod) => ??? }
 
   private def getModuleName(filename: String): String =
     filename.stripSuffix(extension)
