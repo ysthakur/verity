@@ -32,7 +32,7 @@ object Parser {
     parserResult: Either[CatsParser.Error, T]
   ): Result[Option[T]] =
     (parserResult: @unchecked) match {
-      case Right(ast) => Writer.value(Some(ast))
+      case Right(ast) => Result.some(ast)
       case Left(error) =>
         val span = error.input match {
           case None =>

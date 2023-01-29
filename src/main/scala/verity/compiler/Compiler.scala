@@ -23,37 +23,39 @@ object Compiler {
     OParser.parse(parser, args, CliConfig()) match {
       case Some(cfg) =>
         parseFiles(cfg.files) match {
-          case None       => println("No source files found!")
+          case None => println("No source files found!")
           case Some(result) =>
             if (Result.hasError(result)) {
-              printMsgs(result.written)
-            } else {
-              
-            }
+              printMsgs(result.msgs)
+            } else {}
         }
       case None => ???
     }
   }
 
+  /** Parse the given files
+    *
+    * @return
+    *   None if no source files were found, a Some containing a Result with all
+    *   the modules found otherwise.
+    */
   private def parseFiles(
     files: Seq[File]
-  ): Option[Result[Chain[ModuleDef]]] =
-    val results = files.collect {
-      file =>
-        val filename = file.getName()
-        if (file.isDirectory) {
-          parseFiles(file.listFiles().toList).map(
-            _.map(mods => Some(FolderModule(filename, file, mods.toList)))
-          )
-        } else if (filename.endsWith(Extension)) {
-          Some(Parser.parseFile(filename.stripSuffix(Extension), file))
-        } else {
-          None
-        }
+  ): Option[Result[Chain[ModuleDef]]] = {
+    val results = files.map { file =>
+      val filename = file.getName()
+      if (file.isDirectory) {
+        parseFiles(file.listFiles().toList).map(
+          _.map(mods => Some(FolderModule(filename, file, mods.toList)))
+        )
+      } else if (filename.endsWith(Extension)) {
+        Some(Parser.parseFile(filename.stripSuffix(Extension), file))
+      } else {
+        None
+      }
     }
-    NonEmptyChain.fromSeq(results.flatten).map { results =>
-      results.reduceMap(res => res.map(Chain.fromOption))
-    }
+    NonEmptyChain.fromSeq(results.flatten).map(Result.combineAllOpts)
+  }
 
   private def printMsgs(msgs: Chain[Message]): Unit = {
     for (msg <- msgs.iterator) {
