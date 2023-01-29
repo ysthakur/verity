@@ -6,8 +6,7 @@ import verity.compiler.parser.Core.*
 import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
 
-/** Parsers for type-related stuff
-  */
+/** Parsers for type-related stuff */
 object Types {
 
   /** TODO find a better name for this A type like `foo` or `foo.bar.baz` (only

@@ -3,16 +3,16 @@ package verity.compiler
 import verity.compiler.ast.Span
 
 import java.io.File
+import scala.annotation.tailrec
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
+
 import cats.data.{Chain, Writer}
 import cats.kernel.Semigroup
 import cats.syntax.all.*
-import cats.Monad
 import cats.FlatMap
-
-import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.ArrayBuffer
 import cats.Foldable
+import cats.Monad
 
 /** A message from the compiler
   *
@@ -26,10 +26,10 @@ import cats.Foldable
   *   The severity of the message
   */
 case class Message(
-  msg: String,
-  span: Span,
-  filename: String,
-  level: Message.LogLevel
+    msg: String,
+    span: Span,
+    filename: String,
+    level: Message.LogLevel
 )
 
 object Message {
@@ -77,7 +77,7 @@ object Result {
     *   will be concatenated together.
     */
   def combineAll[F[_], T](
-    results: F[Result[T]]
+      results: F[Result[T]]
   )(using Foldable[F]): Result[Chain[T]] =
     results.foldLeft(Result(Chain.nil, Chain.nil)) { (acc, next) =>
       Result(acc.value :+ next.value, acc.msgs ++ next.msgs)
@@ -91,7 +91,7 @@ object Result {
     *   the results that returned Nones.
     */
   def combineAllOpts[F[_], T](
-    results: F[Result[Option[T]]]
+      results: F[Result[Option[T]]]
   )(using Foldable[F]): Result[Chain[T]] =
     results.foldLeft(Result(Chain.nil, Chain.nil)) { (acc, next) =>
       Result(

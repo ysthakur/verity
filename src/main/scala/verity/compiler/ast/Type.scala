@@ -33,17 +33,17 @@ case class TypeMemberAccess(typ: Type, memberName: String) extends Type
 case object UnknownType extends Type
 
 case class FunctionType(
-  comptimeParamss: List[ComptimeParamList],
-  normParamTypes: List[Type],
-  givenParamTypes: List[Type],
-  returnType: Type
+    comptimeParamss: List[ComptimeParamList],
+    normParamTypes: List[Type],
+    givenParamTypes: List[Type],
+    returnType: Type
 ) extends Type
 
 /** Compile-time arguments */
 case class ComptimeArgs(
-  typeArgs: List[Type],
-  normConstArgs: List[Expr],
-  givenConstArgs: List[Expr]
+    typeArgs: List[Type],
+    normConstArgs: List[Expr],
+    givenConstArgs: List[Expr]
 )
 
 object ComptimeArgs {

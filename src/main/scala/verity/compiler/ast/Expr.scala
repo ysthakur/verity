@@ -8,18 +8,19 @@ case class BoolLiteral(value: Boolean, span: Span = Span.synthetic) extends Expr
 
 case class IntLiteral(value: Int, span: Span = Span.synthetic) extends Expr
 
-case class DoubleLiteral(value: Double, span: Span = Span.synthetic) extends Expr
+case class DoubleLiteral(value: Double, span: Span = Span.synthetic)
+    extends Expr
 
 case class CharLiteral(char: Char, span: Span = Span.synthetic) extends Expr
 
 case class StringLiteral(text: String, span: Span = Span.synthetic) extends Expr
 
-/** A resolved reference to a variable
-  */
+/** A resolved reference to a variable */
 case class VarRef(varName: String, decl: VarDef, span: Span = Span.synthetic)
     extends Expr
 
-case class UnresolvedIdentifier(id: String, span: Span = Span.synthetic) extends Expr
+case class UnresolvedIdentifier(id: String, span: Span = Span.synthetic)
+    extends Expr
 
 /** Used for accessing a property on an object like `foo.bar`.
   *
@@ -50,23 +51,22 @@ case class ValArgList(args: List[Expr], isGiven: Boolean)
 /** An expression like `let foo = bar in baz` */
 case class LetExpr(vars: List[VarDef], body: Expr) extends Expr
 
-/** A local variable
-  */
+/** A local variable */
 case class VarDef(name: String, typ: Option[Type], value: Expr) extends Def
 
 case class Lambda(
-  comptimeParams: ComptimeParams,
-  params: Params,
-  body: Expr,
-  span: Span
+    comptimeParams: ComptimeParams,
+    params: Params,
+    body: Expr,
+    span: Span
 ) extends Expr
 
 case class Param(name: String, typ: Type)
 
 /** The usual kind of runtime parameters, both normal and implicit ones */
 case class Params(
-  normParams: List[Param],
-  givenParams: List[Param]
+    normParams: List[Param],
+    givenParams: List[Param]
 )
 
 object Params {

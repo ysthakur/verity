@@ -1,7 +1,6 @@
 package verity.compiler.parser
 
 import verity.compiler.ast.*
-
 import verity.compiler.parser.Core.*
 import verity.compiler.parser.Types.*
 
@@ -9,8 +8,7 @@ import cats.data.NonEmptyList
 import cats.parse.{Parser as P, Parser0 as P0}
 import cats.parse.Rfc5234.digit
 
-/** Parsers for expressions
-  */
+/** Parsers for expressions */
 object Exprs {
   val expr = P.defer(exprLazy: @unchecked)
 
@@ -243,9 +241,8 @@ object Exprs {
       ~ comptimeParams.surroundedBy(ws)
       ~ params
       ~ (ws *> P.string("->") *> expr)
-      ~ pos).map {
-      case (start -> comptimeParams -> params -> body -> end) =>
-        Lambda(comptimeParams, params, body, Span(start, end))
+      ~ pos).map { case (start -> comptimeParams -> params -> body -> end) =>
+      Lambda(comptimeParams, params, body, Span(start, end))
     }
 
   /** A character that can be part of an operator */

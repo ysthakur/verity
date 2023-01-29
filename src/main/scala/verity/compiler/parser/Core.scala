@@ -2,12 +2,11 @@ package verity.compiler.parser
 
 import verity.compiler.ast.*
 
-import cats.parse.{Parser as P, Parser0 as P0}
-import cats.parse.Rfc5234.{sp, crlf, lf, wsp}
 import cats.data.NonEmptyList
+import cats.parse.{Parser as P, Parser0 as P0}
+import cats.parse.Rfc5234.{crlf, lf, sp, wsp}
 
-/** General purpose parsers
-  */
+/** General purpose parsers */
 private[parser] object Core {
 
   def pos: P0[Pos] = P.caret.map { caret =>
@@ -47,8 +46,7 @@ private[parser] object Core {
       Text(id, Span(end - id.length, end))
     }
 
-  /** Like [[identifierWithTextRange]], but can be inlined
-    */
+  /** Like [[identifierWithTextRange]], but can be inlined */
   val identifierWithTextRange: P[(String, Span)] =
     (identifier ~ pos).map { case (id, end) =>
       id -> Span(end - id.length, end)
@@ -118,10 +116,10 @@ private[parser] object Core {
 
   /** Helper to make parser for argument or parameter lists */
   def list[T](
-    start: P[Unit],
-    item: P[T],
-    sep: P[Unit],
-    end: P[Unit]
+      start: P[Unit],
+      item: P[T],
+      sep: P[Unit],
+      end: P[Unit]
   ): P[List[T]] =
     start.soft *> ws *> item.repSep0(ws *> sep <* ws) <* ws <* end
 }

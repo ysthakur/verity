@@ -1,17 +1,17 @@
 package verity.compiler
 
-// Necessary because of all the File stuff
-import scala.language.unsafeNulls
-
 import verity.compiler.ast.{FolderModule, ModuleDef, ModuleMember}
 import verity.compiler.parser.Parser
 
 import java.io.File
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+// Necessary because of all the File stuff
+import scala.language.unsafeNulls
 
 import cats.data.{Chain, NonEmptyChain, Writer}
 import cats.syntax.all.*
+
 import scopt.OParser
 
 object Compiler {
@@ -40,7 +40,7 @@ object Compiler {
     *   the modules found otherwise.
     */
   private def parseFiles(
-    files: Seq[File]
+      files: Seq[File]
   ): Option[Result[Chain[ModuleDef]]] = {
     val results = files.map { file =>
       val filename = file.getName()
@@ -79,6 +79,6 @@ object Compiler {
   }
 
   private case class CliConfig(
-    files: Seq[File] = List.empty
+      files: Seq[File] = List.empty
   )
 }

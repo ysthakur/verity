@@ -9,8 +9,7 @@ import cats.parse.{Parser as P, Parser0 as P0}
 
 import collection.mutable.ArrayBuffer
 
-/** Parsers for stuff inside TypeDefs
-  */
+/** Parsers for stuff inside TypeDefs */
 private[parser] object TypeDefs {
   val recordDef: P[TypeDef] =
     (keyword("record") *> ws
@@ -24,16 +23,29 @@ private[parser] object TypeDefs {
     (identifier.surroundedBy(ws)
       ~ (comptimeParams <* ws)
       ~ (params <* ws)
-      ~ (P.char(':') *> ws *> valArgs.eitherOr(comptimeArgs ~~ valArgs)).?).map {
-      case (name -> comptimeParams -> valParams -> ctorArgs) =>
+      ~ (P.char(':') *> ws *> valArgs.eitherOr(comptimeArgs ~~ valArgs)).?)
+      .map { case (name -> comptimeParams -> valParams -> ctorArgs) =>
         ctorArgs match {
           case Some(Right(valArgs)) =>
-            EnumCase(name, comptimeParams, valParams, ComptimeArgs.empty, valArgs)
+            EnumCase(
+              name,
+              comptimeParams,
+              valParams,
+              ComptimeArgs.empty,
+              valArgs
+            )
           case Some(Left((comptimeArgs, valArgs))) =>
             EnumCase(name, comptimeParams, valParams, comptimeArgs, valArgs)
-          case None => EnumCase(name, comptimeParams, valParams, ComptimeArgs.empty, Args.empty)
+          case None =>
+            EnumCase(
+              name,
+              comptimeParams,
+              valParams,
+              ComptimeArgs.empty,
+              Args.empty
+            )
         }
-    }
+      }
 
   val enumDef: P[TypeDef] =
     (

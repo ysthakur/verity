@@ -2,9 +2,9 @@ package verity.compiler.ast
 
 import java.io.File
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 import cats.data.NonEmptyList
-import scala.collection.mutable.ArrayBuffer
 
 type ModuleMember = ImportStmt | ModuleDef | TypeDef | VarDef
 
@@ -12,8 +12,8 @@ type ModuleMember = ImportStmt | ModuleDef | TypeDef | VarDef
   *   The path of the import, excluding the wildcard
   */
 case class ImportStmt(
-  path: NonEmptyList[String],
-  wildcard: Boolean = false
+    path: NonEmptyList[String],
+    wildcard: Boolean = false
 ) extends Tree
 
 /** A module definition
@@ -32,7 +32,7 @@ sealed trait ModuleDef {
     *   containing the part of the path at the end that wasn't found.
     */
   def findSubmodule(
-    path: NonEmptyList[String]
+      path: NonEmptyList[String]
   ): Either[NonEmptyList[String], ModuleDef] =
     this.submodules.find(_.name == path.head) match {
       case Some(subMod) =>
@@ -52,9 +52,9 @@ sealed trait ModuleDef {
   *   The folder associated with the module
   */
 case class FolderModule(
-  override val name: String,
-  folder: File,
-  override val submodules: Seq[ModuleDef]
+    override val name: String,
+    folder: File,
+    override val submodules: Seq[ModuleDef]
 ) extends ModuleDef
 
 /** A module that has actual source code */
@@ -65,4 +65,4 @@ case class SourceModule(override val name: String, contents: Seq[ModuleMember])
 
 /** An entire file treated as a module */
 class FileModule(name: String, contents: Seq[ModuleMember], val file: File)
-  extends SourceModule(name, contents)
+    extends SourceModule(name, contents)

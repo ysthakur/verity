@@ -4,15 +4,16 @@ import verity.compiler.{Message, Result}
 import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 
+import java.io.{File, FileInputStream, InputStream}
+import java.nio.charset.Charset
+import java.nio.file.{Files, Path}
+
+import cats.data.{Chain, Writer}
 import cats.implicits.toShow
 import cats.parse.{Parser => CatsParser, Parser0}
-
-import java.io.{File, FileInputStream, InputStream}
-import java.nio.file.{Files, Path}
-import java.nio.charset.Charset
-import collection.mutable.ArrayBuffer
 import cats.parse.LocationMap
-import cats.data.{Chain, Writer}
+
+import collection.mutable.ArrayBuffer
 
 object Parser {
   private val module: CatsParser[ModuleDef] =
@@ -28,8 +29,8 @@ object Parser {
       | module | TypeDefs.typeDef | Exprs.varDef).repSep0(ws) <* ws
 
   private def processResult[T](
-    filename: String,
-    parserResult: Either[CatsParser.Error, T]
+      filename: String,
+      parserResult: Either[CatsParser.Error, T]
   ): Result[Option[T]] =
     (parserResult: @unchecked) match {
       case Right(ast) => Result.some(ast)
@@ -58,9 +59,9 @@ object Parser {
     }
 
   def parseModule(
-    filename: String,
-    moduleName: String,
-    code: String
+      filename: String,
+      moduleName: String,
+      code: String
   ): Result[Option[ModuleDef]] =
     processResult(
       filename,

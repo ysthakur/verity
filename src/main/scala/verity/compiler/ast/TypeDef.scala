@@ -15,16 +15,16 @@ sealed trait TypeDef extends Def {
 case class Field(name: String, typ: Type) extends Tree
 
 case class Record(
-  name: String,
-  override val comptimeParams: ComptimeParams,
-  params: Params
+    name: String,
+    override val comptimeParams: ComptimeParams,
+    params: Params
 ) extends TypeDef
 
 case class EnumDef(
-  name: String,
-  override val comptimeParams: ComptimeParams,
-  params: Params,
-  cases: List[EnumCase]
+    name: String,
+    override val comptimeParams: ComptimeParams,
+    params: Params,
+    cases: List[EnumCase]
 ) extends TypeDef
 
 /** A particular case/variant of an enum
@@ -43,11 +43,11 @@ case class EnumDef(
   *   The implicit arguments to pass to the upper enum's constructor, if any
   */
 case class EnumCase(
-  name: String,
-  comptimeParams: ComptimeParams,
-  params: Params,
-  ctorComptimeArgs: ComptimeArgs,
-  ctorArgs: Args
+    name: String,
+    comptimeParams: ComptimeParams,
+    params: Params,
+    ctorComptimeArgs: ComptimeArgs,
+    ctorArgs: Args
 )
 
 /** A type alias
@@ -60,9 +60,9 @@ case class EnumCase(
   * @param body
   */
 case class TypeAlias(
-  override val name: String,
-  override val comptimeParams: ComptimeParams,
-  val body: Type
+    override val name: String,
+    override val comptimeParams: ComptimeParams,
+    val body: Type
 ) extends TypeDef
 
 object BuiltinTypes {
@@ -107,14 +107,14 @@ enum ComptimeParamList {
   *   The Span of the name
   */
 case class TypeParam(
-  override val name: String,
-  nameRange: Span = Span.synthetic
+    override val name: String,
+    nameRange: Span = Span.synthetic
 ) extends TypeDef
 
 case class ComptimeParams(
-  typeParams: List[TypeParam],
-  normConstParams: List[Param],
-  givenConstParams: List[Param],
+    typeParams: List[TypeParam],
+    normConstParams: List[Param],
+    givenConstParams: List[Param]
 )
 
 object ComptimeParams {
