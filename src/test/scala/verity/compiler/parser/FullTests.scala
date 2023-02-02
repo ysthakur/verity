@@ -14,7 +14,7 @@ class FullTests extends VerityParserTestSuite {
         "Foo",
         List(
           ImportStmt(NonEmptyList("foo", List("bar"))),
-          ImportStmt(NonEmptyList("foo", List("blech", "xyzzy", "baz")))
+          ImportStmt(NonEmptyList("blech", List("xyzzy", "baz")))
         ),
         List(
           SourceModule(
@@ -24,24 +24,56 @@ class FullTests extends VerityParserTestSuite {
             Nil,
             List(
               GlobalVar(
-                "something",
-                ToBeInferred,
-                LetExpr(
-                  List(
-                    LocalVar(
-                      "foobar",
-                      UnresolvedType(List("String")),
-                      IntLiteral(5)
-                    )
-                  ),
-                  VarRef("x", null, Span.synthetic)
-                )
+                "foobar",
+                UnresolvedType(List("String")),
+                IntLiteral(3)
               )
             )
           )
         ),
-        Nil,
-        Nil
+        List(
+          Record(
+            "Foo",
+            ComptimeParams(List(TypeParam("A")), Nil, Nil),
+            Params(
+              List(
+                Param("field1", UnresolvedType(List("Int"))),
+                Param(
+                  "field2",
+                  TypeApply(
+                    UnresolvedType(List("Map")),
+                    List(
+                      UnresolvedType(List("String")),
+                      TypeApply(
+                        UnresolvedType(List("Option")),
+                        List(
+                          UnresolvedType(List("String"))
+                        )
+                      )
+                    )
+                  )
+                )
+              ),
+              Nil
+            )
+          )
+        ),
+        List(
+          GlobalVar(
+            "something",
+            ToBeInferred,
+            LetExpr(
+              List(
+                LocalVar(
+                  "foobar",
+                  UnresolvedType(List("String")),
+                  IntLiteral(5)
+                )
+              ),
+              VarRef("x", null, Span.synthetic)
+            )
+          )
+        )
       )
     )(
       Parser.parseModule(
