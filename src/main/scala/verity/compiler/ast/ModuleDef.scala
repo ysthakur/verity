@@ -20,10 +20,12 @@ case class ImportStmt(
   *
   * Can't name it `Module` because of [[java.lang.Module]]
   */
-sealed trait ModuleDef {
+sealed trait ModuleDef extends Tree {
   def name: String
 
   def submodules: Iterable[ModuleDef]
+  def typeDefs: Iterable[TypeDef]
+  def varDefs: Iterable[VarDef]
 
   /** Find a submodule given its relative path
     *
@@ -47,7 +49,7 @@ sealed trait ModuleDef {
 /** A module represented by a folder containing other modules
   *
   * @param name
-  *   The module name
+  *   The module name (not absolute)
   * @param file
   *   The folder associated with the module
   */
@@ -55,14 +57,22 @@ case class FolderModule(
     override val name: String,
     folder: File,
     override val submodules: Seq[ModuleDef]
-) extends ModuleDef
-
-/** A module that has actual source code */
-case class SourceModule(override val name: String, contents: Seq[ModuleMember])
-    extends ModuleDef {
-  override val submodules = contents.collect { case m: ModuleDef => m }
+) extends ModuleDef {
+  override def typeDefs = Nil
+  override def varDefs = Nil
 }
 
-/** An entire file treated as a module */
-class FileModule(name: String, contents: Seq[ModuleMember], val file: File)
-    extends SourceModule(name, contents)
+/** A module that has actual source code
+  * @param name
+  *   The module name (not absolute)
+  * @param file
+  *   If this module is an entire file, the real file it was in
+  */
+case class SourceModule(
+    name: String,
+    imports: Iterable[ImportStmt],
+    submodules: Seq[ModuleDef],
+    typeDefs: Seq[TypeDef],
+    varDefs: Seq[GlobalVar],
+    file: Option[File] = None
+) extends ModuleDef

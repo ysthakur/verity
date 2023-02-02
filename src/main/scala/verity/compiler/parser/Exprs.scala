@@ -216,19 +216,19 @@ object Exprs {
       case (cond -> thenBody -> elseBody) => If(cond, thenBody, elseBody)
     }
 
-  val varDef: P[VarDef] =
+  val localVar: P[VarDef] =
     (
       keyword("let") *> identifier.surroundedBy(ws)
         ~ (P.char(':') *> ws *> typ <* ws).?
         ~ (P.char('=') *> ws *> assignment <* ws)
     ).map { case (varName -> typ -> value) =>
-      VarDef(varName, typ, value)
+      LocalVar(varName, typ.getOrElse(ToBeInferred), value)
     }
 
   /** Variable definition */
   val letExpr: P[Expr] =
     (
-      (varDef.repSep(ws) <* ws <* keyword("in") <* ws).rep.with1 ~ expr
+      (localVar.repSep(ws) <* ws <* keyword("in") <* ws).rep.with1 ~ expr
     ).map { case (letGroups, body) =>
       letGroups.toList.foldRight(body) {
         case (NonEmptyList(firstVar, rest), body) =>

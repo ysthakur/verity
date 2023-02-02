@@ -15,6 +15,9 @@ object Type {
   */
 case class UnresolvedType(path: List[String]) extends Type
 
+/** A type that needs to be inferred */
+object ToBeInferred extends Type
+
 //TODO deal with covariance and contravariance?
 case class TypeRef(typeDef: TypeDef, args: List[Type] = Nil) extends Type
 

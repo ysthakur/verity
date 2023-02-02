@@ -16,7 +16,7 @@ case class CharLiteral(char: Char, span: Span = Span.synthetic) extends Expr
 case class StringLiteral(text: String, span: Span = Span.synthetic) extends Expr
 
 /** A resolved reference to a variable */
-case class VarRef(varName: String, decl: VarDef, span: Span = Span.synthetic)
+case class VarRef(varName: String, decl: VarDef | Null, span: Span = Span.synthetic)
     extends Expr
 
 case class UnresolvedIdentifier(id: String, span: Span = Span.synthetic)
@@ -51,17 +51,12 @@ case class ValArgList(args: List[Expr], isGiven: Boolean)
 /** An expression like `let foo = bar in baz` */
 case class LetExpr(vars: List[VarDef], body: Expr) extends Expr
 
-/** A local variable */
-case class VarDef(name: String, typ: Option[Type], value: Expr) extends Def
-
 case class Lambda(
     comptimeParams: ComptimeParams,
     params: Params,
     body: Expr,
     span: Span
 ) extends Expr
-
-case class Param(name: String, typ: Type)
 
 /** The usual kind of runtime parameters, both normal and implicit ones */
 case class Params(

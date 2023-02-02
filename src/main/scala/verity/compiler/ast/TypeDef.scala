@@ -9,10 +9,8 @@ sealed trait TypeDef extends Def {
     */
   def comptimeParams: ComptimeParams = ComptimeParams(Nil, Nil, Nil)
 
-  def fields: List[Field] = Nil
+  def fields: List[VarDef] = Nil
 }
-
-case class Field(name: String, typ: Type) extends Tree
 
 case class Record(
     name: String,

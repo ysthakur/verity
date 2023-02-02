@@ -6,6 +6,14 @@ import verity.compiler.ast.*
 import verity.compiler.parser.{Exprs, Types}
 
 class ParserTests extends AnyFunSuite {
+  test("Empty module should parse properly") {
+    assertResult(
+      SourceModule("Test", Nil, Nil, Nil, Nil)
+    )(
+      Parser.parseModuleContents("Test.vt", "Test", "").value.get
+    )
+  }
+
   test("Basic arithmetic and stuff") {
     assert(
       Exprs.expr.parse("3 + 2 * 6 > abc == true") ===
@@ -36,7 +44,7 @@ class ParserTests extends AnyFunSuite {
     assertResult(
       Right(
         LetExpr(
-          List(VarDef("x", None, IntLiteral(5))),
+          List(LocalVar("x", ToBeInferred, IntLiteral(5))),
           IntLiteral(3)
         )
       )
@@ -48,9 +56,9 @@ class ParserTests extends AnyFunSuite {
       Right(
         LetExpr(
           List(
-            VarDef(
+            LocalVar(
               "x",
-              Some(UnresolvedType(List("verity", "lang", "Int"))),
+              UnresolvedType(List("verity", "lang", "Int")),
               IntLiteral(5)
             )
           ),

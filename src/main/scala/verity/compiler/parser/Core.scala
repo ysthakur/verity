@@ -72,12 +72,13 @@ private[parser] object Core {
   }
 
   val dotPath: P[NonEmptyList[String]] =
-    identifier.repSep(1, ws *> P.string0(".") *> ws)
+    identifier.repSep(1, ws.soft *> P.char('.') *> ws)
 
+  // todo this won't parse wildcards properly
   val importStmt: P[ImportStmt] =
-    (keyword("import") *> dotPath.surroundedBy(ws) ~ (P.string(
-      "."
-    ) *> ws *> P.string("*")).? <* P.string(";")).map {
+    (keyword("import")
+      *> dotPath.surroundedBy(ws)
+      ~ (P.string(".") *> ws *> P.string("*")).?).map {
       case (path, None) =>
         ImportStmt(path, wildcard = false)
       case (path, Some(_)) =>
