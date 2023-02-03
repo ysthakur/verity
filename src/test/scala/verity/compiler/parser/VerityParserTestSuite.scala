@@ -1,5 +1,6 @@
 package verity.compiler.parser
 
+import verity.compiler.ast.*
 import verity.compiler.Result
 
 import org.scalatest.compatible.Assertion
@@ -7,7 +8,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 /** Common trait for parser tests to give them helpers */
 trait VerityParserTestSuite extends AnyFunSuite {
-  def testResult[T](expected: T)(res: Result[Option[T]]): Assertion = {
+  inline def testResult[T](expected: T)(res: Result[Option[T]]): Assertion = {
     res.value match {
       case Some(actual) =>
         val errors =

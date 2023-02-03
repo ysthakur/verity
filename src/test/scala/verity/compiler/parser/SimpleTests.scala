@@ -1,9 +1,11 @@
 package verity.compiler.parser
 
-import org.scalatest.funsuite.AnyFunSuite
-
 import verity.compiler.ast.*
 import verity.compiler.parser.{Exprs, Types}
+
+import cats.data.NonEmptyList
+
+import org.scalatest.funsuite.AnyFunSuite
 
 class ParserTests extends AnyFunSuite {
   test("Empty module should parse properly") {
@@ -58,7 +60,7 @@ class ParserTests extends AnyFunSuite {
           List(
             LocalVar(
               "x",
-              UnresolvedType(List("verity", "lang", "Int")),
+              UnresolvedType("verity", "lang", "Int"),
               IntLiteral(5)
             )
           ),
@@ -72,18 +74,18 @@ class ParserTests extends AnyFunSuite {
     assertResult(
       Right(
         TypeApply(
-          UnresolvedType(List("verity", "lang", "Int")),
+          UnresolvedType("verity", "lang", "Int"),
           List(
-            UnresolvedType(List("A")),
+            UnresolvedType("A"),
             TypeApply(
               TypeMemberAccess(
                 TypeApply(
-                  UnresolvedType(List("B")),
-                  List(UnresolvedType(List("D")))
+                  UnresolvedType("B"),
+                  List(UnresolvedType("D"))
                 ),
                 "Foo"
               ),
-              List(UnresolvedType(List("C")))
+              List(UnresolvedType("C"))
             )
           )
         )

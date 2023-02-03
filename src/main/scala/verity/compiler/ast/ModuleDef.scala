@@ -11,10 +11,8 @@ type ModuleMember = ImportStmt | ModuleDef | TypeDef | VarDef
 /** @param path
   *   The path of the import, excluding the wildcard
   */
-case class ImportStmt(
-    path: NonEmptyList[String],
-    wildcard: Boolean = false
-) extends Tree
+case class ImportStmt(path: NonEmptyList[String], wildcard: Boolean = false)
+    extends Tree
 
 /** A module definition
   *

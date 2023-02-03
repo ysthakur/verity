@@ -22,13 +22,7 @@ class FullTests extends VerityParserTestSuite {
             Nil,
             Nil,
             Nil,
-            List(
-              GlobalVar(
-                "foobar",
-                UnresolvedType(List("String")),
-                IntLiteral(3)
-              )
-            )
+            List(GlobalVar("foobar", UnresolvedType("String"), IntLiteral(3)))
           )
         ),
         List(
@@ -37,18 +31,16 @@ class FullTests extends VerityParserTestSuite {
             ComptimeParams(List(TypeParam("A")), Nil, Nil),
             Params(
               List(
-                Param("field1", UnresolvedType(List("Int"))),
+                Param("field1", UnresolvedType("Int")),
                 Param(
                   "field2",
                   TypeApply(
-                    UnresolvedType(List("Map")),
+                    UnresolvedType("Map"),
                     List(
-                      UnresolvedType(List("String")),
+                      UnresolvedType("String"),
                       TypeApply(
-                        UnresolvedType(List("Option")),
-                        List(
-                          UnresolvedType(List("String"))
-                        )
+                        UnresolvedType("Option"),
+                        List(UnresolvedType("String"))
                       )
                     )
                   )
@@ -63,14 +55,8 @@ class FullTests extends VerityParserTestSuite {
             "something",
             ToBeInferred,
             LetExpr(
-              List(
-                LocalVar(
-                  "foobar",
-                  UnresolvedType(List("String")),
-                  IntLiteral(5)
-                )
-              ),
-              VarRef("x", null, Span.synthetic)
+              List(LocalVar("x", ToBeInferred, IntLiteral(5))),
+              UnresolvedIdentifier("x")
             )
           )
         )

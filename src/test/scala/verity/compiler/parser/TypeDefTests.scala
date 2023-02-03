@@ -22,12 +22,12 @@ class TypeDefTests extends AnyFunSuite {
             ),
             Params(
               List(
-                Param("foo", UnresolvedType(List("Int"))),
-                Param("x", TypeApply(UnresolvedType(List("A")), List(UnresolvedType(List("C"))))),
-                Param("y", UnresolvedType(List("B")))
+                Param("foo", UnresolvedType("Int")),
+                Param("x", TypeApply(UnresolvedType("A"), List(UnresolvedType("C")))),
+                Param("y", UnresolvedType("B"))
               ),
               List(
-                Param("foo", UnresolvedType(List("Boolean")))
+                Param("foo", UnresolvedType("Boolean"))
               )
             )
           )

@@ -13,7 +13,7 @@ object Types {
     * names separated by dots)
     */
   val idsWithDots: P[Type] = (identifier <* ws).repSep(P.char('.') ~ ws).map {
-    case (NonEmptyList(first, restPath)) => UnresolvedType(first +: restPath)
+    path => UnresolvedType(path)
   }
 
   val typ: P[Type] = P.recursive { typ =>

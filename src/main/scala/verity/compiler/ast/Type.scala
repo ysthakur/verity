@@ -2,6 +2,8 @@ package verity.compiler.ast
 
 import scala.collection.mutable.ArrayBuffer
 
+import cats.data.NonEmptyList
+
 trait Type extends Tree
 
 object Type {
@@ -10,13 +12,19 @@ object Type {
 
 /** An unresolved type in the form `foo.bar.Baz`. Has to be like this in case
   * the stuff at the start is a package instead of a type.
-  *
-  * @param path
   */
-case class UnresolvedType(path: List[String]) extends Type
+case class UnresolvedType(path: NonEmptyList[String]) extends Type
+
+object UnresolvedType {
+  /** Helper to make unresolved types more concisely */
+  def apply(pathStart: String, pathRest: String*): UnresolvedType =
+    UnresolvedType(NonEmptyList(pathStart, pathRest.toList))
+}
 
 /** A type that needs to be inferred */
-object ToBeInferred extends Type
+object ToBeInferred extends Type {
+  override def toString = "ToBeInferred"
+}
 
 //TODO deal with covariance and contravariance?
 case class TypeRef(typeDef: TypeDef, args: List[Type] = Nil) extends Type
