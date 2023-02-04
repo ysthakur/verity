@@ -4,15 +4,29 @@ import java.io.File
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-import cats.data.NonEmptyList
+import cats.data.{Chain, NonEmptyChain}
 
 type ModuleMember = ImportStmt | ModuleDef | TypeDef | VarDef
 
 /** @param path
   *   The path of the import, excluding the wildcard
+  * @param wildcard
+  *   Whether everything inside the module is to be imported
+  * @param qualified
+  *   Whether it's a qualified import
   */
-case class ImportStmt(path: NonEmptyList[String], wildcard: Boolean = false)
-    extends Tree
+case class ImportStmt(
+    path: NonEmptyChain[String],
+    wildcard: Boolean = false,
+    qualified: Boolean = false
+) extends Tree {
+  /** The module that the path resolved to */
+  private[verity] var resolvedMod: ModuleDef | Null = null
+  /** The type that the path resolved to */
+  private[verity] var resolvedTypeDef: TypeDef | Null = null
+  /** The global variable that the path resolved to */
+  private[verity] var resolvedVar: GlobalVar | Null = null
+}
 
 /** A module definition
   *
@@ -23,25 +37,7 @@ sealed trait ModuleDef extends Tree {
 
   def submodules: Iterable[ModuleDef]
   def typeDefs: Iterable[TypeDef]
-  def varDefs: Iterable[VarDef]
-
-  /** Find a submodule given its relative path
-    *
-    * @return
-    *   A `Right` if the module was found at the given path, otherwise a `Left`
-    *   containing the part of the path at the end that wasn't found.
-    */
-  def findSubmodule(
-      path: NonEmptyList[String]
-  ): Either[NonEmptyList[String], ModuleDef] =
-    this.submodules.find(_.name == path.head) match {
-      case Some(subMod) =>
-        path.tail match {
-          case head :: tail => subMod.findSubmodule(NonEmptyList(head, tail))
-          case _            => Right(subMod)
-        }
-      case None => Left(path)
-    }
+  def varDefs: Iterable[GlobalVar]
 }
 
 /** A module represented by a folder containing other modules
@@ -74,3 +70,6 @@ case class SourceModule(
     varDefs: Seq[GlobalVar],
     file: Option[File] = None
 ) extends ModuleDef
+
+/** A common trait for modules loaded from already compiled code */
+trait BinaryModule extends ModuleDef

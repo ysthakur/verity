@@ -109,11 +109,21 @@ case class TypeParam(
     nameRange: Span = Span.synthetic
 ) extends TypeDef
 
+/** Compile-time parameters
+  * @param typeParams
+  *   Type parameters
+  * @param normConstParams
+  *   Explicitly passed compile-time values
+  * @param givenConstParams
+  *   Implicitly passed compile-time values
+  */
 case class ComptimeParams(
     typeParams: List[TypeParam],
     normConstParams: List[Param],
     givenConstParams: List[Param]
-)
+) {
+  def allConstParams = normConstParams ::: givenConstParams
+}
 
 object ComptimeParams {
   def empty = ComptimeParams(Nil, Nil, Nil)

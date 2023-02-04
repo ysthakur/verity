@@ -1,6 +1,11 @@
 package verity.compiler.ast
 
+import cats.data.NonEmptyChain
+
 trait Tree
+
+/** The path of a module */
+type Path = NonEmptyChain[String]
 
 /** A definition of any sort that can be imported */
 trait Def extends Tree {

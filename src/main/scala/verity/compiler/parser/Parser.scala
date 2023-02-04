@@ -1,19 +1,26 @@
 package verity.compiler.parser
 
-import verity.compiler.{Message, Result}
 import verity.compiler.ast.*
 import verity.compiler.parser.Core.*
 import verity.compiler.parser.Exprs.expr
 import verity.compiler.parser.TypeDefs.typeDef
 import verity.compiler.parser.Types.typ
+import verity.compiler.Message
+import verity.compiler.Result
+import verity.compiler.Source
 
-import java.io.{File, FileInputStream, InputStream}
+import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
 import java.nio.charset.Charset
-import java.nio.file.{Files, Path}
+import java.nio.file.Files
+import java.nio.file.Path
 
-import cats.data.{Chain, Writer}
+import cats.data.Chain
+import cats.data.Writer
 import cats.implicits.toShow
-import cats.parse.{Parser => P, Parser0 => P0}
+import cats.parse.{Parser => P}
+import cats.parse.{Parser0 => P0}
 import cats.parse.LocationMap
 
 import collection.mutable.ArrayBuffer
@@ -51,8 +58,8 @@ object Parser {
       }
 
   private def processResult[T](
-      filename: String,
-      parserResult: Either[P.Error, T]
+      src: Source,
+      parserResult: Either[P.Error, T],
   ): Result[Option[T]] =
     (parserResult: @unchecked) match {
       case Right(ast) => Result.some(ast)
@@ -67,7 +74,7 @@ object Parser {
               case Some(caret) =>
                 Span(
                   Pos(caret.offset, caret.line, caret.col),
-                  Pos(caret.offset, caret.line, caret.col + 1)
+                  Pos(caret.offset, caret.line, caret.col + 1),
                 )
             }
         }
@@ -75,37 +82,36 @@ object Parser {
           Message.err(
             s"Expected one of ${error.expected.toList.map(e => s"\n- ${e.show}").mkString}",
             span,
-            filename
-          )
+            src,
+          ),
         )
     }
 
   /** Parse a module from a string */
-  def parseModule(filename: String, code: String): Result[Option[ModuleDef]] =
-    processResult(filename, module.parseAll(code))
+  def parseModule(code: String): Result[Option[ModuleDef]] =
+    processResult(Source.Str(code), module.parseAll(code))
 
   /** Like [[parseModule]], but the code is only the contents of the module (no
     * module name and end marker)
     */
   def parseModuleContents(
-      filename: String,
       moduleName: String,
-      code: String
+      code: String,
   ): Result[Option[ModuleDef]] =
     processResult(
-      filename,
+      Source.Str(code),
       moduleContents
         .map { toModule => toModule(moduleName, None) }
-        .parseAll(code)
+        .parseAll(code),
     )
 
   def parseFile(moduleName: String, input: File): Result[Option[ModuleDef]] = {
     val code = Files.readString(input.toPath(), Charset.defaultCharset()).nn
     processResult(
-      input.getName().nn,
+      Source.File(input),
       moduleContents
         .map { toModule => toModule(moduleName, Some(input)) }
-        .parseAll(code)
+        .parseAll(code),
     )
   }
 }

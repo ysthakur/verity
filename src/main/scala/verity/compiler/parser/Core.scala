@@ -2,9 +2,14 @@ package verity.compiler.parser
 
 import verity.compiler.ast.*
 
+import cats.data.NonEmptyChain
 import cats.data.NonEmptyList
-import cats.parse.{Parser as P, Parser0 as P0}
-import cats.parse.Rfc5234.{crlf, lf, sp, wsp}
+import cats.parse.Parser as P
+import cats.parse.Parser0 as P0
+import cats.parse.Rfc5234.crlf
+import cats.parse.Rfc5234.lf
+import cats.parse.Rfc5234.sp
+import cats.parse.Rfc5234.wsp
 
 /** General purpose parsers */
 private[parser] object Core {
@@ -26,16 +31,16 @@ private[parser] object Core {
 
   /** Lookahead sort of thing to make sure an identifier's ended */
   val idEnd: P0[Unit] = P.not(
-    P.charWhere(_.isUnicodeIdentifierPart)
+    P.charWhere(_.isUnicodeIdentifierPart),
   )
 
   def keyword(id: String): P[Unit] = P.string(id) *> P.not(
-    P.charWhere(_.isUnicodeIdentifierPart)
+    P.charWhere(_.isUnicodeIdentifierPart),
   )
 
   val identifier: P[String] =
     (P.charWhere(_.isUnicodeIdentifierStart) ~ P.charsWhile0(
-      _.isUnicodeIdentifierPart
+      _.isUnicodeIdentifierPart,
     )).map { case (first, rest) => s"$first$rest" }
 
   /** Like [[identifierWithTextRange]], but doesn't get inlined, and a tuple
@@ -65,8 +70,8 @@ private[parser] object Core {
       "pub",
       "mut",
       "const",
-      "given"
-    )
+      "given",
+    ),
   ) ~ (idEnd *> pos)).map { case (modifier, end) =>
     Modifier(modifier, Span(end - modifier.length, end))
   }
@@ -80,9 +85,9 @@ private[parser] object Core {
       *> dotPath.surroundedBy(ws)
       ~ (P.string(".") *> ws *> P.string("*")).?).map {
       case (path, None) =>
-        ImportStmt(path, wildcard = false)
+        ImportStmt(NonEmptyChain.fromNonEmptyList(path), wildcard = false)
       case (path, Some(_)) =>
-        ImportStmt(path, wildcard = true)
+        ImportStmt(NonEmptyChain.fromNonEmptyList(path), wildcard = true)
     }
 
   // todo update list of hard keywords
@@ -112,7 +117,7 @@ private[parser] object Core {
     "const",
     "default",
     "static",
-    "abstract"
+    "abstract",
   )
 
   /** Helper to make parser for argument or parameter lists */
@@ -120,7 +125,7 @@ private[parser] object Core {
       start: P[Unit],
       item: P[T],
       sep: P[Unit],
-      end: P[Unit]
+      end: P[Unit],
   ): P[List[T]] =
     start.soft *> ws *> item.repSep0(ws *> sep <* ws) <* ws <* end
 }

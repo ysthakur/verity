@@ -20,7 +20,7 @@ import cats.Monad
   *   The contents of the message
   * @param span
   *   The location of the code that the message refers to
-  * @param filename
+  * @param src
   *   The file in which the code is. TODO make this an Option[File]?
   * @param level
   *   The severity of the message
@@ -28,7 +28,7 @@ import cats.Monad
 case class Message(
     msg: String,
     span: Span,
-    filename: String,
+    src: Source,
     level: Message.LogLevel
 )
 
@@ -39,14 +39,29 @@ object Message {
     case Debug, Info, Warn, Error
   }
 
-  def err(msg: String, span: Span, filename: String) =
-    Message(msg, span, filename, LogLevel.Error)
-  def warn(msg: String, span: Span, filename: String) =
-    Message(msg, span, filename, LogLevel.Warn)
-  def info(msg: String, span: Span, filename: String) =
-    Message(msg, span, filename, LogLevel.Info)
-  def debug(msg: String, span: Span, filename: String) =
-    Message(msg, span, filename, LogLevel.Debug)
+  def err(msg: String, span: Span)(using ctx: Context) =
+    Message(msg, span, ctx.file, LogLevel.Error)
+
+  def err(msg: String, span: Span, src: Source) =
+    Message(msg, span, src, LogLevel.Error)
+
+  def warn(msg: String, span: Span)(using ctx: Context) =
+    Message(msg, span, ctx.file, LogLevel.Warn)
+
+  def warn(msg: String, span: Span, src: Source) =
+    Message(msg, span, src, LogLevel.Warn)
+
+  def info(msg: String, span: Span)(using ctx: Context) =
+    Message(msg, span, ctx.file, LogLevel.Info)
+
+  def info(msg: String, span: Span, src: Source) =
+    Message(msg, span, src, LogLevel.Info)
+
+  def debug(msg: String, span: Span)(using ctx: Context) =
+    Message(msg, span, ctx.file, LogLevel.Debug)
+
+  def debug(msg: String, span: Span, src: Source) =
+    Message(msg, span, src, LogLevel.Debug)
 }
 
 case class Result[T](value: T, msgs: Chain[Message])

@@ -4,7 +4,7 @@ import scala.collection.mutable.ArrayBuffer
 
 import cats.data.NonEmptyList
 
-trait Type extends Tree
+sealed trait Type extends Tree
 
 object Type {
   val placeholder: Type = new Type {}

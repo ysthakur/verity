@@ -11,7 +11,8 @@ file = module*;
 ## Modules
 
 ```ebnf
-module = module-stmt, module-member, "end"?;
+module = module-stmt, import*, module-member, "end"?;
+import = "import", "qualified"?, upper-id, ".", (upper-id, ".")*, (upper-id | lower-id | "*");
 module-member = module | typedef | value-def;
 ```
 
