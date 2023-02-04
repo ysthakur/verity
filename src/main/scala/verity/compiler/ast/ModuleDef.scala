@@ -20,12 +20,12 @@ case class ImportStmt(
     wildcard: Boolean = false,
     qualified: Boolean = false
 ) extends Tree {
-  /** The module that the path resolved to */
-  private[verity] var resolvedMod: ModuleDef | Null = null
-  /** The type that the path resolved to */
-  private[verity] var resolvedTypeDef: TypeDef | Null = null
-  /** The global variable that the path resolved to */
-  private[verity] var resolvedVar: GlobalVar | Null = null
+  /** Whether the import resolves to a module */
+  private[verity] var isMod = false
+  /** Whether the import resolves to a typedef */
+  private[verity] var isTypeDef = false
+  /** Whether the import resolves to a global variable */
+  private[verity] var isVar = false
 }
 
 /** A module definition
@@ -35,9 +35,9 @@ case class ImportStmt(
 sealed trait ModuleDef extends Tree {
   def name: String
 
-  def submodules: Iterable[ModuleDef]
-  def typeDefs: Iterable[TypeDef]
-  def varDefs: Iterable[GlobalVar]
+  def submodules: Seq[ModuleDef]
+  def typeDefs: Seq[TypeDef]
+  def varDefs: Seq[GlobalVar]
 }
 
 /** A module represented by a folder containing other modules
@@ -64,7 +64,7 @@ case class FolderModule(
   */
 case class SourceModule(
     name: String,
-    imports: Iterable[ImportStmt],
+    imports: Seq[ImportStmt],
     submodules: Seq[ModuleDef],
     typeDefs: Seq[TypeDef],
     varDefs: Seq[GlobalVar],
