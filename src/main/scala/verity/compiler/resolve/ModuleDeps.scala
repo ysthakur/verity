@@ -16,23 +16,22 @@ import scala.collection.mutable
 import cats.data.Chain
 import cats.data.NonEmptyChain
 import cats.kernel.Semigroup
-import cats.syntax.all.catsSyntaxSemigroup
-
-case class ModuleGraph()
+import cats.syntax.all.*
 
 /** Analyze module dependency tree to see which modules have to be compiled
   * before which
   */
 class ModuleDeps(root: ModuleDef) {
-  def makeGraph(mods: Iterable[ModuleDef])(using Context): ModuleGraph = {
-    val depsMap = makeDepsMap(mods)
-    ???
+  def makeGraph(
+      mods: Iterable[ModuleDef],
+  )(using Context): Result[Graph[Path]] = {
+    makeDepsMap(mods).map(Graph.from)
   }
 
   /** Map modules to the paths of the modules that depend on them */
   private def makeDepsMap(
       mods: Iterable[ModuleDef],
-  )(using Context): Result[Map[Path, Chain[Path]]] = {
+  )(using Context): Result[Map[Path, Iterable[Path]]] = {
     val depsMap = mutable.Map[Path, Chain[Path]]()
 
     def addDep(from: Path, to: Path): Unit =
@@ -72,7 +71,7 @@ class ModuleDeps(root: ModuleDef) {
     val errors =
       mods.view.map(mod => helper(mod, NonEmptyChain(mod.name))).reduce(_ ++ _)
 
-    Result(depsMap.toMap, errors)
+    Result(depsMap.view.map((k, v) => k -> v.toIterable).toMap, errors)
   }
 
   /** Resolve an import statement, returning a list of errors encountered, if

@@ -12,7 +12,7 @@ class ParserTests extends AnyFunSuite {
     assertResult(
       SourceModule("Test", Nil, Nil, Nil, Nil)
     )(
-      Parser.parseModuleContents("Test.vt", "Test", "").value.get
+      Parser.parseModuleContents("Test", "").value.get
     )
   }
 

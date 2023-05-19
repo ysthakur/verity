@@ -3,7 +3,7 @@ package verity.compiler.parser
 import verity.compiler.ast.*
 import verity.compiler.parser.{Exprs, Types}
 
-import cats.data.NonEmptyList
+import cats.data.{Chain, NonEmptyList, NonEmptyChain}
 
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -13,8 +13,8 @@ class FullTests extends VerityParserTestSuite {
       SourceModule(
         "Foo",
         List(
-          ImportStmt(NonEmptyList("foo", List("bar"))),
-          ImportStmt(NonEmptyList("blech", List("xyzzy", "baz")))
+          ImportStmt(NonEmptyChain("foo", "bar")),
+          ImportStmt(NonEmptyChain("blech", "xyzzy", "baz"))
         ),
         List(
           SourceModule(
@@ -63,7 +63,6 @@ class FullTests extends VerityParserTestSuite {
       )
     )(
       Parser.parseModule(
-        "test",
         """
         mod Foo
           import foo.bar
