@@ -7,7 +7,7 @@ sealed trait TypeDef extends Def {
   /** The type parameters and const parameters for this typedef. None of the
     * param lists should be normal or given parameters.
     */
-  def comptimeParams: ComptimeParams = ComptimeParams(Nil, Nil, Nil)
+  def comptimeParams: Params = Params(Nil, Nil, Nil)
 
   def fields: List[VarDef] = Nil
 }

@@ -1,7 +1,7 @@
 import mill._, scalalib._
 
 object verity extends SbtModule {
-  def scalaVersion = "3.2.2"
+  def scalaVersion = "3.3.0"
 
   // Sources are in src/, not in verity/src
   def millSourcePath = build.millSourcePath

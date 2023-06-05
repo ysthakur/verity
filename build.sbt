@@ -1,7 +1,6 @@
-
 ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ysthakur"
-ThisBuild / scalaVersion := "3.2.2"
+ThisBuild / scalaVersion := "3.3.0"
 
 // For Metals
 Global / semanticdbEnabled := true
@@ -15,12 +14,10 @@ lazy val root = project
     name := "verity",
     scalacOptions ++= Seq(
       "-deprecation",
-      "-encoding",
-      "UTF-8",
+      "-encoding", "UTF-8",
       "-feature",
-      "-Xfatal-warnings",
+//      "-Xfatal-warnings",
       "-Yexplicit-nulls",
-      // "-explain",
       "-Ysafe-init",
     ),
     libraryDependencies ++= Seq(
